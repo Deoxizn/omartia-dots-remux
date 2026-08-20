@@ -46,7 +46,7 @@ fi
 info "Checking dependencies..."
 
 DEPS_PKGS=()
-for pkg in cmake ninja qt6-base qt6-declarative qt6-svg; do
+for pkg in cmake ninja qt6-base qt6-declarative qt6-svg qt6-shadertools; do
   if ! pacman -Qi "$pkg" &>/dev/null; then
     DEPS_PKGS+=("$pkg")
   fi
