@@ -64,6 +64,15 @@ for f in "$LATEST_BACKUP"/*.lua "$LATEST_BACKUP"/*.conf; do
   ok "  Restored hypr/$BASENAME"
 done
 
+# Remove Caelestia autostart override from hyprland.lua if backup didn't have it
+HYPRLAND_FILE="$HOME/.config/hypr/hyprland.lua"
+if [[ -f "$HYPRLAND_FILE" ]] && ! grep -q 'require("default.hypr.autostart")' "$LATEST_BACKUP/hyprland.lua" 2>/dev/null; then
+  sed -i '/^-- Caelestia: prevent default omarchy autostart/d' "$HYPRLAND_FILE"
+  sed -i '/^package.loaded\["default.hypr.autostart"\]/d' "$HYPRLAND_FILE"
+  sed -i '/^$/N;/^\n$/d' "$HYPRLAND_FILE"  # Remove resulting blank lines
+  ok "  Removed Caelestia autostart override from hyprland.lua"
+fi
+
 # Restore omarchy shell.json
 if [[ -f "$LATEST_BACKUP/shell.json" ]]; then
   cp "$LATEST_BACKUP/shell.json" "$HOME/.config/omarchy/shell.json"

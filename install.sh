@@ -12,12 +12,14 @@ BACKUP_PATH="$BACKUP_DIR/$BACKUP_TS"
 OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
 YES=false
 SKIP_QS_CHECK=false
+DRY_RUN=false
 
 # Parse args
 for arg in "$@"; do
   case "$arg" in
     -y|--yes) YES=true ;;
     --skip-quickshell-check) SKIP_QS_CHECK=true ;;
+    --dry-run) DRY_RUN=true ;;
   esac
 done
 
@@ -39,9 +41,33 @@ confirm() {
   [[ "$REPLY" =~ ^[Yy]$ ]]
 }
 
+run() {
+  if $DRY_RUN; then
+    info "[dry-run] would run: $*"
+    return 0
+  fi
+  "$@"
+}
+
+run_sudo() {
+  if $DRY_RUN; then
+    info "[dry-run] would run: sudo $*"
+    return 0
+  fi
+  sudo "$@"
+}
+
 # ──────────────────────────────────────────────
 # Preflight checks
 # ──────────────────────────────────────────────
+
+if $DRY_RUN; then
+  echo ""
+  ok "═══════════════════════════════════════════"
+  ok "  DRY RUN MODE — no changes will be made"
+  ok "═══════════════════════════════════════════"
+  echo ""
+fi
 
 if [[ ! -d "$OMARCHY_PATH/default" ]]; then
   err "Omarchy not found at $OMARCHY_PATH"
@@ -68,21 +94,23 @@ if ! $SKIP_QS_CHECK && pacman -Qi quickshell-git &>/dev/null; then
   echo ""
   warn "quickshell-git detected — this is a bleeding-edge package known to break"
   warn "omarchy itself depends on stable 'quickshell' from extra, not the git variant"
-  if confirm "Remove quickshell-git and install stable quickshell?"; then
+  if $DRY_RUN; then
+    warn "[dry-run] would offer to switch to stable quickshell"
+  elif confirm "Remove quickshell-git and install stable quickshell?"; then
     info "Switching to stable quickshell..."
     # omarchy-dev depends on quickshell (provided by quickshell-git), remove it first
     if pacman -Qi omarchy-dev &>/dev/null; then
       warn "omarchy-dev depends on quickshell-git — removing omarchy-dev first"
-      sudo pacman -Rns omarchy-dev --noconfirm
+      run_sudo pacman -Rns omarchy-dev --noconfirm
       mkdir -p "$HOME/.local/state/omartia-dots-remux"
       touch "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
     fi
-    sudo pacman -Rns quickshell-git --noconfirm
-    sudo pacman -S --noconfirm quickshell
+    run_sudo pacman -Rns quickshell-git --noconfirm
+    run_sudo pacman -S --noconfirm quickshell
     # Reinstall omarchy-dev now that stable quickshell provides the dependency
     if [[ -f "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed" ]]; then
       info "Reinstalling omarchy-dev (provides omarchy-launch-* commands)..."
-      sudo pacman -S --noconfirm omarchy-dev
+      run_sudo pacman -S --noconfirm omarchy-dev
       rm -f "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
       ok "omarchy-dev reinstalled"
     fi
@@ -127,9 +155,13 @@ for pkg in cmake ninja base-devel \
 done
 
 if [[ ${#DEPS_PKGS[@]} -gt 0 ]]; then
-  info "Installing: ${DEPS_PKGS[*]}"
-  sudo pacman -S --noconfirm "${DEPS_PKGS[@]}"
-  ok "Dependencies installed"
+  if $DRY_RUN; then
+    info "[dry-run] would install: ${DEPS_PKGS[*]}"
+  else
+    info "Installing: ${DEPS_PKGS[*]}"
+    run_sudo pacman -S --noconfirm "${DEPS_PKGS[@]}"
+    ok "Dependencies installed"
+  fi
 else
   ok "All dependencies already installed"
 fi
@@ -154,9 +186,13 @@ if [[ ${#AUR_PKGS[@]} -gt 0 ]]; then
     err "Install yay: https://github.com/Jguer/yay"
     exit 1
   fi
-  info "Installing AUR packages: ${AUR_PKGS[*]}"
-  "$AUR_HELPER" -S --noconfirm --needed "${AUR_PKGS[@]}"
-  ok "AUR packages installed"
+  if $DRY_RUN; then
+    info "[dry-run] would install AUR packages: ${AUR_PKGS[*]}"
+  else
+    info "Installing AUR packages: ${AUR_PKGS[*]}"
+    "$AUR_HELPER" -S --noconfirm --needed "${AUR_PKGS[@]}"
+    ok "AUR packages installed"
+  fi
 fi
 
 # ──────────────────────────────────────────────
@@ -167,7 +203,9 @@ CAELESTIA_DIR="$HOME/.config/quickshell/caelestia"
 
 if [[ -d "$CAELESTIA_DIR" ]]; then
   warn "Caelestia Shell already installed at $CAELESTIA_DIR"
-  if confirm "Reinstall/update?"; then
+  if $DRY_RUN; then
+    info "[dry-run] would update Caelestia Shell"
+  elif confirm "Reinstall/update?"; then
     info "Updating Caelestia Shell..."
     cd "$CAELESTIA_DIR"
     git pull --ff-only || warn "Git pull failed — using existing version"
@@ -175,24 +213,28 @@ if [[ -d "$CAELESTIA_DIR" ]]; then
       || { err "cmake configure failed"; err "Hint: this may be a quickshell version issue"; err "If on quickshell-git, try: sudo pacman -S quickshell"; exit 1; }
     cmake --build build \
       || { err "cmake build failed"; err "Hint: this may be a quickshell version issue"; err "If on quickshell-git, try: sudo pacman -S quickshell"; exit 1; }
-    sudo cmake --install build \
+    run_sudo cmake --install build \
       || { err "cmake install failed"; exit 1; }
     ok "Caelestia Shell updated"
   fi
 else
-  info "Installing Caelestia Shell..."
-  mkdir -p "$HOME/.config/quickshell"
-  cd "$HOME/.config/quickshell"
-  git clone https://github.com/caelestia-dots/shell.git caelestia \
-    || { err "git clone failed — check your network connection"; exit 1; }
-  cd caelestia
-  cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ \
-    || { err "cmake configure failed"; err "Hint: this may be a quickshell version issue"; err "If on quickshell-git, try: sudo pacman -S quickshell"; exit 1; }
-  cmake --build build \
-    || { err "cmake build failed — check build logs above"; err "Hint: this may be a quickshell version issue"; err "If on quickshell-git, try: sudo pacman -S quickshell"; exit 1; }
-  sudo cmake --install build \
-    || { err "cmake install failed"; exit 1; }
-  ok "Caelestia Shell installed"
+  if $DRY_RUN; then
+    info "[dry-run] would clone and build Caelestia Shell"
+  else
+    info "Installing Caelestia Shell..."
+    mkdir -p "$HOME/.config/quickshell"
+    cd "$HOME/.config/quickshell"
+    git clone https://github.com/caelestia-dots/shell.git caelestia \
+      || { err "git clone failed — check your network connection"; exit 1; }
+    cd caelestia
+    cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ \
+      || { err "cmake configure failed"; err "Hint: this may be a quickshell version issue"; err "If on quickshell-git, try: sudo pacman -S quickshell"; exit 1; }
+    cmake --build build \
+      || { err "cmake build failed — check build logs above"; err "Hint: this may be a quickshell version issue"; err "If on quickshell-git, try: sudo pacman -S quickshell"; exit 1; }
+    run_sudo cmake --install build \
+      || { err "cmake install failed"; exit 1; }
+    ok "Caelestia Shell installed"
+  fi
 fi
 
 cd "$REPO_DIR"
@@ -201,39 +243,48 @@ cd "$REPO_DIR"
 # Backup existing configs
 # ──────────────────────────────────────────────
 
-info "Backing up existing configs to $BACKUP_PATH"
+if $DRY_RUN; then
+  info "[dry-run] would backup configs to $BACKUP_PATH"
+else
+  info "Backing up existing configs to $BACKUP_PATH"
 
-mkdir -p "$BACKUP_PATH"
+  mkdir -p "$BACKUP_PATH"
 
-# Backup hypr configs
-for f in "$HOME/.config/hypr"/*.lua "$HOME/.config/hypr"/*.conf; do
-  [[ -f "$f" ]] && cp "$f" "$BACKUP_PATH/"
-done
+  # Backup hypr configs
+  for f in "$HOME/.config/hypr"/*.lua "$HOME/.config/hypr"/*.conf; do
+    [[ -f "$f" ]] && cp "$f" "$BACKUP_PATH/"
+  done
 
-# Backup omarchy shell.json
-[[ -f "$HOME/.config/omarchy/shell.json" ]] && cp "$HOME/.config/omarchy/shell.json" "$BACKUP_PATH/"
+  # Backup omarchy shell.json
+  [[ -f "$HOME/.config/omarchy/shell.json" ]] && cp "$HOME/.config/omarchy/shell.json" "$BACKUP_PATH/"
 
-# Backup caelestia dir
-[[ -d "$HOME/.config/caelestia" ]] && cp -r "$HOME/.config/caelestia" "$BACKUP_PATH/caelestia"
+  # Backup caelestia dir
+  [[ -d "$HOME/.config/caelestia" ]] && cp -r "$HOME/.config/caelestia" "$BACKUP_PATH/caelestia"
 
-# Backup caelestia systemd service
-[[ -f "$HOME/.config/systemd/user/caelestia-shell.service" ]] && cp "$HOME/.config/systemd/user/caelestia-shell.service" "$BACKUP_PATH/"
+  # Backup caelestia systemd service
+  [[ -f "$HOME/.config/systemd/user/caelestia-shell.service" ]] && cp "$HOME/.config/systemd/user/caelestia-shell.service" "$BACKUP_PATH/"
 
-ok "Backup complete"
+  ok "Backup complete"
+fi
 
 # ──────────────────────────────────────────────
 # Install config files
 # ──────────────────────────────────────────────
 
-info "Installing config files..."
+if $DRY_RUN; then
+  info "[dry-run] would install config files..."
+else
+  info "Installing config files..."
+fi
 
 # Auto-detect monitor config for monitors.lua (only on first install)
 if [[ ! -f "$HOME/.config/hypr/monitors.lua" ]]; then
-  if command -v hyprctl &>/dev/null && [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+  if $DRY_RUN; then
+    info "[dry-run] would auto-detect monitors for monitors.lua"
+  elif command -v hyprctl &>/dev/null && [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
     info "  Detecting monitors..."
     MONITOR_JSON=$(hyprctl monitors -j 2>/dev/null)
     if [[ -n "$MONITOR_JSON" ]]; then
-      # Determine GDK_SCALE: 1 for <=1080p, 1.5 for 1440p, 2 for 4K+
       MAX_RES=$(echo "$MONITOR_JSON" | python3 -c "
 import sys, json
 monitors = json.load(sys.stdin)
@@ -271,7 +322,9 @@ fi
 # Hypr configs — only copy if not present (first install), never silently overwrite
 for f in hyprland.lua autostart.lua looknfeel.lua input.lua; do
   if [[ ! -f "$HOME/.config/hypr/$f" ]]; then
-    cp "$REPO_DIR/config/hypr/$f" "$HOME/.config/hypr/$f"
+    if ! $DRY_RUN; then
+      cp "$REPO_DIR/config/hypr/$f" "$HOME/.config/hypr/$f"
+    fi
     ok "  hypr/$f (new)"
   else
     warn "  hypr/$f exists — skipped"
@@ -281,12 +334,17 @@ done
 # Patch bindings.lua — inject Caelestia launcher/lock bindings into existing config
 BINDINGS_FILE="$HOME/.config/hypr/bindings.lua"
 if [[ ! -f "$BINDINGS_FILE" ]]; then
-  cp "$REPO_DIR/config/hypr/bindings.lua" "$BINDINGS_FILE"
+  if ! $DRY_RUN; then
+    cp "$REPO_DIR/config/hypr/bindings.lua" "$BINDINGS_FILE"
+  fi
   ok "  hypr/bindings.lua (new)"
 else
   if ! grep -q "caelestia:launcher" "$BINDINGS_FILE" 2>/dev/null; then
-    info "  Patching hypr/bindings.lua with Caelestia bindings..."
-    cat >> "$BINDINGS_FILE" << 'CAELESTIA_BINDINGS'
+    if $DRY_RUN; then
+      info "[dry-run] would patch hypr/bindings.lua with Caelestia bindings"
+    else
+      info "  Patching hypr/bindings.lua with Caelestia bindings..."
+      cat >> "$BINDINGS_FILE" << 'CAELESTIA_BINDINGS'
 
 -- omartia-dots-remux: Caelestia bindings (auto-injected)
 hl.unbind("SUPER + SPACE")
@@ -298,6 +356,7 @@ o.bind("SUPER + ALT + D", "Dashboard", hl.dsp.global("caelestia:dashboard"))
 hl.unbind("SUPER + CTRL + L")
 o.bind("SUPER + CTRL + L", "Lock system", hl.dsp.global("caelestia:lock"))
 CAELESTIA_BINDINGS
+    fi
     ok "  hypr/bindings.lua (patched)"
   else
     warn "  hypr/bindings.lua already has Caelestia bindings — skipped"
@@ -307,34 +366,70 @@ fi
 # Patch autostart.lua — inject Caelestia shell launch into existing config
 AUTOSTART_FILE="$HOME/.config/hypr/autostart.lua"
 if [[ ! -f "$AUTOSTART_FILE" ]]; then
-  cp "$REPO_DIR/config/hypr/autostart.lua" "$AUTOSTART_FILE"
+  if ! $DRY_RUN; then
+    cp "$REPO_DIR/config/hypr/autostart.lua" "$AUTOSTART_FILE"
+  fi
   ok "  hypr/autostart.lua (new)"
 else
   if ! grep -q "caelestia-shell" "$AUTOSTART_FILE" 2>/dev/null; then
-    info "  Patching hypr/autostart.lua with Caelestia shell launch..."
-    cat >> "$AUTOSTART_FILE" << 'CAELESTIA_AUTOSTART'
+    if $DRY_RUN; then
+      info "[dry-run] would patch hypr/autostart.lua with Caelestia shell launch"
+    else
+      info "  Patching hypr/autostart.lua with Caelestia shell launch..."
+
+      # Comment out the omarchy quickshell bar launch (Caelestia provides its own bar)
+      if grep -q 'quickshell.*config/quickshell/bar' "$AUTOSTART_FILE" 2>/dev/null; then
+        sed -i 's|^\([^#].*quickshell.*config/quickshell/bar.*\)$|-- omartia-dots-remux: disabled (Caelestia provides bar)\n-- \1|' "$AUTOSTART_FILE"
+        ok "  hypr/autostart.lua (omarchy bar disabled)"
+      fi
+
+      cat >> "$AUTOSTART_FILE" << 'CAELESTIA_AUTOSTART'
 
 -- omartia-dots-remux: Caelestia Shell (auto-injected)
--- Runs alongside omarchy-shell (plugins disabled via shell.json)
+-- Replaces omarchy-shell (plugins disabled via shell.json)
+-- Commands are chained to ensure env is imported BEFORE the service starts
+-- After Caelestia starts, kill the omarchy shell (default autostart launches it)
 hl.on("hyprland.start", function()
-  hl.exec_cmd("systemctl --user import-environment $(env | cut -d'=' -f 1)")
-  hl.exec_cmd("dbus-update-activation-environment --systemd --all")
-  hl.exec_cmd("systemctl --user start caelestia-shell.service")
+  hl.exec_cmd("bash -c 'systemctl --user import-environment $(env | cut -d\"=\" -f 1) && dbus-update-activation-environment --systemd --all && systemctl --user start caelestia-shell.service && sleep 3 && pkill -f \"quickshell -n -p .*/omarchy/shell\" 2>/dev/null'")
 end)
 CAELESTIA_AUTOSTART
+    fi
     ok "  hypr/autostart.lua (patched)"
   else
     warn "  hypr/autostart.lua already has Caelestia shell — skipped"
   fi
 fi
 
+# Prevent omarchy shell from launching (Caelestia replaces it)
+# The default omarchy autostart calls omarchy-launch-shell which has a supervision
+# loop that respawns the shell when killed. Instead of replacing system binaries
+# (which breaks on pacman updates), prevent the autostart module from loading
+# via Lua's package.loaded mechanism.
+HYPRLAND_FILE="$HOME/.config/hypr/hyprland.lua"
+if [[ -f "$HYPRLAND_FILE" ]]; then
+  if ! grep -q 'package.loaded\["default.hypr.autostart"\]' "$HYPRLAND_FILE" 2>/dev/null; then
+    if $DRY_RUN; then
+      info "[dry-run] would patch hyprland.lua (disable default autostart)"
+    else
+      # Insert at the top of the file, before any other code
+      sed -i '1i\-- Caelestia: prevent default omarchy autostart (Caelestia handles shell launch)\npackage.loaded["default.hypr.autostart"] = function() end\n' "$HYPRLAND_FILE"
+    fi
+    ok "  hyprland.lua patched (default autostart disabled)"
+  else
+    warn "  hyprland.lua already has Caelestia autostart override — skipped"
+  fi
+fi
+
 # Caelestia shell.json
-mkdir -p "$HOME/.config/caelestia"
-cp "$REPO_DIR/config/caelestia/shell.json" "$HOME/.config/caelestia/shell.json"
+if ! $DRY_RUN; then
+  mkdir -p "$HOME/.config/caelestia"
+  cp "$REPO_DIR/config/caelestia/shell.json" "$HOME/.config/caelestia/shell.json"
+fi
 
 # Hide system utility apps and omarchy preinstalls from Caelestia's launcher
 # These are desktop files that ship with packages but shouldn't appear in a launcher
-python3 - "$HOME/.config/caelestia/shell.json" << 'HIDDENPY'
+if ! $DRY_RUN; then
+  python3 - "$HOME/.config/caelestia/shell.json" << 'HIDDENPY'
 import json, os, sys, glob
 
 config_path = sys.argv[1]
@@ -386,24 +481,28 @@ cfg.setdefault("launcher", {})["hiddenApps"] = hidden
 with open(config_path, "w") as f:
     json.dump(cfg, f, indent=4)
 HIDDENPY
+fi
 ok "  caelestia/shell.json"
 
 # Omarchy shell.json — disable conflicting plugins
-mkdir -p "$HOME/.config/omarchy"
-cp "$REPO_DIR/config/omarchy/shell.json" "$HOME/.config/omarchy/shell.json"
+if ! $DRY_RUN; then
+  mkdir -p "$HOME/.config/omarchy"
+  cp "$REPO_DIR/config/omarchy/shell.json" "$HOME/.config/omarchy/shell.json"
+fi
 ok "  omarchy/shell.json (plugins disabled)"
 
 # Caelestia systemd service — auto-restarts on crash or package update
-mkdir -p "$HOME/.config/systemd/user"
-if command -v qs &>/dev/null; then
-  QS_BIN="$(command -v qs)"
-elif command -v quickshell &>/dev/null; then
-  QS_BIN="$(command -v quickshell)"
-else
-  err "Neither qs nor quickshell found in PATH"
-  exit 1
-fi
-cat > "$HOME/.config/systemd/user/caelestia-shell.service" <<EOF
+if ! $DRY_RUN; then
+  mkdir -p "$HOME/.config/systemd/user"
+  if command -v qs &>/dev/null; then
+    QS_BIN="$(command -v qs)"
+  elif command -v quickshell &>/dev/null; then
+    QS_BIN="$(command -v quickshell)"
+  else
+    err "Neither qs nor quickshell found in PATH"
+    exit 1
+  fi
+  cat > "$HOME/.config/systemd/user/caelestia-shell.service" <<EOF
 [Unit]
 Description=Caelestia Shell
 After=graphical-session.target
@@ -411,17 +510,20 @@ PartOf=graphical-session.target
 
 [Service]
 Type=simple
+ExecStartPre=/usr/bin/bash -c 'for i in 1 2 3 4 5; do [ -n "\$WAYLAND_DISPLAY" ] && exit 0; sleep 0.5; done; exit 1'
 ExecStart=${QS_BIN} -c caelestia
 Restart=on-failure
 RestartSec=2
 Environment=QT_QPA_PLATFORM=wayland
+Environment=QT_WAYLAND_DISABLE_WINDOWDECORATION=1
 
 [Install]
 WantedBy=graphical-session.target
 EOF
-systemctl --user daemon-reload
-systemctl --user enable caelestia-shell.service
-ok "  caelestia-shell.service (auto-restart enabled, binary: $QS_BIN)"
+  systemctl --user daemon-reload
+  systemctl --user enable caelestia-shell.service
+fi
+ok "  caelestia-shell.service (auto-restart enabled)"
 
 # ──────────────────────────────────────────────
 # Install theme bridge hook
@@ -430,9 +532,11 @@ ok "  caelestia-shell.service (auto-restart enabled, binary: $QS_BIN)"
 info "Installing theme bridge hook..."
 
 HOOK_DIR="$HOME/.config/omarchy/hooks/theme-set.d"
-mkdir -p "$HOOK_DIR"
-cp "$REPO_DIR/hooks/theme-set.d/caelestia-sync.sh" "$HOOK_DIR/caelestia-sync.sh"
-chmod +x "$HOOK_DIR/caelestia-sync.sh"
+if ! $DRY_RUN; then
+  mkdir -p "$HOOK_DIR"
+  cp "$REPO_DIR/hooks/theme-set.d/caelestia-sync.sh" "$HOOK_DIR/caelestia-sync.sh"
+  chmod +x "$HOOK_DIR/caelestia-sync.sh"
+fi
 ok "Theme bridge hook installed"
 
 # ──────────────────────────────────────────────
@@ -442,7 +546,9 @@ ok "Theme bridge hook installed"
 info "Syncing current theme to Caelestia..."
 
 if [[ -f "$HOME/.local/state/omarchy/current/theme/colors.toml" ]]; then
-  bash "$HOOK_DIR/caelestia-sync.sh"
+  if ! $DRY_RUN; then
+    bash "$HOOK_DIR/caelestia-sync.sh"
+  fi
   ok "Theme synced"
 else
   warn "No active theme found — run 'omarchy-theme-set <name>' then this script again"
@@ -453,29 +559,37 @@ fi
 # ──────────────────────────────────────────────
 
 echo ""
-ok "═══════════════════════════════════════════"
-ok "  omartia-dots-remux installed!"
-ok "═══════════════════════════════════════════"
-echo ""
-info "What changed:"
-info "  • omarchy-shell plugins disabled (shell.json)"
-info "  • Caelestia Shell installed (bar, lock, launcher, dashboard)"
-info "  • Theme bridge installed (omarchy themes → Caelestia colors)"
-info "  • Keybindings patched (SUPER+Space → Caelestia launcher)"
-info "  • Backups at: $BACKUP_PATH"
-echo ""
-info "Next steps:"
-info "  1. Edit ~/.config/hypr/monitors.lua for your displays"
-info "  2. Edit ~/.config/hypr/input.lua for your keyboard"
-info "  4. Test: SUPER+Space (launcher), SUPER+L (lock)"
-info "  5. Test: omarchy-theme-set <theme> (verify colors update)"
-echo ""
-info "To uninstall: $REPO_DIR/uninstall.sh"
-echo ""
+if $DRY_RUN; then
+  ok "═══════════════════════════════════════════"
+  ok "  DRY RUN COMPLETE — no changes were made"
+  ok "═══════════════════════════════════════════"
+  echo ""
+  info "Everything looks good. Run without --dry-run to install:"
+  info "  $REPO_DIR/install.sh -y"
+else
+  ok "═══════════════════════════════════════════"
+  ok "  omartia-dots-remux installed!"
+  ok "═══════════════════════════════════════════"
+  echo ""
+  info "What changed:"
+  info "  • Caelestia Shell installed (bar, lock, launcher, dashboard)"
+  info "  • Theme bridge installed (omarchy themes → Caelestia colors)"
+  info "  • Keybindings patched (SUPER+Space → Caelestia launcher)"
+  info "  • omarchy-shell default autostart disabled (package.loaded override)"
+  info "  • Backups at: $BACKUP_PATH"
+  echo ""
+  info "Next steps:"
+  info "  1. Test: SUPER+Space (launcher), SUPER+L (lock)"
+  info "  2. Test: omarchy-theme-set <theme> (verify colors update)"
+  info "  3. If anything is wrong, run: $REPO_DIR/uninstall.sh"
+  echo ""
+  info "To uninstall: $REPO_DIR/uninstall.sh"
+  echo ""
 
-# Offer to log out so Caelestia Shell starts
-if confirm "Log out now to start Caelestia Shell?"; then
-  info "Logging out in 5 seconds... (press Ctrl+C to cancel)"
-  sleep 5
-  loginctl terminate-user "$USER"
+  # Auto-logout after 5 seconds so Caelestia Shell starts
+  if confirm "Log out now to start Caelestia Shell?"; then
+    info "Logging out in 5 seconds... (press Ctrl+C to cancel)"
+    sleep 5
+    loginctl terminate-user "$USER"
+  fi
 fi
