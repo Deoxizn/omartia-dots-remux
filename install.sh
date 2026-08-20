@@ -330,36 +330,57 @@ fi
 mkdir -p "$HOME/.config/caelestia"
 cp "$REPO_DIR/config/caelestia/shell.json" "$HOME/.config/caelestia/shell.json"
 
-# If omarchy preinstalls were removed, hide those apps from Caelestia's launcher
-# (omarchy-remove-preinstalls only removes user-level .desktop files, but
-# /usr/share/omarchy/applications/ still has them and Caelestia reads all XDG entries)
-if [[ -f "$HOME/.local/state/omarchy/preinstalls-removed" ]]; then
-  OMARCHY_APPS_DIR="/usr/share/omarchy/applications"
-  if [[ -d "$OMARCHY_APPS_DIR" ]]; then
-    HIDDEN_IDS=()
-    for f in "$OMARCHY_APPS_DIR"/*.desktop; do
-      [[ -f "$f" ]] || continue
-      id=$(basename "$f" .desktop)
-      HIDDEN_IDS+=("$id")
-    done
-    if [[ ${#HIDDEN_IDS[@]} -gt 0 ]]; then
-      HIDDEN_JSON=$(printf '%s\n' "${HIDDEN_IDS[@]}" | python3 -c "
-import sys, json
-ids = [line.strip() for line in sys.stdin if line.strip()]
-print(json.dumps(ids))
-")
-      python3 -c "
-import json
-with open('$HOME/.config/caelestia/shell.json') as f:
+# Hide system utility apps and omarchy preinstalls from Caelestia's launcher
+# These are desktop files that ship with packages but shouldn't appear in a launcher
+python3 - "$HOME/.config/caelestia/shell.json" << 'HIDDENPY'
+import json, os, sys, glob
+
+config_path = sys.argv[1]
+with open(config_path) as f:
     cfg = json.load(f)
-cfg.setdefault('launcher', {})['hiddenApps'] = $HIDDEN_JSON
-with open('$HOME/.config/caelestia/shell.json', 'w') as f:
+
+# Base list: system utility desktop file IDs that should never appear in launcher
+hidden = [
+    # Avahi network tools
+    "avahi-discover", "bssh", "bvnc",
+    # Dev/build helpers
+    "cmake-gui",
+    # Printer config
+    "cups", "system-config-printer",
+    # System utilities
+    "lstopo", "limine-snapper-restore", "user-dirs-update-gtk", "uuctl",
+    # Terminal variants (main "foot" is kept)
+    "foot-server", "footclient",
+    # Qt test/video utilities
+    "qv4l2", "qvidcap",
+    # Gnome helper apps
+    "gnome-disk-image-mounter", "gnome-disk-image-writer",
+    "nautilus-autorun-software",
+    # Internal components that shouldn't be launched directly
+    "gcr-prompter", "gcr-viewer",
+    "xdg-desktop-portal-gtk", "org.freedesktop.Xwayland",
+    "org.gnupg.pinentry-qt", "org.quickshell",
+    # Fcitx wrappers (main entry is org.fcitx.Fcitx5)
+    "org.fcitx.fcitx5-qt5-gui-wrapper", "org.fcitx.fcitx5-qt6-gui-wrapper",
+    "fcitx5-wayland-launcher",
+    # Evince previewer (main Evince is kept)
+    "org.gnome.Evince-previewer",
+    # imv variants
+    "imv-dir",
+]
+
+# Also hide any omarchy preinstall apps that still have desktop files
+omarchy_dir = "/usr/share/omarchy/applications"
+if os.path.isdir(omarchy_dir):
+    for f in glob.glob(os.path.join(omarchy_dir, "*.desktop")):
+        app_id = os.path.splitext(os.path.basename(f))[0]
+        if app_id not in hidden:
+            hidden.append(app_id)
+
+cfg.setdefault("launcher", {})["hiddenApps"] = hidden
+with open(config_path, "w") as f:
     json.dump(cfg, f, indent=4)
-"
-      ok "  Hidden ${#HIDDEN_IDS[@]} omarchy preinstall apps from launcher"
-    fi
-  fi
-fi
+HIDDENPY
 ok "  caelestia/shell.json"
 
 # Omarchy shell.json — disable conflicting plugins

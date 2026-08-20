@@ -8,21 +8,20 @@
   "launcher": {
     "enabled": true,
     "hiddenApps": [
-      "avahi-discover", "Basecamp", "bssh", "btop", "bvnc",
-      "cmake-gui", "cups", "Discord", "Disk Usage", "Docker",
-      "dropbox", "electron34", "electron36", "electron37",
-      "fcitx5-configtool", "fcitx5-wayland-launcher", "foot",
-      "foot-server", "footclient", "Google Contacts", "Google Maps",
-      "Google Messages", "Google Photos", "HEY", "imv",
-      "java-java-openjdk", "java-java17-openjdk",
-      "jconsole-java-openjdk", "jconsole-java17-openjdk",
-      "jshell-java-openjdk", "jshell-java17-openjdk",
-      "kbd-layout-viewer5", "kcm_fcitx5", "kcm_kaccounts",
-      "kvantummanager", "limine-snapper-restore", "lstopo", "mpv",
-      "org.fcitx.Fcitx5", "org.fcitx.fcitx5-config-qt",
-      "org.fcitx.fcitx5-migrator", "org.fcitx.fcitx5-qt5-gui-wrapper",
-      "org.fcitx.fcitx5-qt6-gui-wrapper", "qv4l2", "qvidcap",
-      "uuctl", "WhatsApp", "X", "xgps", "xgpsspeed", "YouTube", "Zoom"
+      "avahi-discover", "bssh", "bvnc",
+      "cmake-gui", "cups", "system-config-printer",
+      "lstopo", "limine-snapper-restore", "user-dirs-update-gtk", "uuctl",
+      "foot-server", "footclient",
+      "qv4l2", "qvidcap",
+      "gnome-disk-image-mounter", "gnome-disk-image-writer",
+      "nautilus-autorun-software",
+      "gcr-prompter", "gcr-viewer",
+      "xdg-desktop-portal-gtk", "org.freedesktop.Xwayland",
+      "org.gnupg.pinentry-qt", "org.quickshell",
+      "org.fcitx.fcitx5-qt5-gui-wrapper", "org.fcitx.fcitx5-qt6-gui-wrapper",
+      "fcitx5-wayland-launcher",
+      "org.gnome.Evince-previewer",
+      "imv-dir"
     ]
   },
   "sidebar": {
