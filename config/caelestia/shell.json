@@ -1,60 +1,121 @@
 {
-  "lock": {
-    "enabled": true
-  },
-  "dashboard": {
-    "enabled": true
-  },
-  "launcher": {
-    "enabled": true,
-    "hiddenApps": [
-      "avahi-discover", "bssh", "bvnc", "btop",
-      "cmake-gui", "cups", "system-config-printer",
-      "lstopo", "limine-snapper-restore", "user-dirs-update-gtk", "uuctl",
-      "foot-server", "footclient",
-      "qv4l2", "qvidcap",
-      "gnome-disk-image-mounter", "gnome-disk-image-writer",
-      "nautilus-autorun-software",
-      "gcr-prompter", "gcr-viewer",
-      "xdg-desktop-portal-gtk", "org.freedesktop.Xwayland",
-      "org.gnupg.pinentry-qt", "org.quickshell",
-      "org.fcitx.Fcitx5", "fcitx5-configtool",
-      "org.fcitx.fcitx5-qt5-gui-wrapper", "org.fcitx.fcitx5-qt6-gui-wrapper",
-      "fcitx5-wayland-launcher",
-      "org.gnome.Evince-previewer",
-      "imv-dir"
-    ]
-  },
-  "sidebar": {
-    "enabled": true
-  },
-  "session": {
-    "enabled": true,
-    "commands": {
-      "logout": ["loginctl", "terminate-user", "$USER"],
-      "shutdown": ["poweroff"],
-      "reboot": ["reboot"],
-      "hibernate": ["systemctl", "hibernate"]
-    }
-  },
-  "osd": {
-    "enabled": true
-  },
-  "appearance": {
-    "deformScale": 1.0,
-    "rounding": { "scale": 1.0 },
-    "spacing": { "scale": 1.0 },
-    "padding": { "scale": 1.0 },
-    "font": {
-      "scale": 1.0,
-      "mono": {
-        "family": "JetBrainsMono Nerd Font"
-      }
+    "appearance": {
+        "deformScale": 1,
+        "font": {
+            "mono": {
+                "family": "JetBrainsMono Nerd Font"
+            },
+            "scale": 1
+        },
+        "padding": {
+            "scale": 1
+        },
+        "rounding": {
+            "scale": 1
+        },
+        "spacing": {
+            "scale": 1
+        },
+        "transparency": {
+            "base": 0.85,
+            "enabled": true,
+            "layers": 0.75
+        }
     },
-    "transparency": {
-      "enabled": true,
-      "base": 0.85,
-      "layers": 0.75
+    "bar": {
+        "excludedScreens": [
+            "HDMI-A-1"
+        ],
+        "persistent": false
+    },
+    "dashboard": {
+        "enabled": true
+    },
+    "launcher": {
+        "enabled": true,
+        "hiddenApps": [
+            "avahi-discover",
+            "bssh",
+            "bvnc",
+            "cmake-gui",
+            "btop",
+            "cups",
+            "system-config-printer",
+            "lstopo",
+            "limine-snapper-restore",
+            "user-dirs-update-gtk",
+            "uuctl",
+            "foot-server",
+            "footclient",
+            "qv4l2",
+            "qvidcap",
+            "gnome-disk-image-mounter",
+            "gnome-disk-image-writer",
+            "nautilus-autorun-software",
+            "gcr-prompter",
+            "gcr-viewer",
+            "xdg-desktop-portal-gtk",
+            "org.freedesktop.Xwayland",
+            "org.gnupg.pinentry-qt",
+            "org.quickshell",
+            "org.fcitx.Fcitx5",
+            "fcitx5-configtool",
+            "org.fcitx.fcitx5-qt5-gui-wrapper",
+            "org.fcitx.fcitx5-qt6-gui-wrapper",
+            "fcitx5-wayland-launcher",
+            "org.gnome.Evince-previewer",
+            "imv-dir",
+            "Basecamp",
+            "Discord",
+            "Disk Usage",
+            "Docker",
+            "Google Contacts",
+            "Google Maps",
+            "Google Messages",
+            "Google Photos",
+            "HEY",
+            "WhatsApp",
+            "X",
+            "YouTube",
+            "Zoom",
+            "foot",
+            "imv",
+            "mpv",
+            "xgps",
+            "xgpsspeed"
+        ]
+    },
+    "lock": {
+        "enabled": true
+    },
+    "notifications": {
+        "defaultExpireTimeout": 5000,
+        "expire": true
+    },
+    "osd": {
+        "enabled": true
+    },
+    "session": {
+        "commands": {
+            "hibernate": [
+                "systemctl",
+                "hibernate"
+            ],
+            "logout": [
+                "loginctl",
+                "terminate-user",
+                "$USER"
+            ],
+            "reboot": [
+                "reboot"
+            ],
+            "shutdown": [
+                "poweroff"
+            ]
+        },
+        "enabled": true
+    },
+    "sidebar": {
+        "enabled": true
     }
-  }
 }
