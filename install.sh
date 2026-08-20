@@ -220,8 +220,49 @@ ok "Backup complete"
 
 info "Installing config files..."
 
+# Auto-detect monitor config for monitors.lua (only on first install)
+if [[ ! -f "$HOME/.config/hypr/monitors.lua" ]]; then
+  if command -v hyprctl &>/dev/null && [[ -n "${HYPRLAND_INSTANCE_SIGNATURE:-}" ]]; then
+    info "  Detecting monitors..."
+    MONITOR_JSON=$(hyprctl monitors -j 2>/dev/null)
+    if [[ -n "$MONITOR_JSON" ]]; then
+      # Determine GDK_SCALE: 1 for <=1080p, 1.5 for 1440p, 2 for 4K+
+      MAX_RES=$(echo "$MONITOR_JSON" | python3 -c "
+import sys, json
+monitors = json.load(sys.stdin)
+max_h = max((m.get('height', 0) for m in monitors), default=1080)
+if max_h <= 1080:
+    print(1)
+elif max_h <= 1440:
+    print(1.5)
+else:
+    print(2)
+" 2>/dev/null || echo "1")
+      cat > "$HOME/.config/hypr/monitors.lua" << MONITORS_EOF
+-- See https://wiki.hypr.land/Configuring/Basics/Monitors/
+-- List current monitors and supported resolutions with: hyprctl monitors all
+
+local omarchy_gdk_scale = ${MAX_RES}
+local omarchy_monitor_scale = "auto"
+
+hl.env("GDK_SCALE", tostring(omarchy_gdk_scale))
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy_monitor_scale })
+MONITORS_EOF
+      ok "  hypr/monitors.lua (auto-detected, GDK_SCALE=${MAX_RES})"
+    else
+      cp "$REPO_DIR/config/hypr/monitors.lua" "$HOME/.config/hypr/monitors.lua"
+      ok "  hypr/monitors.lua (fallback default)"
+    fi
+  else
+    cp "$REPO_DIR/config/hypr/monitors.lua" "$HOME/.config/hypr/monitors.lua"
+    ok "  hypr/monitors.lua (default)"
+  fi
+else
+  warn "  hypr/monitors.lua exists — skipped"
+fi
+
 # Hypr configs — only copy if not present (first install), never silently overwrite
-for f in hyprland.lua autostart.lua looknfeel.lua monitors.lua input.lua; do
+for f in hyprland.lua autostart.lua looknfeel.lua input.lua; do
   if [[ ! -f "$HOME/.config/hypr/$f" ]]; then
     cp "$REPO_DIR/config/hypr/$f" "$HOME/.config/hypr/$f"
     ok "  hypr/$f (new)"
