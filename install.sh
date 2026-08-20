@@ -146,12 +146,12 @@ ok "Backup complete"
 info "Installing config files..."
 
 # Hypr configs — only copy monitors/input if not present (first install)
-for f in hyprland.lua autostart.lua bindings.lua looknfeel.lua; do
+for f in hyprland.lua autostart.lua looknfeel.lua; do
   cp "$REPO_DIR/config/hypr/$f" "$HOME/.config/hypr/$f"
   ok "  hypr/$f"
 done
 
-for f in monitors.lua input.lua; do
+for f in monitors.lua input.lua bindings.lua; do
   if [[ ! -f "$HOME/.config/hypr/$f" ]]; then
     cp "$REPO_DIR/config/hypr/$f" "$HOME/.config/hypr/$f"
     ok "  hypr/$f (new)"
