@@ -1,8 +1,4 @@
 {
-  "bar": {
-    "position": "top",
-    "height": 26
-  },
   "lock": {
     "enabled": true
   },
@@ -16,7 +12,13 @@
     "enabled": true
   },
   "session": {
-    "enabled": true
+    "enabled": true,
+    "commands": {
+      "logout": ["loginctl", "terminate-user", "$USER"],
+      "shutdown": ["poweroff"],
+      "reboot": ["reboot"],
+      "hibernate": ["systemctl", "hibernate"]
+    }
   },
   "osd": {
     "enabled": true
@@ -28,8 +30,9 @@
     "padding": { "scale": 1.0 },
     "font": {
       "scale": 1.0,
-      "family": "CaskaydiaCove Nerd Font",
-      "monoFamily": "CaskaydiaMono Nerd Font"
+      "mono": {
+        "family": "JetBrainsMono Nerd Font"
+      }
     },
     "transparency": {
       "enabled": true,

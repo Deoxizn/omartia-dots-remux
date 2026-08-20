@@ -6,8 +6,12 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("systemctl --user import-environment $(env | cut -d'=' -f 1)")
   hl.exec_cmd("dbus-update-activation-environment --systemd --all")
 
-  -- Caelestia Shell (replaces omarchy-launch-shell)
-  hl.exec_cmd("caelestia shell -d")
+  -- Kill omarchy-shell immediately (it starts via uwsm before our config loads)
+  hl.exec_cmd("pkill -f omarchy-launch-shell")
+  hl.exec_cmd("pkill -f 'quickshell -n -p /usr/share/omarchy'")
+
+  -- Launch Caelestia Shell
+  hl.exec_cmd("qs -c caelestia")
 
   -- Omarchy services
   hl.exec_cmd("omarchy-provision-first-run")

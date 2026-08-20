@@ -10,6 +10,14 @@ BACKUP_DIR="$HOME/.config/omartia-dots-remux-backup"
 BACKUP_TS="$(date +%Y%m%d%H%M%S)"
 BACKUP_PATH="$BACKUP_DIR/$BACKUP_TS"
 OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
+YES=false
+
+# Parse args
+for arg in "$@"; do
+  case "$arg" in
+    -y|--yes) YES=true ;;
+  esac
+done
 
 # Colors
 RED='\033[0;31m'
@@ -22,6 +30,12 @@ info()  { echo -e "${CYAN}[omartia]${NC} $*"; }
 ok()    { echo -e "${GREEN}[omartia]${NC} $*"; }
 warn()  { echo -e "${YELLOW}[omartia]${NC} $*"; }
 err()   { echo -e "${RED}[omartia]${NC} $*" >&2; }
+
+confirm() {
+  if $YES; then return 0; fi
+  read -rp "$1 [y/N] " REPLY
+  [[ "$REPLY" =~ ^[Yy]$ ]]
+}
 
 # ──────────────────────────────────────────────
 # Preflight checks
@@ -38,6 +52,12 @@ if [[ "$(id -u)" -eq 0 ]]; then
   err "Do not run this installer as root"
   exit 1
 fi
+
+if ! command -v quickshell &>/dev/null && ! command -v qs &>/dev/null; then
+  err "quickshell not found — install it first: https://quickshell.outfoxxed.me"
+  exit 1
+fi
+ok "Quickshell found"
 
 # ──────────────────────────────────────────────
 # Install dependencies
@@ -62,9 +82,11 @@ else
   ok "All dependencies already installed"
 fi
 
-# AUR packages (libcava provides the .pc file Caelestia needs; Arch's cava is just the binary)
+# AUR packages
+# - libcava: provides the .pc file Caelestia needs (Arch's cava is just the binary)
+# - caelestia-cli: wallpaper, scheme, shell control commands
 AUR_PKGS=()
-for pkg in libcava; do
+for pkg in libcava caelestia-cli; do
   if ! pacman -Qi "$pkg" &>/dev/null; then
     AUR_PKGS+=("$pkg")
   fi
@@ -78,7 +100,6 @@ if [[ ${#AUR_PKGS[@]} -gt 0 ]]; then
   else
     err "AUR packages needed (${AUR_PKGS[*]}) but neither yay nor paru found"
     err "Install yay: https://github.com/Jguer/yay"
-    err "Or install manually: $AUR_HELPER -S ${AUR_PKGS[*]}"
     exit 1
   fi
   info "Installing AUR packages: ${AUR_PKGS[*]}"
@@ -94,14 +115,16 @@ CAELESTIA_DIR="$HOME/.config/quickshell/caelestia"
 
 if [[ -d "$CAELESTIA_DIR" ]]; then
   warn "Caelestia Shell already installed at $CAELESTIA_DIR"
-  read -rp "Reinstall/update? [y/N] " REINSTALL
-  if [[ "$REINSTALL" =~ ^[Yy]$ ]]; then
+  if confirm "Reinstall/update?"; then
     info "Updating Caelestia Shell..."
     cd "$CAELESTIA_DIR"
     git pull --ff-only || warn "Git pull failed — using existing version"
-    cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ 2>/dev/null
-    cmake --build build 2>/dev/null
-    sudo cmake --install build 2>/dev/null
+    cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ \
+      || { err "cmake configure failed"; exit 1; }
+    cmake --build build \
+      || { err "cmake build failed"; exit 1; }
+    sudo cmake --install build \
+      || { err "cmake install failed"; exit 1; }
     ok "Caelestia Shell updated"
   fi
 else
@@ -110,9 +133,12 @@ else
   cd "$HOME/.config/quickshell"
   git clone https://github.com/caelestia-dots/shell.git caelestia
   cd caelestia
-  cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/
-  cmake --build build
-  sudo cmake --install build
+  cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ \
+    || { err "cmake configure failed"; exit 1; }
+  cmake --build build \
+    || { err "cmake build failed — check build logs above"; exit 1; }
+  sudo cmake --install build \
+    || { err "cmake install failed"; exit 1; }
   ok "Caelestia Shell installed"
 fi
 
