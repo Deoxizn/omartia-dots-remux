@@ -13,7 +13,7 @@ o.bind("SUPER + ALT + SPACE", "Session menu", hl.dsp.global("caelestia:session")
 o.bind("SUPER + N", "Notifications shade", hl.dsp.global("caelestia:sidebar"))
 
 -- Caelestia dashboard
-o.bind("SUPER + D", "Dashboard", hl.dsp.global("caelestia:dashboard"))
+o.bind("SUPER + ALT + D", "Dashboard", hl.dsp.global("caelestia:dashboard"))
 
 -- Lock via Caelestia (replaces omarchy-system-lock)
 hl.unbind("SUPER + CTRL + L")
