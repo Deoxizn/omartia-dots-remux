@@ -9,8 +9,7 @@
     "enabled": true
   },
   "sidebar": {
-    "enabled": true,
-    "showOnHover": true
+    "enabled": true
   },
   "session": {
     "enabled": true,
