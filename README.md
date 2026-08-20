@@ -36,14 +36,22 @@ cd omartia-dots-remux
 
 Use `./install.sh -y` to skip confirmation prompts.
 
+**Test first without making changes:**
+```bash
+./install.sh --dry-run
+```
+
 The installer will:
 1. Install build dependencies (cmake, ninja, qt6, etc.)
 2. Build and install Caelestia Shell from source
 3. Backup your existing configs
 4. Copy the new configs (skips hypr files that already exist)
-5. Set up the systemd service (auto-restart on crash)
-6. Set up the theme bridge hook
-7. Sync your current theme
+5. Patch `hyprland.lua` to disable omarchy's default autostart (via Lua `package.loaded` — survives pacman updates)
+6. Patch `autostart.lua` to launch Caelestia Shell
+7. Set up the systemd service (auto-restart on crash)
+8. Set up the theme bridge hook
+9. Sync your current theme
+10. Auto-logout after 5 seconds (press Ctrl+C to cancel)
 
 ## After install
 
