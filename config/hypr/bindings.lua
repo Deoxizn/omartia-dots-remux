@@ -6,9 +6,9 @@
 -- Caelestia launcher (replaces omarchy-menu)
 hl.unbind("SUPER + SPACE")
 hl.unbind("SUPER + ALT + SPACE")
-o.bind("SUPER + SPACE", "Caelestia launcher", function() hl.dsp.global("caelestia:launcher") end)
-o.bind("SUPER + ALT + SPACE", "Session menu", function() hl.dsp.global("caelestia:session") end)
+o.bind("SUPER + SPACE", "Caelestia launcher", hl.dsp.global("caelestia:launcher"))
+o.bind("SUPER + ALT + SPACE", "Session menu", hl.dsp.global("caelestia:session"))
 
 -- Lock via Caelestia (replaces omarchy-system-lock)
 hl.unbind("SUPER + CTRL + L")
-o.bind("SUPER + CTRL + L", "Lock system", function() hl.dsp.global("caelestia:lock") end)
+o.bind("SUPER + CTRL + L", "Lock system", hl.dsp.global("caelestia:lock"))

@@ -79,6 +79,13 @@ if ! $SKIP_QS_CHECK && pacman -Qi quickshell-git &>/dev/null; then
     fi
     sudo pacman -Rns quickshell-git --noconfirm
     sudo pacman -S --noconfirm quickshell
+    # Reinstall omarchy-dev now that stable quickshell provides the dependency
+    if [[ -f "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed" ]]; then
+      info "Reinstalling omarchy-dev (provides omarchy-launch-* commands)..."
+      sudo pacman -S --noconfirm omarchy-dev
+      rm -f "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
+      ok "omarchy-dev reinstalled"
+    fi
     ok "Switched to stable quickshell"
   else
     warn "Continuing with quickshell-git — you may hit build or runtime issues"
@@ -284,10 +291,10 @@ else
 -- omartia-dots-remux: Caelestia bindings (auto-injected)
 hl.unbind("SUPER + SPACE")
 hl.unbind("SUPER + ALT + SPACE")
-o.bind("SUPER + SPACE", "Caelestia launcher", function() hl.dsp.global("caelestia:launcher") end)
-o.bind("SUPER + ALT + SPACE", "Session menu", function() hl.dsp.global("caelestia:session") end)
+o.bind("SUPER + SPACE", "Caelestia launcher", hl.dsp.global("caelestia:launcher"))
+o.bind("SUPER + ALT + SPACE", "Session menu", hl.dsp.global("caelestia:session"))
 hl.unbind("SUPER + CTRL + L")
-o.bind("SUPER + CTRL + L", "Lock system", function() hl.dsp.global("caelestia:lock") end)
+o.bind("SUPER + CTRL + L", "Lock system", hl.dsp.global("caelestia:lock"))
 CAELESTIA_BINDINGS
     ok "  hypr/bindings.lua (patched)"
   else
