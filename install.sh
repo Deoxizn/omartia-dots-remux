@@ -345,6 +345,8 @@ hidden = [
     "avahi-discover", "bssh", "bvnc",
     # Dev/build helpers
     "cmake-gui",
+    # System monitor (user accesses via terminal)
+    "btop",
     # Printer config
     "cups", "system-config-printer",
     # System utilities
@@ -360,7 +362,8 @@ hidden = [
     "gcr-prompter", "gcr-viewer",
     "xdg-desktop-portal-gtk", "org.freedesktop.Xwayland",
     "org.gnupg.pinentry-qt", "org.quickshell",
-    # Fcitx wrappers (main entry is org.fcitx.Fcitx5)
+    # Fcitx5 (input method — configured via system settings, not launcher)
+    "org.fcitx.Fcitx5", "fcitx5-configtool",
     "org.fcitx.fcitx5-qt5-gui-wrapper", "org.fcitx.fcitx5-qt6-gui-wrapper",
     "fcitx5-wayland-launcher",
     # Evince previewer (main Evince is kept)
