@@ -190,12 +190,50 @@ done
 # Caelestia shell.json
 mkdir -p "$HOME/.config/caelestia"
 cp "$REPO_DIR/config/caelestia/shell.json" "$HOME/.config/caelestia/shell.json"
+
+# If omarchy preinstalls were removed, hide those apps from Caelestia's launcher
+# (omarchy-remove-preinstalls only removes user-level .desktop files, but
+# /usr/share/omarchy/applications/ still has them and Caelestia reads all XDG entries)
+if [[ -f "$HOME/.local/state/omarchy/preinstalls-removed" ]]; then
+  OMARCHY_APPS_DIR="/usr/share/omarchy/applications"
+  if [[ -d "$OMARCHY_APPS_DIR" ]]; then
+    HIDDEN_IDS=()
+    for f in "$OMARCHY_APPS_DIR"/*.desktop; do
+      [[ -f "$f" ]] || continue
+      id=$(basename "$f" .desktop)
+      HIDDEN_IDS+=("$id")
+    done
+    if [[ ${#HIDDEN_IDS[@]} -gt 0 ]]; then
+      HIDDEN_JSON=$(printf '%s\n' "${HIDDEN_IDS[@]}" | python3 -c "
+import sys, json
+ids = [line.strip() for line in sys.stdin if line.strip()]
+print(json.dumps(ids))
+")
+      python3 -c "
+import json
+with open('$HOME/.config/caelestia/shell.json') as f:
+    cfg = json.load(f)
+cfg.setdefault('launcher', {})['hiddenApps'] = $HIDDEN_JSON
+with open('$HOME/.config/caelestia/shell.json', 'w') as f:
+    json.dump(cfg, f, indent=4)
+"
+      ok "  Hidden ${#HIDDEN_IDS[@]} omarchy preinstall apps from launcher"
+    fi
+  fi
+fi
 ok "  caelestia/shell.json"
 
 # Omarchy shell.json — disable conflicting plugins
 mkdir -p "$HOME/.config/omarchy"
 cp "$REPO_DIR/config/omarchy/shell.json" "$HOME/.config/omarchy/shell.json"
 ok "  omarchy/shell.json (plugins disabled)"
+
+# Caelestia systemd service — auto-restarts on crash or package update
+mkdir -p "$HOME/.config/systemd/user"
+cp "$REPO_DIR/config/systemd/user/caelestia-shell.service" "$HOME/.config/systemd/user/caelestia-shell.service"
+systemctl --user daemon-reload
+systemctl --user enable caelestia-shell.service
+ok "  caelestia-shell.service (auto-restart enabled)"
 
 # ──────────────────────────────────────────────
 # Install theme bridge hook
