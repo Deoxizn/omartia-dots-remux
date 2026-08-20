@@ -391,8 +391,15 @@ echo ""
 info "Next steps:"
 info "  1. Edit ~/.config/hypr/monitors.lua for your displays"
 info "  2. Edit ~/.config/hypr/input.lua for your keyboard"
-info "  3. Log out and back in"
 info "  4. Test: SUPER+Space (launcher), SUPER+L (lock)"
 info "  5. Test: omarchy-theme-set <theme> (verify colors update)"
 echo ""
 info "To uninstall: $REPO_DIR/uninstall.sh"
+echo ""
+
+# Offer to log out so Caelestia Shell starts
+if confirm "Log out now to start Caelestia Shell?"; then
+  info "Logging out in 5 seconds... (press Ctrl+C to cancel)"
+  sleep 5
+  loginctl terminate-user "$USER"
+fi
