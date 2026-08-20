@@ -46,8 +46,8 @@ The installer will:
 2. Build and install Caelestia Shell from source
 3. Backup your existing configs
 4. Copy the new configs (skips hypr files that already exist)
-5. Patch `hyprland.lua` to disable omarchy's default autostart (via Lua `package.loaded` — survives pacman updates)
-6. Patch `autostart.lua` to launch Caelestia Shell
+5. Patch `hyprland.lua` to disable omarchy's default autostart (via Lua `package.loaded`, injected after Omarchy's bootstrap — survives pacman updates and config reloads)
+6. Patch `autostart.lua` to launch Caelestia Shell and take over the non-shell parts of Omarchy's autostart (monitor watch, automount, post-boot hooks)
 7. Set up the systemd service (auto-restart on crash)
 8. Set up the theme bridge hook
 9. Sync your current theme

@@ -371,7 +371,32 @@ if [[ ! -f "$AUTOSTART_FILE" ]]; then
   fi
   ok "  hypr/autostart.lua (new)"
 else
-  if ! grep -q "caelestia-shell" "$AUTOSTART_FILE" 2>/dev/null; then
+  if grep -q 'sleep 3 && pkill' "$AUTOSTART_FILE" 2>/dev/null; then
+    # Upgrade path: replace the old injected block. Killing the omarchy shell
+    # after launch no longer works — omarchy-launch-shell is a supervisor loop
+    # that respawns quickshell when it dies.
+    if $DRY_RUN; then
+      info "[dry-run] would replace outdated Caelestia autostart block"
+    else
+      info "  Replacing outdated Caelestia autostart block..."
+      sed -i '/^-- omartia-dots-remux: Caelestia Shell (auto-injected)/,/^end)$/d' "$AUTOSTART_FILE"
+      cat >> "$AUTOSTART_FILE" << 'CAELESTIA_AUTOSTART'
+
+-- omartia-dots-remux: Caelestia Shell (auto-injected)
+-- Replaces omarchy-shell. The default autostart is stubbed out in
+-- hyprland.lua, so the non-shell parts it used to launch are replicated here.
+hl.on("hyprland.start", function()
+  hl.exec_cmd("bash -c 'systemctl --user import-environment $(env | cut -d\"=\" -f 1) && dbus-update-activation-environment --systemd --all && systemctl --user start caelestia-shell.service'")
+  hl.exec_cmd("omarchy-provision-first-run")
+  hl.exec_cmd("omarchy-powerprofiles-init")
+  hl.exec_cmd(o.launch("omarchy-hyprland-monitor-watch"))
+  hl.exec_cmd(o.launch("udiskie --automount --no-notify --no-tray"))
+  hl.exec_cmd("sleep 2 && omarchy-hook post-boot")
+end)
+CAELESTIA_AUTOSTART
+    fi
+    ok "  hypr/autostart.lua (updated)"
+  elif ! grep -q "caelestia-shell" "$AUTOSTART_FILE" 2>/dev/null; then
     if $DRY_RUN; then
       info "[dry-run] would patch hypr/autostart.lua with Caelestia shell launch"
     else
@@ -386,11 +411,15 @@ else
       cat >> "$AUTOSTART_FILE" << 'CAELESTIA_AUTOSTART'
 
 -- omartia-dots-remux: Caelestia Shell (auto-injected)
--- Replaces omarchy-shell (plugins disabled via shell.json)
--- Commands are chained to ensure env is imported BEFORE the service starts
--- After Caelestia starts, kill the omarchy shell (default autostart launches it)
+-- Replaces omarchy-shell. The default autostart is stubbed out in
+-- hyprland.lua, so the non-shell parts it used to launch are replicated here.
 hl.on("hyprland.start", function()
-  hl.exec_cmd("bash -c 'systemctl --user import-environment $(env | cut -d\"=\" -f 1) && dbus-update-activation-environment --systemd --all && systemctl --user start caelestia-shell.service && sleep 3 && pkill -f \"quickshell -n -p .*/omarchy/shell\" 2>/dev/null'")
+  hl.exec_cmd("bash -c 'systemctl --user import-environment $(env | cut -d\"=\" -f 1) && dbus-update-activation-environment --systemd --all && systemctl --user start caelestia-shell.service'")
+  hl.exec_cmd("omarchy-provision-first-run")
+  hl.exec_cmd("omarchy-powerprofiles-init")
+  hl.exec_cmd(o.launch("omarchy-hyprland-monitor-watch"))
+  hl.exec_cmd(o.launch("udiskie --automount --no-notify --no-tray"))
+  hl.exec_cmd("sleep 2 && omarchy-hook post-boot")
 end)
 CAELESTIA_AUTOSTART
     fi
@@ -405,18 +434,63 @@ fi
 # loop that respawns the shell when killed. Instead of replacing system binaries
 # (which breaks on pacman updates), prevent the autostart module from loading
 # via Lua's package.loaded mechanism.
+#
+# The stub MUST be injected after the bootstrap.lua dofile line: bootstrap
+# clears package.loaded for all default.hypr.* modules on every config load and
+# reload, so a stub placed before it (e.g. at the top of the file) is wiped
+# before require("default.hypr.omarchy") loads the real autostart.
 HYPRLAND_FILE="$HOME/.config/hypr/hyprland.lua"
 if [[ -f "$HYPRLAND_FILE" ]]; then
-  if ! grep -q 'package.loaded\["default.hypr.autostart"\]' "$HYPRLAND_FILE" 2>/dev/null; then
-    if $DRY_RUN; then
-      info "[dry-run] would patch hyprland.lua (disable default autostart)"
-    else
-      # Insert at the top of the file, before any other code
-      sed -i '1i\-- Caelestia: prevent default omarchy autostart (Caelestia handles shell launch)\npackage.loaded["default.hypr.autostart"] = function() end\n' "$HYPRLAND_FILE"
-    fi
-    ok "  hyprland.lua patched (default autostart disabled)"
-  else
+  if grep -q 'package.loaded\["default.hypr.autostart"\] = true' "$HYPRLAND_FILE" 2>/dev/null; then
     warn "  hyprland.lua already has Caelestia autostart override — skipped"
+  elif $DRY_RUN; then
+    info "[dry-run] would patch hyprland.lua (disable default autostart)"
+  else
+    # python3 exits non-zero if no injection point is found
+    if python3 - "$HYPRLAND_FILE" << 'STUBPY'
+import sys
+
+path = sys.argv[1]
+with open(path) as f:
+    lines = f.readlines()
+
+# Remove previously injected stubs (any placement), then strip leading blanks
+marker = 'package.loaded["default.hypr.autostart"]'
+lines = [l for l in lines if marker not in l and "Caelestia: prevent default omarchy autostart" not in l]
+while lines and lines[0].strip() == "":
+    lines.pop(0)
+
+stub = [
+    "-- Caelestia: prevent default omarchy autostart (Caelestia handles shell launch).\n",
+    "-- Must be set AFTER bootstrap.lua: it clears package.loaded for default.hypr.*\n",
+    "-- on every load/reload, so a stub placed before it gets wiped.\n",
+    'package.loaded["default.hypr.autostart"] = true\n',
+    "\n",
+]
+
+# Insert after the bootstrap dofile line; fall back to right before Omarchy's
+# defaults are required.
+idx = next((i for i, l in enumerate(lines) if "default/hypr/bootstrap.lua" in l), None)
+anchor = "after bootstrap.lua dofile"
+if idx is None:
+    idx = next((i for i, l in enumerate(lines) if 'require("default.hypr.omarchy")' in l), None)
+    anchor = "before require(default.hypr.omarchy)"
+if idx is None:
+    sys.exit(1)
+
+lines[idx + 1:idx + 1] = stub
+with open(path, "w") as f:
+    f.writelines(lines)
+print(f"  injected {anchor}")
+sys.exit(0)
+STUBPY
+    then
+      ok "  hyprland.lua patched (default autostart disabled)"
+    else
+      err "  Could not patch hyprland.lua automatically — add this after"
+      err "  bootstrap.lua loads and before require(\"default.hypr.omarchy\"):"
+      err '    package.loaded["default.hypr.autostart"] = true'
+    fi
   fi
 fi
 
@@ -424,6 +498,15 @@ fi
 if ! $DRY_RUN; then
   mkdir -p "$HOME/.config/caelestia"
   cp "$REPO_DIR/config/caelestia/shell.json" "$HOME/.config/caelestia/shell.json"
+fi
+
+# Caelestia per-monitor overlays (e.g. disable shell on secondary monitors)
+if [[ -d "$REPO_DIR/config/caelestia/monitors" ]]; then
+  if ! $DRY_RUN; then
+    mkdir -p "$HOME/.config/caelestia/monitors"
+    cp -r "$REPO_DIR/config/caelestia/monitors/." "$HOME/.config/caelestia/monitors/"
+  fi
+  ok "  caelestia/monitors overlays"
 fi
 
 # Hide system utility apps and omarchy preinstalls from Caelestia's launcher
@@ -467,6 +550,8 @@ hidden = [
     "org.gnome.Evince-previewer",
     # imv variants
     "imv-dir",
+    # GPS tools (gpsd-clients)
+    "xgps", "xgpsspeed",
 ]
 
 # Also hide any omarchy preinstall apps that still have desktop files
