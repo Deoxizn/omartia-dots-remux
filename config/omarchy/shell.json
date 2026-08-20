@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "disabledPlugins": [
+    "omarchy.bar",
+    "omarchy.lock",
+    "omarchy.osd",
+    "omarchy.menu",
+    "omarchy.notifications",
+    "omarchy.background",
+    "omarchy.idle",
+    "omarchy.nightlight",
+    "omarchy.polkit",
+    "omarchy.clipboard",
+    "omarchy.emojis",
+    "omarchy.reminders",
+    "omarchy.image-picker"
+  ],
+  "plugins": []
+}

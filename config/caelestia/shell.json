@@ -1,0 +1,40 @@
+{
+  "bar": {
+    "position": "top",
+    "height": 26
+  },
+  "lock": {
+    "enabled": true
+  },
+  "dashboard": {
+    "enabled": true
+  },
+  "launcher": {
+    "enabled": true
+  },
+  "sidebar": {
+    "enabled": true
+  },
+  "session": {
+    "enabled": true
+  },
+  "osd": {
+    "enabled": true
+  },
+  "appearance": {
+    "deformScale": 1.0,
+    "rounding": { "scale": 1.0 },
+    "spacing": { "scale": 1.0 },
+    "padding": { "scale": 1.0 },
+    "font": {
+      "scale": 1.0,
+      "family": "CaskaydiaCove Nerd Font",
+      "monoFamily": "CaskaydiaMono Nerd Font"
+    },
+    "transparency": {
+      "enabled": true,
+      "base": 0.85,
+      "layers": 0.75
+    }
+  }
+}
