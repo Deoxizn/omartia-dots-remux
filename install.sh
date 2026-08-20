@@ -267,6 +267,8 @@ else
 -- omartia-dots-remux: Caelestia Shell (auto-injected)
 -- Runs alongside omarchy-shell (plugins disabled via shell.json)
 hl.on("hyprland.start", function()
+  hl.exec_cmd("systemctl --user import-environment $(env | cut -d'=' -f 1)")
+  hl.exec_cmd("dbus-update-activation-environment --systemd --all")
   hl.exec_cmd("systemctl --user start caelestia-shell.service")
 end)
 CAELESTIA_AUTOSTART
