@@ -28,13 +28,16 @@ cd omartia-dots-remux
 ./install.sh
 ```
 
+Use `./install.sh -y` to skip confirmation prompts.
+
 The installer will:
-1. Install build dependencies (cmake, ninja, qt6)
+1. Install build dependencies (cmake, ninja, qt6, etc.)
 2. Build and install Caelestia Shell from source
 3. Backup your existing configs
-4. Copy the new configs
-5. Set up the theme bridge hook
-6. Sync your current theme
+4. Copy the new configs (skips hypr files that already exist)
+5. Set up the systemd service (auto-restart on crash)
+6. Set up the theme bridge hook
+7. Sync your current theme
 
 ## After install
 
@@ -42,6 +45,8 @@ The installer will:
 2. Edit `~/.config/hypr/input.lua` for your keyboard
 3. Log out and back in
 4. Test: `SUPER+Space` (launcher), `SUPER+L` (lock), `omarchy-theme-set <theme>`
+
+**Reinstalling?** Existing hypr configs (`hyprland.lua`, `autostart.lua`, `looknfeel.lua`, `monitors.lua`, `input.lua`, `bindings.lua`) are never overwritten — edit them directly or restore from backup at `~/.config/omartia-dots-remux-backup/`.
 
 ## Keybindings
 
@@ -65,7 +70,7 @@ The installer will:
 ./uninstall.sh
 ```
 
-Restores all backed-up configs and removes Caelestia Shell configs. Log out/in to restore omarchy-shell.
+Restores all backed-up configs, stops and removes the Caelestia Shell systemd service, and removes Caelestia Shell configs. Log out/in to restore omarchy-shell.
 
 ## How the theme bridge works
 
@@ -84,7 +89,9 @@ Any omarchy theme works automatically. No per-theme configuration needed.
 
 - Arch Linux (or Arch-based distro)
 - Omarchy 4.0 (quattro) installed
-- cmake, ninja, qt6-base, qt6-declarative, qt6-svg (installer handles this)
+- Quickshell (`qs` or `quickshell` in PATH)
+- cmake, ninja, base-devel (installer handles these and other deps)
+- AUR helper (yay or paru) for libcava, caelestia-cli
 
 ## Credits
 

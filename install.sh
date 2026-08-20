@@ -132,7 +132,8 @@ else
   info "Installing Caelestia Shell..."
   mkdir -p "$HOME/.config/quickshell"
   cd "$HOME/.config/quickshell"
-  git clone https://github.com/caelestia-dots/shell.git caelestia
+  git clone https://github.com/caelestia-dots/shell.git caelestia \
+    || { err "git clone failed — check your network connection"; exit 1; }
   cd caelestia
   cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ \
     || { err "cmake configure failed"; exit 1; }
@@ -164,6 +165,9 @@ done
 # Backup caelestia dir
 [[ -d "$HOME/.config/caelestia" ]] && cp -r "$HOME/.config/caelestia" "$BACKUP_PATH/caelestia"
 
+# Backup caelestia systemd service
+[[ -f "$HOME/.config/systemd/user/caelestia-shell.service" ]] && cp "$HOME/.config/systemd/user/caelestia-shell.service" "$BACKUP_PATH/"
+
 ok "Backup complete"
 
 # ──────────────────────────────────────────────
@@ -172,10 +176,14 @@ ok "Backup complete"
 
 info "Installing config files..."
 
-# Hypr configs — only copy monitors/input if not present (first install)
+# Hypr configs — only copy if not present (first install), never silently overwrite
 for f in hyprland.lua autostart.lua looknfeel.lua; do
-  cp "$REPO_DIR/config/hypr/$f" "$HOME/.config/hypr/$f"
-  ok "  hypr/$f"
+  if [[ ! -f "$HOME/.config/hypr/$f" ]]; then
+    cp "$REPO_DIR/config/hypr/$f" "$HOME/.config/hypr/$f"
+    ok "  hypr/$f (new)"
+  else
+    warn "  hypr/$f exists — skipped (edit manually if needed)"
+  fi
 done
 
 for f in monitors.lua input.lua bindings.lua; do
@@ -230,10 +238,33 @@ ok "  omarchy/shell.json (plugins disabled)"
 
 # Caelestia systemd service — auto-restarts on crash or package update
 mkdir -p "$HOME/.config/systemd/user"
-cp "$REPO_DIR/config/systemd/user/caelestia-shell.service" "$HOME/.config/systemd/user/caelestia-shell.service"
+if command -v qs &>/dev/null; then
+  QS_BIN="$(command -v qs)"
+elif command -v quickshell &>/dev/null; then
+  QS_BIN="$(command -v quickshell)"
+else
+  err "Neither qs nor quickshell found in PATH"
+  exit 1
+fi
+cat > "$HOME/.config/systemd/user/caelestia-shell.service" <<EOF
+[Unit]
+Description=Caelestia Shell
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=${QS_BIN} -c caelestia
+Restart=on-failure
+RestartSec=2
+Environment=QT_QPA_PLATFORM=wayland
+
+[Install]
+WantedBy=graphical-session.target
+EOF
 systemctl --user daemon-reload
 systemctl --user enable caelestia-shell.service
-ok "  caelestia-shell.service (auto-restart enabled)"
+ok "  caelestia-shell.service (auto-restart enabled, binary: $QS_BIN)"
 
 # ──────────────────────────────────────────────
 # Install theme bridge hook

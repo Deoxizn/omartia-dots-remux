@@ -39,10 +39,18 @@ if [[ ! "$CONFIRM" =~ ^[Yy]$ ]]; then
   exit 0
 fi
 
-# Kill Caelestia Shell if running
-if pgrep -f "caelestia shell" &>/dev/null; then
-  info "Stopping Caelestia Shell..."
-  pkill -f "caelestia shell" 2>/dev/null || true
+# Stop and disable Caelestia Shell systemd service
+if systemctl --user is-active caelestia-shell.service &>/dev/null; then
+  info "Stopping Caelestia Shell service..."
+  systemctl --user stop caelestia-shell.service
+  systemctl --user disable caelestia-shell.service
+  ok "Caelestia Shell service stopped and disabled"
+fi
+
+# Kill any lingering Caelestia Shell process
+if pgrep -f "qs.*caelestia\|quickshell.*caelestia" &>/dev/null; then
+  info "Killing lingering Caelestia Shell process..."
+  pkill -f "qs.*caelestia\|quickshell.*caelestia" 2>/dev/null || true
   sleep 1
   ok "Caelestia Shell stopped"
 fi
@@ -73,6 +81,13 @@ fi
 if [[ -f "$HOME/.config/omarchy/hooks/theme-set.d/caelestia-sync.sh" ]]; then
   rm "$HOME/.config/omarchy/hooks/theme-set.d/caelestia-sync.sh"
   ok "  Removed theme bridge hook"
+fi
+
+# Remove Caelestia systemd service
+if [[ -f "$HOME/.config/systemd/user/caelestia-shell.service" ]]; then
+  rm "$HOME/.config/systemd/user/caelestia-shell.service"
+  systemctl --user daemon-reload
+  ok "  Removed caelestia-shell.service"
 fi
 
 # Remove scheme.json (Caelestia runtime state)
