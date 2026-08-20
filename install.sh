@@ -46,16 +46,13 @@ fi
 info "Checking dependencies..."
 
 DEPS_PKGS=()
-for pkg in cmake ninja qt6-base qt6-declarative qt6-svg qt6-shadertools aubio libqalculate libpipewire; do
+for pkg in cmake ninja base-devel \
+  qt6-base qt6-declarative qt6-svg qt6-shadertools qt6-multimedia qt6-wayland qt6-5compat \
+  aubio cava libqalculate libpipewire lm_sensors; do
   if ! pacman -Qi "$pkg" &>/dev/null; then
     DEPS_PKGS+=("$pkg")
   fi
 done
-
-# base-devel is a group, check if make is available
-if ! command -v make &>/dev/null; then
-  DEPS_PKGS+=("base-devel")
-fi
 
 if [[ ${#DEPS_PKGS[@]} -gt 0 ]]; then
   info "Installing: ${DEPS_PKGS[*]}"
