@@ -48,7 +48,7 @@ info "Checking dependencies..."
 DEPS_PKGS=()
 for pkg in cmake ninja base-devel \
   qt6-base qt6-declarative qt6-svg qt6-shadertools qt6-multimedia qt6-wayland qt6-5compat \
-  aubio cava libqalculate libpipewire lm_sensors; do
+  aubio libqalculate libpipewire lm_sensors; do
   if ! pacman -Qi "$pkg" &>/dev/null; then
     DEPS_PKGS+=("$pkg")
   fi
@@ -60,6 +60,30 @@ if [[ ${#DEPS_PKGS[@]} -gt 0 ]]; then
   ok "Dependencies installed"
 else
   ok "All dependencies already installed"
+fi
+
+# AUR packages (libcava provides the .pc file Caelestia needs; Arch's cava is just the binary)
+AUR_PKGS=()
+for pkg in libcava; do
+  if ! pacman -Qi "$pkg" &>/dev/null; then
+    AUR_PKGS+=("$pkg")
+  fi
+done
+
+if [[ ${#AUR_PKGS[@]} -gt 0 ]]; then
+  if command -v yay &>/dev/null; then
+    AUR_HELPER="yay"
+  elif command -v paru &>/dev/null; then
+    AUR_HELPER="paru"
+  else
+    err "AUR packages needed (${AUR_PKGS[*]}) but neither yay nor paru found"
+    err "Install yay: https://github.com/Jguer/yay"
+    err "Or install manually: $AUR_HELPER -S ${AUR_PKGS[*]}"
+    exit 1
+  fi
+  info "Installing AUR packages: ${AUR_PKGS[*]}"
+  "$AUR_HELPER" -S --noconfirm --needed "${AUR_PKGS[@]}"
+  ok "AUR packages installed"
 fi
 
 # ──────────────────────────────────────────────
