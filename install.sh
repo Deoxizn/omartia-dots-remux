@@ -70,6 +70,13 @@ if ! $SKIP_QS_CHECK && pacman -Qi quickshell-git &>/dev/null; then
   warn "omarchy itself depends on stable 'quickshell' from extra, not the git variant"
   if confirm "Remove quickshell-git and install stable quickshell?"; then
     info "Switching to stable quickshell..."
+    # omarchy-dev depends on quickshell (provided by quickshell-git), remove it first
+    if pacman -Qi omarchy-dev &>/dev/null; then
+      warn "omarchy-dev depends on quickshell-git — removing omarchy-dev first"
+      sudo pacman -Rns omarchy-dev --noconfirm
+      mkdir -p "$HOME/.local/state/omartia-dots-remux"
+      touch "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
+    fi
     sudo pacman -Rns quickshell-git --noconfirm
     sudo pacman -S --noconfirm quickshell
     ok "Switched to stable quickshell"

@@ -96,6 +96,26 @@ if [[ -f "$HOME/.local/state/caelestia/scheme.json" ]]; then
   ok "  Removed Caelestia scheme state"
 fi
 
+# Reinstall omarchy-dev if it was removed during install
+OMARCHY_DEV_FLAG="$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
+if [[ -f "$OMARCHY_DEV_FLAG" ]]; then
+  if ! pacman -Qi omarchy-dev &>/dev/null; then
+    echo ""
+    warn "omarchy-dev was removed during install (dependency conflict with quickshell-git)"
+    read -rp "Reinstall omarchy-dev? [y/N] " REINSTALL
+    if [[ "$REINSTALL" =~ ^[Yy]$ ]]; then
+      info "Reinstalling omarchy-dev..."
+      sudo pacman -S --noconfirm omarchy-dev
+      ok "omarchy-dev reinstalled"
+    else
+      warn "Skipped — you can reinstall later: sudo pacman -S omarchy-dev"
+    fi
+  fi
+  rm -f "$OMARCHY_DEV_FLAG"
+  # Clean up state dir if empty
+  rmdir "$HOME/.local/state/omartia-dots-remux" 2>/dev/null || true
+fi
+
 echo ""
 ok "═══════════════════════════════════════════"
 ok "  omartia-dots-remux uninstalled!"
