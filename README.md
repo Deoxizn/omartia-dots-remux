@@ -2,6 +2,12 @@
 
 Drop-in replacement for omarchy-shell (quattro bar) with **Caelestia Shell** — keeps omarchy's theme switching working via a color bridge.
 
+![Preview 1](preview.png)
+![Preview 2](preview2.png)
+![Preview 3](preview3.png)
+
+https://github.com/user-attachments/assets/previewvideo.mp4
+
 ## What this does
 
 - **Replaces** omarchy-shell (bar, notifications, OSD, menu) with Caelestia Shell
