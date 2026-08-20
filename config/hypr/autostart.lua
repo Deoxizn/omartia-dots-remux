@@ -1,16 +1,12 @@
 -- omartia-dots-remux: Autostart
--- Caelestia Shell replaces omarchy-shell (managed by systemd)
+-- Caelestia Shell runs alongside omarchy-shell (plugins disabled via shell.json)
 
 hl.on("hyprland.start", function()
   -- Systemd / D-Bus environment setup
   hl.exec_cmd("systemctl --user import-environment $(env | cut -d'=' -f 1)")
   hl.exec_cmd("dbus-update-activation-environment --systemd --all")
 
-  -- Kill omarchy-shell immediately (it starts via uwsm before our config loads)
-  hl.exec_cmd("pkill -f omarchy-launch-shell")
-  hl.exec_cmd("pkill -f 'quickshell -n -p /usr/share/omarchy'")
-
-  -- Launch Caelestia Shell via systemd (auto-restarts on crash or update)
+  -- Start Caelestia Shell via systemd (auto-restarts on crash or update)
   hl.exec_cmd("systemctl --user start caelestia-shell.service")
 
   -- Omarchy services

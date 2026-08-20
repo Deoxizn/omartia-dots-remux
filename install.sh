@@ -221,23 +221,60 @@ ok "Backup complete"
 info "Installing config files..."
 
 # Hypr configs — only copy if not present (first install), never silently overwrite
-for f in hyprland.lua autostart.lua looknfeel.lua; do
+for f in hyprland.lua autostart.lua looknfeel.lua monitors.lua input.lua; do
   if [[ ! -f "$HOME/.config/hypr/$f" ]]; then
     cp "$REPO_DIR/config/hypr/$f" "$HOME/.config/hypr/$f"
     ok "  hypr/$f (new)"
   else
-    warn "  hypr/$f exists — skipped (edit manually if needed)"
+    warn "  hypr/$f exists — skipped"
   fi
 done
 
-for f in monitors.lua input.lua bindings.lua; do
-  if [[ ! -f "$HOME/.config/hypr/$f" ]]; then
-    cp "$REPO_DIR/config/hypr/$f" "$HOME/.config/hypr/$f"
-    ok "  hypr/$f (new)"
+# Patch bindings.lua — inject Caelestia launcher/lock bindings into existing config
+BINDINGS_FILE="$HOME/.config/hypr/bindings.lua"
+if [[ ! -f "$BINDINGS_FILE" ]]; then
+  cp "$REPO_DIR/config/hypr/bindings.lua" "$BINDINGS_FILE"
+  ok "  hypr/bindings.lua (new)"
+else
+  if ! grep -q "caelestia:launcher" "$BINDINGS_FILE" 2>/dev/null; then
+    info "  Patching hypr/bindings.lua with Caelestia bindings..."
+    cat >> "$BINDINGS_FILE" << 'CAELESTIA_BINDINGS'
+
+-- omartia-dots-remux: Caelestia bindings (auto-injected)
+hl.unbind("SUPER + SPACE")
+hl.unbind("SUPER + ALT + SPACE")
+o.bind("SUPER + SPACE", "Caelestia launcher", function() hl.dsp.global("caelestia:launcher") end)
+o.bind("SUPER + ALT + SPACE", "Session menu", function() hl.dsp.global("caelestia:session") end)
+hl.unbind("SUPER + CTRL + L")
+o.bind("SUPER + CTRL + L", "Lock system", function() hl.dsp.global("caelestia:lock") end)
+CAELESTIA_BINDINGS
+    ok "  hypr/bindings.lua (patched)"
   else
-    warn "  hypr/$f exists — skipped (edit manually if needed)"
+    warn "  hypr/bindings.lua already has Caelestia bindings — skipped"
   fi
-done
+fi
+
+# Patch autostart.lua — inject Caelestia shell launch into existing config
+AUTOSTART_FILE="$HOME/.config/hypr/autostart.lua"
+if [[ ! -f "$AUTOSTART_FILE" ]]; then
+  cp "$REPO_DIR/config/hypr/autostart.lua" "$AUTOSTART_FILE"
+  ok "  hypr/autostart.lua (new)"
+else
+  if ! grep -q "caelestia-shell" "$AUTOSTART_FILE" 2>/dev/null; then
+    info "  Patching hypr/autostart.lua with Caelestia shell launch..."
+    cat >> "$AUTOSTART_FILE" << 'CAELESTIA_AUTOSTART'
+
+-- omartia-dots-remux: Caelestia Shell (auto-injected)
+-- Runs alongside omarchy-shell (plugins disabled via shell.json)
+hl.on("hyprland.start", function()
+  hl.exec_cmd("systemctl --user start caelestia-shell.service")
+end)
+CAELESTIA_AUTOSTART
+    ok "  hypr/autostart.lua (patched)"
+  else
+    warn "  hypr/autostart.lua already has Caelestia shell — skipped"
+  fi
+fi
 
 # Caelestia shell.json
 mkdir -p "$HOME/.config/caelestia"
@@ -345,9 +382,10 @@ ok "  omartia-dots-remux installed!"
 ok "═══════════════════════════════════════════"
 echo ""
 info "What changed:"
-info "  • omarchy-shell disabled (all plugins off)"
+info "  • omarchy-shell plugins disabled (shell.json)"
 info "  • Caelestia Shell installed (bar, lock, launcher, dashboard)"
 info "  • Theme bridge installed (omarchy themes → Caelestia colors)"
+info "  • Keybindings patched (SUPER+Space → Caelestia launcher)"
 info "  • Backups at: $BACKUP_PATH"
 echo ""
 info "Next steps:"
