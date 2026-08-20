@@ -11,11 +11,13 @@ BACKUP_TS="$(date +%Y%m%d%H%M%S)"
 BACKUP_PATH="$BACKUP_DIR/$BACKUP_TS"
 OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
 YES=false
+SKIP_QS_CHECK=false
 
 # Parse args
 for arg in "$@"; do
   case "$arg" in
     -y|--yes) YES=true ;;
+    --skip-quickshell-check) SKIP_QS_CHECK=true ;;
   esac
 done
 
@@ -53,11 +55,46 @@ if [[ "$(id -u)" -eq 0 ]]; then
   exit 1
 fi
 
+MIN_QS_VERSION="0.3.0"
+
 if ! command -v quickshell &>/dev/null && ! command -v qs &>/dev/null; then
   err "quickshell not found — install it first: https://quickshell.outfoxxed.me"
   exit 1
 fi
 ok "Quickshell found"
+
+# Detect quickshell-git — offer to switch to stable
+if ! $SKIP_QS_CHECK && pacman -Qi quickshell-git &>/dev/null; then
+  echo ""
+  warn "quickshell-git detected — this is a bleeding-edge package known to break"
+  warn "omarchy itself depends on stable 'quickshell' from extra, not the git variant"
+  if confirm "Remove quickshell-git and install stable quickshell?"; then
+    info "Switching to stable quickshell..."
+    sudo pacman -Rns quickshell-git --noconfirm
+    sudo pacman -S --noconfirm quickshell
+    ok "Switched to stable quickshell"
+  else
+    warn "Continuing with quickshell-git — you may hit build or runtime issues"
+  fi
+  echo ""
+fi
+
+# Version compatibility check
+if ! $SKIP_QS_CHECK; then
+  QS_VERSION_RAW=$(qs --version 2>/dev/null || quickshell --version 2>/dev/null || echo "")
+  if [[ -n "$QS_VERSION_RAW" ]]; then
+    QS_VERSION=$(echo "$QS_VERSION_RAW" | grep -oP '[\d]+\.[\d]+\.[\d]+' | head -1)
+    if [[ -n "$QS_VERSION" ]]; then
+      if printf '%s\n%s\n' "$MIN_QS_VERSION" "$QS_VERSION" | sort -V | head -1 | grep -q "$MIN_QS_VERSION"; then
+        ok "Quickshell version $QS_VERSION (>= $MIN_QS_VERSION required)"
+      else
+        err "Quickshell $QS_VERSION is too old — need >= $MIN_QS_VERSION"
+        err "Update: sudo pacman -Syu quickshell"
+        exit 1
+      fi
+    fi
+  fi
+fi
 
 # ──────────────────────────────────────────────
 # Install dependencies
@@ -121,9 +158,9 @@ if [[ -d "$CAELESTIA_DIR" ]]; then
     cd "$CAELESTIA_DIR"
     git pull --ff-only || warn "Git pull failed — using existing version"
     cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ \
-      || { err "cmake configure failed"; exit 1; }
+      || { err "cmake configure failed"; err "Hint: this may be a quickshell version issue"; err "If on quickshell-git, try: sudo pacman -S quickshell"; exit 1; }
     cmake --build build \
-      || { err "cmake build failed"; exit 1; }
+      || { err "cmake build failed"; err "Hint: this may be a quickshell version issue"; err "If on quickshell-git, try: sudo pacman -S quickshell"; exit 1; }
     sudo cmake --install build \
       || { err "cmake install failed"; exit 1; }
     ok "Caelestia Shell updated"
@@ -136,9 +173,9 @@ else
     || { err "git clone failed — check your network connection"; exit 1; }
   cd caelestia
   cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ \
-    || { err "cmake configure failed"; exit 1; }
+    || { err "cmake configure failed"; err "Hint: this may be a quickshell version issue"; err "If on quickshell-git, try: sudo pacman -S quickshell"; exit 1; }
   cmake --build build \
-    || { err "cmake build failed — check build logs above"; exit 1; }
+    || { err "cmake build failed — check build logs above"; err "Hint: this may be a quickshell version issue"; err "If on quickshell-git, try: sudo pacman -S quickshell"; exit 1; }
   sudo cmake --install build \
     || { err "cmake install failed"; exit 1; }
   ok "Caelestia Shell installed"
