@@ -891,7 +891,7 @@ else
   info "  3. If anything is wrong, run: $REPO_DIR/uninstall.sh"
   echo ""
   info "To uninstall: $REPO_DIR/uninstall.sh"
-  info "Black screen after logout? Press Ctrl+Alt+F4 for a TTY, log in, then:"
+  info "Caelestia didn't start after install? Press Ctrl+Alt+F4 for a TTY, log in, then:"
   info "  cat ~/omartia-preflight.log && systemctl --user start caelestia-shell.service"
   echo ""
 

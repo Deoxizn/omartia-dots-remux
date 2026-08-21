@@ -74,15 +74,12 @@ The installer will:
 10. Install the omartia fuzzel menu suite to `~/.local/bin/`
 11. Sync your current theme
 12. Run the session-start preflight (see [Install safety net](#install-safety-net-preflight))
-13. Auto-logout after 5 seconds — **only if every preflight check passed** (press Ctrl+C to cancel). Uses `omarchy-system-logout` (`uwsm stop`), so sddm-helper exits cleanly and the login screen returns instead of black-screening
+13. Auto-logout after 5 seconds — **only if every preflight check passed** (press Ctrl+C to cancel). Uses `omarchy-system-logout` (`uwsm stop`), so the session ends cleanly and you land back at the login screen
 
 ## Install safety net (preflight)
 
-Historically, switching to Caelestia could black-screen after logout on a fresh
-install: the stub suppressed omarchy-shell, and if the injected launch handler
-didn't survive upstream config changes, *nothing* started. The installer now
-verifies the exact chain your **next login** depends on, before it ever offers
-to log you out:
+Before the installer offers to log you out, it verifies the exact chain your
+**next login** depends on:
 
 - `hyprland.lua` autostart stub is correctly placed (after Omarchy's bootstrap, before its defaults load)
 - Omarchy still loads `hypr.autostart` and still ships the APIs the launch handler uses (`o.launch`, `hyprland.start`) — catches upstream layout drift on fresh installs
@@ -102,8 +99,8 @@ rolled back, lands in `~/omartia-preflight.log`. Send that file for help or hand
 it to your AI agent, then fix and re-run `./install.sh` — or `./uninstall.sh`
 to remove everything.
 
-**Black screen anyway** (e.g. an install from before this existed)? Press
-`Ctrl+Alt+F4` for a TTY, log in, then:
+**Caelestia didn't start after install** (e.g. an install from before this
+existed)? Press `Ctrl+Alt+F4` for a TTY, log in, then:
 
 ```bash
 cat ~/omartia-preflight.log                     # see what's wrong
