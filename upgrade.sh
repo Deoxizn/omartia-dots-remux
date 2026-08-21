@@ -286,6 +286,28 @@ else
   MANAGED_BEGIN="-- BEGIN omartia-dots-remux managed keybinds (auto-synced by upgrade.sh — personal edits belong outside this block)"
   MANAGED_END="-- END omartia-dots-remux managed keybinds"
 
+  # Strip legacy auto-injected omartia blocks (predecessors of the managed
+  # block). Duplicates make toggle binds (sidebar/dashboard) fire twice and
+  # appear dead. A legacy block = its marker comment plus the command lines
+  # after it, up to the next blank line.
+  if grep -q -- "-- omartia-dots-remux: .*auto-injected" "$BINDINGS_FILE"; then
+    if $DRY_RUN; then
+      info "  [dry-run] would remove legacy omartia auto-injected binding block(s)"
+      changed=$((changed+1))
+    else
+      tmp="$(mktemp)"
+      awk '
+        /^-- omartia-dots-remux: .*auto-injected/ { skip=1; next }
+        skip && /^[[:space:]]*$/ { skip=0; next }
+        skip { next }
+        { print }
+      ' "$BINDINGS_FILE" > "$tmp"
+      mv "$tmp" "$BINDINGS_FILE"
+      ok "  removed legacy auto-injected binding block(s) — run 'hyprctl reload' to apply"
+      changed=$((changed+1))
+    fi
+  fi
+
   section_file="$(mktemp)"
   {
     printf '%s\n' "$MANAGED_BEGIN"
