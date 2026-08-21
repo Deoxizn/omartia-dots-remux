@@ -1,24 +1,28 @@
 #!/usr/bin/env bash
 # omartia-dots-remux upgrader
 # Syncs an existing remux install with the repo: refreshes menu scripts,
-# theme bridge hook, update guard, adds any missing menu keybinds, and
-# reports config drift (never overwrites your edited configs).
-# For fresh installs use install.sh instead.
+# theme bridge hook, update guard, merges lua config updates (personal
+# edits preserved via 3-way merge) and keeps keybinds in sync via a
+# managed block. For fresh installs use install.sh instead.
 
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 DRY_RUN=false
 NO_PULL=false
+ADOPT_LUA=false
 
 for arg in "$@"; do
   case "$arg" in
     -n|--dry-run) DRY_RUN=true ;;
     --no-pull) NO_PULL=true ;;
+    --adopt-lua) ADOPT_LUA=true ;;
     -h|--help)
-      echo "Usage: ./upgrade.sh [--dry-run] [--no-pull]"
-      echo "  --dry-run   show what would change without touching anything"
-      echo "  --no-pull   skip git pull (sync from current checkout)"
+      echo "Usage: ./upgrade.sh [--dry-run] [--no-pull] [--adopt-lua]"
+      echo "  --dry-run    show what would change without touching anything"
+      echo "  --no-pull    skip git pull (sync from current checkout)"
+      echo "  --adopt-lua  adopt repo versions of hypr lua configs that have no"
+      echo "               sync history (your current file is backed up first)"
       exit 0 ;;
   esac
 done
@@ -164,41 +168,161 @@ fi
 echo ""
 
 # ──────────────────────────────────────────────
-# Menu keybinds — append only what's missing
+# Hypr Lua configs — 3-way merge from repo
+# Personal edits are preserved; repo changes are merged in using the
+# last-synced copy as merge base. monitors.lua and input.lua are skipped
+# (device-specific); bindings.lua is handled separately below.
+# On conflict your live file is left untouched and a .conflict copy is
+# written for manual resolution.
+# ──────────────────────────────────────────────
+
+SKIP_LUA=(monitors.lua input.lua bindings.lua)
+BASE_DIR="$HOME/.config/hypr/.omartia-base"
+info "Hypr Lua configs (merge from repo):"
+
+shopt -s nullglob
+for src in "$REPO_DIR"/config/hypr/*.lua; do
+  name="$(basename "$src")"
+  # skip device-specific / specially-handled files
+  skip=false
+  for s in "${SKIP_LUA[@]}"; do [[ $name == "$s" ]] && skip=true; done
+  $skip && continue
+
+  dst="$HOME/.config/hypr/$name"
+  base="$BASE_DIR/$name"
+  mkdir -p "$BASE_DIR"
+
+  if [[ ! -f $dst ]]; then
+    if $DRY_RUN; then
+      info "  [dry-run] would install $name"
+    else
+      install -m644 "$src" "$dst"
+      cp -f "$src" "$base"
+      ok "  installed $name"
+    fi
+    changed=$((changed+1))
+  elif cmp -s "$src" "$dst"; then
+    cp -f "$src" "$base"   # keep merge base fresh
+    ok "  $name up to date"
+  elif [[ ! -f $base ]]; then
+    # No sync history: cannot tell your edits from stale repo state — don't touch.
+    warn "  $name differs and has no sync history — left untouched"
+    warn "    review: diff \"$src\" \"$dst\""
+    warn "    or adopt repo version (backs up yours): ./upgrade.sh --adopt-lua"
+  else
+    tmp_current="$(mktemp)"
+    cp "$dst" "$tmp_current"
+    if git merge-file -L yours -L base -L repo "$tmp_current" "$base" "$src" >/dev/null 2>&1; then
+      if $DRY_RUN; then
+        info "  [dry-run] would merge repo changes into $name (your edits kept, backup: hypr/$name.pre-upgrade.bak)"
+      else
+        cp "$dst" "$dst.pre-upgrade.bak"
+        install -m644 "$tmp_current" "$dst"
+        cp -f "$src" "$base"
+        ok "  merged repo changes into $name (backup: hypr/$name.pre-upgrade.bak)"
+      fi
+      changed=$((changed+1))
+    else
+      cp "$tmp_current" "$HOME/.config/hypr/$name.conflict"
+      warn "  $name has conflicts between your edits and repo changes — NOT applied"
+      warn "    resolve manually: hypr/$name.conflict → hypr/$name (markers: yours/base/repo)"
+      changed=$((changed+1))
+    fi
+    rm -f "$tmp_current"
+  fi
+done
+shopt -u nullglob
+
+# --adopt-lua: explicitly take repo version for files without sync history
+if $ADOPT_LUA; then
+  info "Adopting repo versions (--adopt-lua):"
+  shopt -s nullglob
+  for src in "$REPO_DIR"/config/hypr/*.lua; do
+    name="$(basename "$src")"
+    skip=false
+    for s in "${SKIP_LUA[@]}"; do [[ $name == "$s" ]] && skip=true; done
+    $skip && continue
+
+    dst="$HOME/.config/hypr/$name"
+    base="$BASE_DIR/$name"
+    [[ -f $dst && ! -f $base ]] || continue
+    if $DRY_RUN; then
+      info "  [dry-run] would adopt repo $name (backup: hypr/$name.pre-upgrade.bak)"
+    else
+      cp "$dst" "$dst.pre-upgrade.bak"
+      install -m644 "$src" "$dst"
+      cp -f "$src" "$base"
+      ok "  adopted repo $name (backup: hypr/$name.pre-upgrade.bak)"
+    fi
+    changed=$((changed+1))
+  done
+  shopt -u nullglob
+fi
+
+echo ""
+
+# ──────────────────────────────────────────────
+# Keybinds (bindings.lua) — managed block overlay
+# Your personal lines stay untouched above the managed block; the full repo
+# keybind set is appended inside it. Hyprland applies binds top-down with
+# last-wins, so repo keybinds always take effect on every machine.
 # ──────────────────────────────────────────────
 
 BINDINGS_FILE="$HOME/.config/hypr/bindings.lua"
-info "Menu keybinds:"
+REPO_BINDINGS="$REPO_DIR/config/hypr/bindings.lua"
+info "Keybinds:"
 
 if [[ ! -f $BINDINGS_FILE ]]; then
-  warn "  no bindings.lua found — skipping"
+  if $DRY_RUN; then
+    info "  [dry-run] would install bindings.lua from repo"
+  else
+    install -m644 "$REPO_BINDINGS" "$BINDINGS_FILE"
+    ok "  installed bindings.lua from repo"
+  fi
+  changed=$((changed+1))
+elif [[ ! -f $REPO_BINDINGS ]]; then
+  warn "  repo bindings.lua not found — skipping"
 else
-  bind_lines=()
-  grep -q '"omartia-menu"' "$BINDINGS_FILE" 2>/dev/null || {
-    bind_lines+=('hl.unbind("SUPER + ALT + SPACE")' 'o.bind("SUPER + ALT + SPACE", "Omartia menu", "omartia-menu")')
-  }
-  grep -q '"omartia-keybinds"' "$BINDINGS_FILE" 2>/dev/null || {
-    bind_lines+=('hl.unbind("SUPER + K")' 'o.bind("SUPER + K", "Keybindings", "omartia-keybinds")')
-  }
-  grep -q '"omartia-power"' "$BINDINGS_FILE" 2>/dev/null || {
-    bind_lines+=('o.bind("SUPER + ESCAPE", "Power menu", "omartia-power")')
-  }
+  MANAGED_BEGIN="-- BEGIN omartia-dots-remux managed keybinds (auto-synced by upgrade.sh — personal edits belong outside this block)"
+  MANAGED_END="-- END omartia-dots-remux managed keybinds"
 
-  if (( ${#bind_lines[@]} )); then
-    if $DRY_RUN; then
-      info "  [dry-run] would add ${#bind_lines[@]} binding line(s) to hypr/bindings.lua"
+  section_file="$(mktemp)"
+  {
+    printf '%s\n' "$MANAGED_BEGIN"
+    cat "$REPO_BINDINGS"
+    printf '%s\n' "$MANAGED_END"
+  } > "$section_file"
+
+  begin_line=$(grep -nF -e "$MANAGED_BEGIN" "$BINDINGS_FILE" | head -1 | cut -d: -f1) || true
+  end_line=$(grep -nF -e "$MANAGED_END" "$BINDINGS_FILE" | head -1 | cut -d: -f1) || true
+
+  if [[ -n $begin_line && -n $end_line ]]; then
+    old_section="$(mktemp)"
+    sed -n "${begin_line},${end_line}p" "$BINDINGS_FILE" > "$old_section"
+    if cmp -s "$old_section" "$section_file"; then
+      ok "  keybinds up to date"
+    elif $DRY_RUN; then
+      info "  [dry-run] would update managed keybind block; changes:"
+      diff --unified=0 "$old_section" "$section_file" | sed 's/^/      /' || true
+      changed=$((changed+1))
     else
-      info "  adding missing menu keybinds..."
-      {
-        printf '\n-- omartia-dots-remux: menu suite keybinds (auto-injected by upgrade.sh)\n'
-        printf '%s\n' "${bind_lines[@]}"
-      } >> "$BINDINGS_FILE"
-      ok "  hypr/bindings.lua updated — run 'hyprctl reload' to apply"
+      tmp="$(mktemp)"
+      { head -n $((begin_line - 1)) "$BINDINGS_FILE"; cat "$section_file"; tail -n +"$((end_line + 1))" "$BINDINGS_FILE"; } > "$tmp"
+      mv "$tmp" "$BINDINGS_FILE"
+      ok "  managed keybind block updated — run 'hyprctl reload' to apply"
+      changed=$((changed+1))
+    fi
+    rm -f "$old_section"
+  else
+    if $DRY_RUN; then
+      info "  [dry-run] would append managed keybind block ($(wc -l < "$REPO_BINDINGS") lines) to hypr/bindings.lua"
+    else
+      { echo ""; cat "$section_file"; } >> "$BINDINGS_FILE"
+      ok "  managed keybind block appended — run 'hyprctl reload' to apply"
     fi
     changed=$((changed+1))
-  else
-    ok "  all menu keybinds present"
   fi
+  rm -f "$section_file"
 fi
 
 echo ""
