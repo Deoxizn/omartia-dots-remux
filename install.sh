@@ -89,6 +89,30 @@ if ! command -v quickshell &>/dev/null && ! command -v qs &>/dev/null; then
 fi
 ok "Quickshell found"
 
+# Refresh package databases — fresh installs often have empty or stale sync
+# DBs, which makes every later 'pacman -S' fail with "target not found".
+# The shell-restart guard hook isn't in place yet at this point (it gets
+# installed by this script), but it's not needed either: caelestia-shell
+# isn't running on a fresh target, so an update can't kill it mid-flight.
+info "Refreshing package databases..."
+if $DRY_RUN; then
+  info "[dry-run] would run: sudo pacman -Sy --noconfirm"
+else
+  run_sudo pacman -Sy --noconfirm
+fi
+
+# Bring the base system level with the repos before layering the remux on top
+if command -v omarchy-update &>/dev/null; then
+  if confirm "Run omarchy-update first (recommended on fresh installs)?"; then
+    info "Running omarchy-update..."
+    if $DRY_RUN; then
+      info "[dry-run] would run: omarchy-update"
+    else
+      omarchy-update || warn "omarchy-update failed — continuing anyway"
+    fi
+  fi
+fi
+
 # Detect quickshell-git — offer to switch to stable
 if ! $SKIP_QS_CHECK && pacman -Qi quickshell-git &>/dev/null; then
   echo ""
