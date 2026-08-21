@@ -669,6 +669,173 @@ else
 fi
 
 # ──────────────────────────────────────────────
+# Session-start preflight (black screen guard)
+# Verifies the exact chain the NEXT login depends on: hyprland.lua stub
+# placement, autostart.lua handler registration, upstream API presence,
+# and the caelestia-shell.service unit. Any failure here means logging out
+# could leave the session with no shell at all (the historic black screen).
+# ──────────────────────────────────────────────
+
+PREFLIGHT_LOG="$HOME/omartia-preflight.log"
+PREFLIGHT_FAIL=0
+
+if ! $DRY_RUN; then
+  info "Running session-start preflight..."
+
+  pf_pass() { echo "PASS: $*" | tee -a "$PREFLIGHT_LOG"; }
+  pf_fail() { echo "FAIL: $*" | tee -a "$PREFLIGHT_LOG"; PREFLIGHT_FAIL=1; }
+
+  : > "$PREFLIGHT_LOG"
+  echo "omartia session-start preflight — $(date)" >> "$PREFLIGHT_LOG"
+
+  HYPRLAND_FILE="$HOME/.config/hypr/hyprland.lua"
+  AUTOSTART_FILE="$HOME/.config/hypr/autostart.lua"
+  SERVICE_FILE="$HOME/.config/systemd/user/caelestia-shell.service"
+
+  stub_report="$(python3 - "$HYPRLAND_FILE" <<'PFPY'
+import sys
+
+try:
+    lines = open(sys.argv[1]).readlines()
+except OSError:
+    print("file-missing")
+    sys.exit(0)
+
+def find(pred):
+    return next((i for i, l in enumerate(lines) if pred(l)), None)
+
+boot = find(lambda l: "default/hypr/bootstrap.lua" in l)
+stub = find(lambda l: 'package.loaded["default.hypr.autostart"]' in l)
+req = find(lambda l: 'require("default.hypr.omarchy")' in l)
+
+if boot is None:
+    print("no-bootstrap-anchor")
+elif req is None:
+    print("no-omarchy-require")
+elif stub is None:
+    print("no-stub")
+elif boot < stub < req:
+    print(f"ok bootstrap=line {boot+1}, stub=line {stub+1}, omarchy=line {req+1}")
+else:
+    print(f"misplaced bootstrap=line {boot+1}, stub=line {stub+1}, omarchy=line {req+1}")
+PFPY
+)"
+  case "$stub_report" in
+    ok*) pf_pass "autostart stub placement ($stub_report)" ;;
+    *) pf_fail "autostart stub: $stub_report (must sit after bootstrap.lua, before default.hypr.omarchy)" ;;
+  esac
+
+  if grep -q 'require("hypr.autostart")' "$HYPRLAND_FILE" 2>/dev/null; then
+    pf_pass "hyprland.lua loads hypr.autostart"
+  else
+    pf_fail "hyprland.lua no longer requires hypr.autostart — upstream Omarchy layout changed"
+  fi
+
+  if [[ -f "$OMARCHY_PATH/default/hypr/helpers.lua" ]] && grep -q "function o.launch" "$OMARCHY_PATH/default/hypr/helpers.lua"; then
+    pf_pass "o.launch helper present in omarchy defaults"
+  else
+    pf_fail "o.launch helper missing in $OMARCHY_PATH/default/hypr/helpers.lua — autostart.lua would abort on load"
+  fi
+
+  if grep -rq '"hyprland.start"' "$OMARCHY_PATH/default/hypr/" /usr/share/hypr/stubs/ 2>/dev/null; then
+    pf_pass "hyprland.start event exists upstream"
+  else
+    pf_fail "hyprland.start event not found upstream — hl.on handler may never fire"
+  fi
+
+  if grep -q 'hl.on("hyprland.start"' "$AUTOSTART_FILE" 2>/dev/null && grep -q "caelestia-shell.service" "$AUTOSTART_FILE" 2>/dev/null; then
+    pf_pass "autostart.lua registers the Caelestia launch handler"
+  else
+    pf_fail "autostart.lua missing Caelestia launch handler"
+  fi
+
+  LUAC_BIN="$(command -v luac5.4 || command -v luac5.3 || command -v luac || true)"
+  if [[ -n "$LUAC_BIN" ]]; then
+    if "$LUAC_BIN" -p "$AUTOSTART_FILE" >/dev/null 2>&1; then
+      pf_pass "autostart.lua syntax valid"
+    else
+      pf_fail "autostart.lua has Lua syntax errors — it would abort silently on login"
+    fi
+  else
+    echo "SKIP: no luac found — autostart.lua syntax unchecked" >> "$PREFLIGHT_LOG"
+  fi
+
+  QS_BIN_UNIT="$(sed -n 's/^ExecStart=//p' "$SERVICE_FILE" 2>/dev/null | cut -d' ' -f1 || true)"
+  if [[ -n "$QS_BIN_UNIT" && -x "$QS_BIN_UNIT" ]]; then
+    pf_pass "caelestia-shell.service ExecStart binary present ($QS_BIN_UNIT)"
+  else
+    pf_fail "caelestia-shell.service missing or its ExecStart binary is not executable"
+  fi
+
+  if systemctl --user is-enabled --quiet caelestia-shell.service 2>/dev/null; then
+    pf_pass "caelestia-shell.service enabled"
+  else
+    pf_fail "caelestia-shell.service is not enabled"
+  fi
+
+  if systemd-analyze --user verify "$SERVICE_FILE" >/dev/null 2>&1; then
+    pf_pass "caelestia-shell.service unit verifies"
+  else
+    pf_fail "systemd-analyze --user verify flagged caelestia-shell.service"
+  fi
+
+  echo "" >> "$PREFLIGHT_LOG"
+
+  if [[ "$PREFLIGHT_FAIL" -eq 1 ]]; then
+    err ""
+    err "═══════════════════════════════════════════"
+    err "  PREFLIGHT FAILED — ROLLING BACK SAFELY"
+    err "═══════════════════════════════════════════"
+
+    pf_rollback() {
+      local f restored=0
+      info "Restoring stock Omarchy startup chain..."
+      for f in hyprland.lua autostart.lua bindings.lua; do
+        if [[ -f "$BACKUP_PATH/$f" ]]; then
+          cp "$BACKUP_PATH/$f" "$HOME/.config/hypr/$f"
+          ok "  restored hypr/$f from backup"
+          echo "ROLLBACK: restored hypr/$f from $BACKUP_PATH" >> "$PREFLIGHT_LOG"
+          restored=1
+        fi
+      done
+      if [[ "$restored" -eq 0 ]]; then
+        python3 - "$HOME/.config/hypr/hyprland.lua" <<'PFUNSTUB'
+import sys
+
+path = sys.argv[1]
+with open(path) as fh:
+    lines = fh.readlines()
+marker = 'package.loaded["default.hypr.autostart"]'
+lines = [l for l in lines if marker not in l and "Caelestia: prevent default omarchy autostart" not in l]
+with open(path, "w") as fh:
+    fh.writelines(lines)
+PFUNSTUB
+        sed -i '/^-- omartia-dots-remux: Caelestia Shell (auto-injected)/,/^end)$/d' "$HOME/.config/hypr/autostart.lua" 2>/dev/null || true
+        warn "  no backup found — stripped injected blocks instead"
+        echo "ROLLBACK: no backup; stripped injections surgically" >> "$PREFLIGHT_LOG"
+      fi
+      systemctl --user disable --now caelestia-shell.service >/dev/null 2>&1 || true
+      ok "  caelestia-shell.service disabled (stock omarchy-shell owns startup again)"
+      echo "ROLLBACK: caelestia-shell.service disabled" >> "$PREFLIGHT_LOG"
+    }
+    pf_rollback
+
+    err ""
+    err "Your PC remains fully usable as stock Omarchy — logging out or rebooting is SAFE."
+    err "Nothing is broken; the Caelestia switch was paused before it could break anything."
+    err ""
+    err "Failed checks:"
+    grep '^FAIL' "$PREFLIGHT_LOG" | sed 's/^/  /' >&2
+    err ""
+    err "Send this log for help, or ask your AI agent to read it: $PREFLIGHT_LOG"
+    err "Fixed something? Re-run: $REPO_DIR/install.sh"
+    err "Want it fully removed? $REPO_DIR/uninstall.sh"
+  else
+    ok "Preflight passed: $(grep -c '^PASS' "$PREFLIGHT_LOG") checks OK (log: $PREFLIGHT_LOG)"
+  fi
+fi
+
+# ──────────────────────────────────────────────
 # Done
 # ──────────────────────────────────────────────
 
@@ -698,10 +865,12 @@ else
   info "  3. If anything is wrong, run: $REPO_DIR/uninstall.sh"
   echo ""
   info "To uninstall: $REPO_DIR/uninstall.sh"
+  info "Black screen after logout? Press Ctrl+Alt+F4 for a TTY, log in, then:"
+  info "  cat ~/omartia-preflight.log && systemctl --user start caelestia-shell.service"
   echo ""
 
-  # Auto-logout after 5 seconds so Caelestia Shell starts
-  if confirm "Log out now to start Caelestia Shell?"; then
+  # Auto-logout after 5 seconds so Caelestia Shell starts (preflight must pass)
+  if [[ "$PREFLIGHT_FAIL" -eq 0 ]] && confirm "Log out now to start Caelestia Shell?"; then
     info "Logging out in 5 seconds... (press Ctrl+C to cancel)"
     sleep 5
     loginctl terminate-user "$USER"
