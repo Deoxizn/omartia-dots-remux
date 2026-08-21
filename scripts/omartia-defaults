@@ -1,0 +1,89 @@
+#!/bin/bash
+
+# omartia:summary=Defaults submenu: pick the default browser, editor, terminal, or coding agent.
+
+choice=$(
+  printf '%s\n' \
+    'Browser' \
+    'Editor' \
+    'Terminal' \
+    'Agent' |
+    omartia-fuzzel --dmenu --prompt='Defaults: ' --width=24 --lines=4
+) || exec omartia-menu   # Esc = back to root menu
+
+case "$choice" in
+  Browser)  type="browser" ;;
+  Editor)   type="editor" ;;
+  Terminal) type="terminal" ;;
+  Agent)    type="agent" ;;
+  *)        exit 0 ;;
+esac
+
+current=$(omarchy default "$type" 2>/dev/null)
+
+# Build entries as "match-key|label|command". The ✓ marks the entry whose
+# match-key equals the reported current default.
+entries=()
+
+case "$type" in
+  browser)
+    # Stock names go through omarchy (adds install-if-missing); installed
+    # non-stock variants are set via xdg-settings directly, since omarchy's
+    # wrapper only accepts its seven stock names.
+    for name in chromium chrome brave brave-origin edge firefox zen; do
+      entries+=("$name|$name|omarchy default browser $name")
+    done
+    while IFS='|' read -r label id; do
+      for d in "$HOME/.local/share/applications" "/usr/local/share/applications" "/usr/share/applications"; do
+        if [[ -f $d/$id ]]; then
+          entries+=("$id|$label|env -u BROWSER xdg-settings set default-web-browser $id")
+          break
+        fi
+      done
+    done <<'EOF'
+Brave Origin Beta|brave-origin-beta.desktop
+Chrome Beta|google-chrome-beta.desktop
+Chrome Nightly|google-chrome-unstable.desktop
+Edge Dev|microsoft-edge-dev.desktop
+Firefox Nightly|firefox-nightly.desktop
+EOF
+    ;;
+  editor)
+    [[ $current == zeditor ]] && current="zed"
+    for name in code cursor zed sublime_text helix vim emacs nvim; do
+      entries+=("$name|$name|omarchy default editor $name")
+    done
+    ;;
+  terminal)
+    for name in alacritty foot ghostty kitty; do
+      entries+=("$name|$name|omarchy default terminal $name")
+    done
+    ;;
+  agent)
+    for name in pi omp opencode claude codex grok agy copilot crush; do
+      entries+=("$name|$name|omarchy default agent $name")
+    done
+    ;;
+esac
+
+menu=""
+declare -A cmd_for=()
+for e in "${entries[@]}"; do
+  IFS='|' read -r key label cmd <<<"$e"
+  cmd_for[$label]=$cmd
+  marker=""
+  [[ $key == "$current" ]] && marker="✓ "
+  menu+="$marker$label"$'\n'
+done
+
+max_lines=$(( ${#entries[@]} < 9 ? ${#entries[@]} : 9 ))
+
+pick_choice=$(
+  printf '%s' "$menu" |
+    omartia-fuzzel --dmenu --prompt="${type^}: " --width=26 --lines=$max_lines
+) || exec omartia-defaults   # Esc = back to Defaults menu
+
+[[ -n $pick_choice ]] || exit 0
+pick=${pick_choice#✓ }
+cmd=${cmd_for[$pick]:-}
+[[ -n $cmd ]] && exec $cmd

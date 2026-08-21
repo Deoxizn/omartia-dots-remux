@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# omartia: fuzzel wrapper themed from the active Caelestia scheme.
+# All omartia menus launch through this so theming lives in one place.
+# Usage: omartia-fuzzel [fuzzel args...]
+
+scheme="${XDG_STATE_HOME:-$HOME/.local/state}/caelestia/scheme.json"
+
+read -r bg fg primary < <(python3 - "$scheme" <<'PY'
+import json, sys
+c = json.load(open(sys.argv[1]))["colours"]
+print(c["background"], c["onBackground"], c["primary"])
+PY
+)
+
+exec fuzzel \
+  --font='JetBrainsMono Nerd Font:size=11' \
+  --background-color="$bg"ee --text-color="$fg"ff \
+  --selection-color="$primary"44 --selection-text-color="$fg"ff \
+  --border-width=2 --border-color="$primary"ff "$@"

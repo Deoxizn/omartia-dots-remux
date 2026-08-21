@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# omartia:summary=Package management menu: install, remove, or AUR-install via the Omarchy TUIs.
+
+choice=$(
+  printf '%s\n' \
+    'Install packages' \
+    'Remove packages' \
+    'Install from AUR' |
+    omartia-fuzzel --dmenu --prompt='Packages: ' --width=28 --lines=3
+) || exec omartia-menu   # Esc = back to root menu
+
+case "$choice" in
+  "Install packages")  exec omarchy-launch-or-focus-tui omarchy-pkg-install ;;
+  "Remove packages")   exec omarchy-launch-or-focus-tui omarchy-pkg-remove ;;
+  "Install from AUR")  exec omarchy-launch-or-focus-tui omarchy-pkg-aur-install ;;
+esac

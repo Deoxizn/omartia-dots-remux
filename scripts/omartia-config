@@ -1,0 +1,44 @@
+#!/bin/bash
+
+# omartia:summary=Edit Hyprland config files in your default editor.
+
+hypr_dir="$HOME/.config/hypr"
+
+label_for() {
+  case "$1" in
+    hyprland.lua)    printf 'Hyprland settings' ;;
+    bindings.lua)    printf 'Keybindings' ;;
+    monitors.lua)    printf 'Monitors' ;;
+    looknfeel.lua)   printf 'Look and feel' ;;
+    input.lua)       printf 'Input devices' ;;
+    autostart.lua)   printf 'Autostart' ;;
+    hypridle.conf)   printf 'Idle and sleep' ;;
+    hyprpaper.conf)  printf 'Wallpaper engine' ;;
+    hyprsunset.conf) printf 'Night light' ;;
+    envs.conf)       printf 'Environment variables' ;;
+    xdph.conf)       printf 'Screen sharing' ;;
+    *)               printf '%s' "$1" ;;
+  esac
+}
+
+menu=""
+declare -A file_for=()
+while IFS= read -r f; do
+  label=$(label_for "$f")
+  # Disambiguate in case a custom file maps to an existing label
+  [[ -n ${file_for[$label]:-} ]] && label="$f"
+  file_for[$label]="$f"
+  menu+="$label"$'\n'
+done < <(find "$hypr_dir" -maxdepth 1 \( -name '*.lua' -o -name '*.conf' \) -type f -printf '%f\n' |
+  grep -v '^envs.conf$' | sort)
+
+[[ -n $menu ]] || { echo "No config files found in $hypr_dir" >&2; exit 1; }
+
+choice=$(
+  printf '%s' "$menu" |
+    omartia-fuzzel --dmenu --prompt='Config: ' --width=30 --lines=10
+) || exec omartia-menu   # Esc = back to root menu
+
+[[ -n $choice ]] || exit 0
+file=${file_for[$choice]:-}
+[[ -n $file ]] && exec omarchy-launch-config-editor "$hypr_dir/$file"

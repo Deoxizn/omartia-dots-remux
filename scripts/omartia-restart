@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# omartia:summary=Restart menu: reload Hyprland, restart terminal or shell, refresh theme.
+
+choice=$(
+  printf '%s\n' \
+    'Reload Hyprland' \
+    'Restart terminal' \
+    'Restart Caelestia' \
+    'Refresh theme' |
+    omartia-fuzzel --dmenu --prompt='Restart: ' --width=28 --lines=4
+) || exec omartia-menu   # Esc = back to root menu
+
+case "$choice" in
+  "Reload Hyprland")   exec omarchy restart hyprctl ;;
+  "Restart terminal")  exec omarchy restart terminal ;;
+  "Restart Caelestia") exec systemctl --user restart caelestia-shell.service ;;
+  "Refresh theme")     nohup omarchy theme refresh >/dev/null 2>&1 & ;;
+esac

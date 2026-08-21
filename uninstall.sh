@@ -98,6 +98,15 @@ if [[ -f /usr/local/bin/omartia-guard-restart-shell.sh ]]; then
   ok "  Removed update guard"
 fi
 
+# Remove omartia menu suite scripts
+shopt -s nullglob
+menu_scripts=("$HOME/.local/bin/"omartia-*)
+if (( ${#menu_scripts[@]} )); then
+  rm -f "${menu_scripts[@]}"
+  ok "  Removed omartia menu scripts (${#menu_scripts[@]})"
+fi
+shopt -u nullglob
+
 # Remove Caelestia systemd service
 if [[ -f "$HOME/.config/systemd/user/caelestia-shell.service" ]]; then
   rm "$HOME/.config/systemd/user/caelestia-shell.service"

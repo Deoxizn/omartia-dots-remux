@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# omartia:summary=Themes submenu: browse the theme list or install a new theme.
+
+choice=$(
+  printf '%s\n' \
+    'Theme list' \
+    'Install theme' |
+    omartia-fuzzel --dmenu --prompt='Themes: ' --width=26 --lines=2
+) || exec omartia-menu   # Esc = back to root menu
+
+case "$choice" in
+  "Theme list")    exec omartia-themes-list ;;
+  "Install theme") exec omarchy-launch-or-focus-tui omarchy-theme-install ;;
+esac

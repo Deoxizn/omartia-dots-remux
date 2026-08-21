@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# omartia:summary=Omartia root menu: keybindings, themes, packages, and session.
+
+choice=$(
+  printf '%s\n' \
+    'Keybindings' \
+    'Themes' \
+    'Packages' \
+    'Update' \
+    'Config' \
+    'Defaults' \
+    'Restart' \
+    'Session' |
+    omartia-fuzzel --dmenu --prompt='Menu: ' --width=22 --lines=8
+)
+
+case "$choice" in
+  Keybindings) exec omartia-keybinds --menu ;;
+  Themes)      exec omartia-themes ;;
+  Packages)    exec omartia-pkgs ;;
+  Update)      exec omartia-update ;;
+  Config)      exec omartia-config ;;
+  Defaults)    exec omartia-defaults ;;
+  Restart)     exec omartia-restart ;;
+  Session)     exec hyprctl dispatch global caelestia:session ;;
+esac

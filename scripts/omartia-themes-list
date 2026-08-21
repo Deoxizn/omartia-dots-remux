@@ -1,0 +1,70 @@
+#!/bin/bash
+
+# omartia:summary=Switch Omarchy themes via a themed fuzzel menu with preview images.
+
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}"
+cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/theme-selector/previews"
+mkdir -p "$cache_dir"
+
+# Normalise stored theme dir name to its display form, matching `omarchy theme list`.
+current=$(cat "$state_dir/omarchy/current/theme.name" 2>/dev/null |
+  sed -E 's/(^|-)([a-z])/\1\u\2/g; s/-/ /g')
+
+# Resolve a preview image for a theme display name; caches it as a symlink.
+# Cache files are keyed by the raw theme dir name (same as omarchy-theme-switcher).
+find_preview() {
+  local name=$1 dir ext src base theme_path
+
+  dir=$(printf '%s' "$name" | tr '[:upper:]' '[:lower:]' | tr ' ' '-')
+
+  for ext in png jpg jpeg webp gif bmp; do
+    [[ -e $cache_dir/$dir.$ext ]] && { printf '%s\n' "$cache_dir/$dir.$ext"; return; }
+  done
+
+  theme_path=""
+  for base in "$HOME/.config/omarchy/themes" "${OMARCHY_PATH:-/usr/share/omarchy}/themes"; do
+    [[ -d $base/$dir ]] && { theme_path=$base/$dir; break; }
+  done
+  [[ -n $theme_path ]] || return 0
+
+  src=""
+  for ext in png jpg jpeg webp gif bmp; do
+    [[ -f $theme_path/preview.$ext ]] && { src=$theme_path/preview.$ext; break; }
+  done
+
+  if [[ -z $src && -d $theme_path/backgrounds ]]; then
+    src=$(find -L "$theme_path/backgrounds" -maxdepth 1 -type f \
+      \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' -o -iname '*.gif' -o -iname '*.bmp' -o -iname '*.webp' \) |
+      sort | head -n 1)
+  fi
+  [[ -n $src ]] || return 0
+
+  ext=${src##*.}
+  ln -s "$src" "$cache_dir/$dir.${ext,,}" 2>/dev/null
+  printf '%s\n' "$cache_dir/$dir.${ext,,}"
+}
+
+# Emit "<label>\0icon\x1f<preview-path>" lines (Rofi extended dmenu protocol,
+# which is what fuzzel parses); entries without a preview stay plain.
+# NOTE: piped straight into fuzzel - bash variables cannot hold NUL bytes.
+choice=$(
+  omarchy theme list | while read -r name; do
+    marker=""
+    [[ $name == "$current" ]] && marker="▶ "
+    if preview=$(find_preview "$name") && [[ -n $preview ]]; then
+      printf '%s%s\0icon\x1f%s\n' "$marker" "$name" "$preview"
+    else
+      printf '%s%s\n' "$marker" "$name"
+    fi
+  done |
+    omartia-fuzzel --dmenu --width=44 --lines=5 \
+      --line-height=150 --horizontal-pad=12 --vertical-pad=6 \
+      --hide-prompt
+) || exec omartia-themes   # Esc = back to Themes submenu
+
+# Drop any residual icon metadata, then the current-theme marker.
+theme=$(printf '%s' "$choice" | sed -E 's/icon\x1f.*//')
+theme=${theme#▶ }
+[[ -n $theme ]] || exit 0
+
+nohup omarchy theme set "$theme" >/dev/null 2>&1 &

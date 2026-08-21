@@ -13,6 +13,7 @@ https://github.com/user-attachments/assets/previewvideo.mp4
 - **Replaces** omarchy-shell (bar, notifications, OSD, menu) with Caelestia Shell
 - **Bridges** omarchy themes → Caelestia's Material Design 3 color system
 - **Keeps** all omarchy keybindings, workspace management, and theme switching
+- **Recreates** the removed omarchy menus as a themed **fuzzel menu suite**
 
 ## What you get
 
@@ -23,6 +24,7 @@ https://github.com/user-attachments/assets/previewvideo.mp4
 | App launcher | Caelestia Shell (Super+Space) |
 | Dashboard | Caelestia Shell (media, weather, stats) |
 | OSD (volume/brightness) | Caelestia Shell |
+| Menus (root/power/keybinds/themes/packages/update/config/defaults/restart) | Fuzzel suite (`omartia-*`), themed from the live Caelestia scheme |
 | Theme switching | `omarchy-theme-set` (native, works as before) |
 | Window management | Omarchy keybindings (unchanged) |
 | Update resilience | `omarchy-update` can't resurrect omarchy-shell |
@@ -52,8 +54,9 @@ The installer will:
 7. Set up the systemd service (auto-restart on crash)
 8. Set up the theme bridge hook
 9. Install the omarchy-update guard — `omarchy-update` ends with `omarchy-restart-shell`, which hard-relaunches omarchy-shell over Caelestia. The guard makes it exit early while Caelestia is running, and a libalpm hook re-applies it after every omarchy package upgrade
-10. Sync your current theme
-11. Auto-logout after 5 seconds (press Ctrl+C to cancel)
+10. Install the omartia fuzzel menu suite to `~/.local/bin/`
+11. Sync your current theme
+12. Auto-logout after 5 seconds (press Ctrl+C to cancel)
 
 ## After install
 
@@ -69,16 +72,38 @@ The installer will:
 | Binding | Action |
 |---|---|
 | `SUPER+Space` | Caelestia launcher (apps, wallpaper, schemes, system) |
-| `SUPER+Alt+Space` | Session menu (logout, shutdown, reboot) |
+| `SUPER+Alt+Space` | Omartia root menu |
+| `SUPER+Escape` | Power menu (confirm guard on reboot/shutdown) |
 | `SUPER+Return` | Terminal |
 | `SUPER+Shift+Return` | Browser |
 | `SUPER+Shift+F` | File manager |
 | `SUPER+Shift+N` | Editor |
-| `SUPER+K` | Keybinding list |
+| `SUPER+K` | Keybinding list (fuzzel) |
 | `SUPER+Q` | Close window |
 | `SUPER+1-0` | Switch workspace |
 | `SUPER+Arrow` | Move/resize windows |
 | `PRINT` | Screenshot |
+
+## Menu suite
+
+The omarchy-shell menus are recreated as standalone fuzzel scripts in
+[`scripts/`](scripts/) (installed to `~/.local/bin/`). All of them are themed
+from the live Caelestia scheme via the shared `omartia-fuzzel` wrapper, so
+they restyle automatically on every theme switch. Esc navigates back one menu
+level.
+
+| Script | Purpose |
+|---|---|
+| `omartia-menu` | Root menu: Keybindings, Themes, Packages, Update, Config, Defaults, Restart, Session |
+| `omartia-power` | Lock, logout, suspend, hibernate, reboot, shutdown (destructive actions require Confirm) |
+| `omartia-keybinds` | Searchable keybinding list that dispatches binds (`--menu` for Esc-back) |
+| `omartia-themes` / `omartia-themes-list` | Theme switcher with preview thumbnails + git theme install |
+| `omartia-pkgs` | Package TUI launcher: install, remove, AUR |
+| `omartia-update` | System/theme/firmware updates + package channel switcher |
+| `omartia-config` | Edit `~/.config/hypr/*.{lua,conf}` in your default editor |
+| `omartia-defaults` | Default browser/editor/terminal/agent pickers (includes installed beta/nightly browsers) |
+| `omartia-restart` | Reload Hyprland, restart terminal/Caelestia shell, refresh theme |
+| `omartia-fuzzel` | Shared fuzzel wrapper — reads colors from `~/.local/state/caelestia/scheme.json` |
 
 ## Uninstall
 

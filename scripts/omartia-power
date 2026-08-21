@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# omartia:summary=Power menu: lock, logout, suspend, hibernate, reboot, shutdown.
+
+choice=$(
+  printf '%s\n' \
+    'Lock' \
+    'Logout' \
+    'Suspend' \
+    'Hibernate' \
+    'Reboot' \
+    'Shutdown' |
+    omartia-fuzzel --dmenu --prompt='Power: ' --width=22 --lines=6
+) || exit 0
+
+# Destructive actions require selecting "Confirm" (Esc cancels).
+confirm() {
+  [[ $(printf 'Confirm\n' | omartia-fuzzel --dmenu --prompt="$1: " --width=22 --lines=1) == "Confirm" ]]
+}
+
+case "$choice" in
+  Lock)      exec caelestia-system-lock ;;
+  Logout)    exec omarchy-system-logout ;;
+  Suspend)   exec systemctl suspend ;;
+  Hibernate) exec systemctl hibernate ;;
+  Reboot)    confirm "Reboot" && exec omarchy-system-reboot ;;
+  Shutdown)  confirm "Shutdown" && exec omarchy-system-shutdown ;;
+esac

@@ -1,13 +1,15 @@
 -- omartia-dots-remux: Keybindings
--- Minimal overrides — only replaces omarchy-menu with Caelestia launcher.
--- Everything else inherits from omarchy defaults (window mgmt, workspaces, apps).
+-- Minimal overrides — replaces omarchy-menu with the Caelestia launcher and
+-- the omartia fuzzel menu suite. Everything else inherits from omarchy
+-- defaults (window mgmt, workspaces, apps).
 -- Add your own personal bindings below.
 
 -- Caelestia launcher (replaces omarchy-menu)
 hl.unbind("SUPER + SPACE")
-hl.unbind("SUPER + ALT + SPACE")
 o.bind("SUPER + SPACE", "Caelestia launcher", hl.dsp.global("caelestia:launcher"))
-o.bind("SUPER + ALT + SPACE", "Session menu", hl.dsp.global("caelestia:session"))
+
+-- Omartia menu suite (fuzzel)
+o.bind("SUPER + ALT + SPACE", "Omartia menu", "omartia-menu")
 
 -- Caelestia sidebar / notifications shade
 o.bind("SUPER + N", "Notifications shade", hl.dsp.global("caelestia:sidebar"))
@@ -18,3 +20,10 @@ o.bind("SUPER + ALT + D", "Dashboard", hl.dsp.global("caelestia:dashboard"))
 -- Lock via Caelestia (replaces omarchy-system-lock)
 hl.unbind("SUPER + CTRL + L")
 o.bind("SUPER + CTRL + L", "Lock system", hl.dsp.global("caelestia:lock"))
+
+-- Keybinding list (fuzzel; omarchy's summons the removed omarchy-shell)
+hl.unbind("SUPER + K")
+o.bind("SUPER + K", "Keybindings", "omartia-keybinds")
+
+-- Power menu (fuzzel)
+o.bind("SUPER + ESCAPE", "Power menu", "omartia-power")

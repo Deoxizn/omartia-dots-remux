@@ -348,13 +348,15 @@ else
 
 -- omartia-dots-remux: Caelestia bindings (auto-injected)
 hl.unbind("SUPER + SPACE")
-hl.unbind("SUPER + ALT + SPACE")
 o.bind("SUPER + SPACE", "Caelestia launcher", hl.dsp.global("caelestia:launcher"))
-o.bind("SUPER + ALT + SPACE", "Session menu", hl.dsp.global("caelestia:session"))
+o.bind("SUPER + ALT + SPACE", "Omartia menu", "omartia-menu")
 o.bind("SUPER + N", "Notifications shade", hl.dsp.global("caelestia:sidebar"))
 o.bind("SUPER + ALT + D", "Dashboard", hl.dsp.global("caelestia:dashboard"))
 hl.unbind("SUPER + CTRL + L")
 o.bind("SUPER + CTRL + L", "Lock system", hl.dsp.global("caelestia:lock"))
+hl.unbind("SUPER + K")
+o.bind("SUPER + K", "Keybindings", "omartia-keybinds")
+o.bind("SUPER + ESCAPE", "Power menu", "omartia-power")
 CAELESTIA_BINDINGS
     fi
     ok "  hypr/bindings.lua (patched)"
@@ -636,6 +638,20 @@ if ! $DRY_RUN; then
   run_sudo /usr/local/bin/omartia-guard-restart-shell.sh
 fi
 ok "Update guard installed (blocks omarchy-update from relaunching omarchy-shell)"
+
+# ──────────────────────────────────────────────
+# Install omartia fuzzel menu suite
+# ──────────────────────────────────────────────
+
+info "Installing omartia menu suite..."
+
+if ! $DRY_RUN; then
+  mkdir -p "$HOME/.local/bin"
+  for f in "$REPO_DIR"/scripts/omartia-*; do
+    install -m755 "$f" "$HOME/.local/bin/"
+  done
+fi
+ok "omartia menus installed (SUPER+ALT+SPACE root, SUPER+ESC power, SUPER+K keybinds)"
 
 # ──────────────────────────────────────────────
 # Run initial theme sync
