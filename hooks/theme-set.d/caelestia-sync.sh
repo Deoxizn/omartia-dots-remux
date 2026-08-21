@@ -103,9 +103,10 @@ BLACK = (0.0, 0.0, 0.0)
 
 
 def derive_tertiary(base):
-    """Rotate accent hue +60° so tertiary shifts with every theme."""
+    """Rotate accent hue moderately (+25°) so tertiary stays in the
+    theme's colour family while still reading as a distinct accent."""
     h, l, s = colorsys.rgb_to_hls(*(c / 255 for c in base))
-    h = (h + 60 / 360) % 1.0
+    h = (h + 25 / 360) % 1.0
     s = min(0.60, max(0.25, s))
     if mode == "dark":
         l = min(0.75, max(0.45, l))
