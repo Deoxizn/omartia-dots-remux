@@ -44,6 +44,15 @@ Use `./install.sh -y` to skip confirmation prompts.
 ./install.sh --dry-run
 ```
 
+**Already running the remux?** Don't reinstall — just upgrade:
+```bash
+./upgrade.sh
+```
+This pulls the latest repo, refreshes the menu scripts / theme bridge hook /
+update guard in place, appends any missing menu keybinds to `bindings.lua`,
+and reports config drift without ever touching your edited configs.
+Add `--dry-run` to preview.
+
 The installer will:
 1. Install build dependencies (cmake, ninja, qt6, etc.)
 2. Build and install Caelestia Shell from source
