@@ -102,9 +102,7 @@
                 "hibernate"
             ],
             "logout": [
-                "loginctl",
-                "terminate-user",
-                "$USER"
+                "omarchy-system-logout"
             ],
             "reboot": [
                 "reboot"
