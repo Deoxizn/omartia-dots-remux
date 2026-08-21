@@ -25,6 +25,7 @@ https://github.com/user-attachments/assets/previewvideo.mp4
 | OSD (volume/brightness) | Caelestia Shell |
 | Theme switching | `omarchy-theme-set` (native, works as before) |
 | Window management | Omarchy keybindings (unchanged) |
+| Update resilience | `omarchy-update` can't resurrect omarchy-shell |
 
 ## Quick install
 
@@ -50,8 +51,9 @@ The installer will:
 6. Patch `autostart.lua` to launch Caelestia Shell and take over the non-shell parts of Omarchy's autostart (monitor watch, automount, post-boot hooks)
 7. Set up the systemd service (auto-restart on crash)
 8. Set up the theme bridge hook
-9. Sync your current theme
-10. Auto-logout after 5 seconds (press Ctrl+C to cancel)
+9. Install the omarchy-update guard — `omarchy-update` ends with `omarchy-restart-shell`, which hard-relaunches omarchy-shell over Caelestia. The guard makes it exit early while Caelestia is running, and a libalpm hook re-applies it after every omarchy package upgrade
+10. Sync your current theme
+11. Auto-logout after 5 seconds (press Ctrl+C to cancel)
 
 ## After install
 
@@ -84,7 +86,7 @@ The installer will:
 ./uninstall.sh
 ```
 
-Restores all backed-up configs, stops and removes the Caelestia Shell systemd service, and removes Caelestia Shell configs. Log out/in to restore omarchy-shell.
+Restores all backed-up configs, stops and removes the Caelestia Shell systemd service, and removes Caelestia Shell configs (including the update guard — which also self-neutralizes once Caelestia is no longer running). Log out/in to restore omarchy-shell.
 
 ## How the theme bridge works
 

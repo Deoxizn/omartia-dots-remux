@@ -1,0 +1,12 @@
+[Trigger]
+Operation = Install
+Operation = Upgrade
+Type = Package
+Target = omarchy-dev
+Target = omarchy
+Target = omarchy-settings-dev
+
+[Action]
+Description = omartia remux: re-apply Caelestia guard to omarchy-restart-shell
+When = PostTransaction
+Exec = /usr/local/bin/omartia-guard-restart-shell.sh

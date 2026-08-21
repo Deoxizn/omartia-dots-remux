@@ -625,6 +625,19 @@ fi
 ok "Theme bridge hook installed"
 
 # ──────────────────────────────────────────────
+# Install update guard (omarchy-restart-shell)
+# ──────────────────────────────────────────────
+
+info "Installing omarchy-update shell guard..."
+
+if ! $DRY_RUN; then
+  run_sudo install -m755 "$REPO_DIR/hooks/libalpm/omartia-guard-restart-shell.sh" /usr/local/bin/
+  run_sudo install -m644 "$REPO_DIR/hooks/libalpm/omartia-restart-shell-guard.hook" /usr/share/libalpm/hooks/
+  run_sudo /usr/local/bin/omartia-guard-restart-shell.sh
+fi
+ok "Update guard installed (blocks omarchy-update from relaunching omarchy-shell)"
+
+# ──────────────────────────────────────────────
 # Run initial theme sync
 # ──────────────────────────────────────────────
 

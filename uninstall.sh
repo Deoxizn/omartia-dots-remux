@@ -92,6 +92,12 @@ if [[ -f "$HOME/.config/omarchy/hooks/theme-set.d/caelestia-sync.sh" ]]; then
   ok "  Removed theme bridge hook"
 fi
 
+# Remove update guard (guard self-neutralizes once Caelestia is gone)
+if [[ -f /usr/local/bin/omartia-guard-restart-shell.sh ]]; then
+  sudo rm -f /usr/local/bin/omartia-guard-restart-shell.sh /usr/share/libalpm/hooks/omartia-restart-shell-guard.hook
+  ok "  Removed update guard"
+fi
+
 # Remove Caelestia systemd service
 if [[ -f "$HOME/.config/systemd/user/caelestia-shell.service" ]]; then
   rm "$HOME/.config/systemd/user/caelestia-shell.service"
