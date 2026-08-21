@@ -28,6 +28,7 @@ Drop-in replacement for omarchy-shell (quattro bar) with **Caelestia Shell** —
 | Theme switching | `omarchy-theme-set` (native, works as before) |
 | Window management | Omarchy keybindings (unchanged) |
 | Update resilience | `omarchy-update` can't resurrect omarchy-shell |
+| Install safety net | Preflight verifies the login chain before logout; auto-rollback to stock Omarchy on failure |
 
 ## Quick install
 
@@ -65,7 +66,42 @@ The installer will:
 9. Install the omarchy-update guard — `omarchy-update` ends with `omarchy-restart-shell`, which hard-relaunches omarchy-shell over Caelestia. The guard makes it exit early while Caelestia is running, and a libalpm hook re-applies it after every omarchy package upgrade
 10. Install the omartia fuzzel menu suite to `~/.local/bin/`
 11. Sync your current theme
-12. Auto-logout after 5 seconds (press Ctrl+C to cancel)
+12. Run the session-start preflight (see [Install safety net](#install-safety-net-preflight))
+13. Auto-logout after 5 seconds — **only if every preflight check passed** (press Ctrl+C to cancel)
+
+## Install safety net (preflight)
+
+Historically, switching to Caelestia could black-screen after logout on a fresh
+install: the stub suppressed omarchy-shell, and if the injected launch handler
+didn't survive upstream config changes, *nothing* started. The installer now
+verifies the exact chain your **next login** depends on, before it ever offers
+to log you out:
+
+- `hyprland.lua` autostart stub is correctly placed (after Omarchy's bootstrap, before its defaults load)
+- Omarchy still loads `hypr.autostart` and still ships the APIs the launch handler uses (`o.launch`, `hyprland.start`) — catches upstream layout drift on fresh installs
+- `autostart.lua` registers the Caelestia launch handler and parses as valid Lua
+- `caelestia-shell.service` exists, is enabled, points at a real binary, and passes `systemd-analyze --user verify`
+
+**All checks pass** → normal logout prompt, Caelestia takes over.
+
+**Any check fails** → automatic rollback instead of a dead session:
+
+1. `hyprland.lua`, `autostart.lua`, `bindings.lua` restored from the backup taken at install start (injected blocks stripped surgically if no backup exists)
+2. `caelestia-shell.service` disabled so stock omarchy-shell owns startup again
+
+Your PC stays fully usable as stock Omarchy — logging out or rebooting is safe.
+The terminal prints exactly which checks failed; everything, including what was
+rolled back, lands in `~/omartia-preflight.log`. Send that file for help or hand
+it to your AI agent, then fix and re-run `./install.sh` — or `./uninstall.sh`
+to remove everything.
+
+**Black screen anyway** (e.g. an install from before this existed)? Press
+`Ctrl+Alt+F4` for a TTY, log in, then:
+
+```bash
+cat ~/omartia-preflight.log                     # see what's wrong
+systemctl --user start caelestia-shell.service  # bring the shell back now
+```
 
 ## After install
 
