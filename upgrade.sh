@@ -350,7 +350,7 @@ if [[ ! -f $CAELESTIA_SHELL_JSON ]]; then
 elif logout_ok "$CAELESTIA_SHELL_JSON"; then
   ok "  logout command up to date"
 elif $DRY_RUN; then
-  info "  [dry-run] would set session.commands.logout -> omartia-logout"
+  info "  [dry-run] would set session.commands.logout -> omarchy-system-logout"
   changed=$((changed+1))
 else
   cp "$CAELESTIA_SHELL_JSON" "$CAELESTIA_SHELL_JSON.pre-upgrade.bak"
