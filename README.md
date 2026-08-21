@@ -6,7 +6,7 @@ Drop-in replacement for omarchy-shell (quattro bar) with **Caelestia Shell** —
 ![Preview 2](preview2.png)
 ![Preview 3](preview3.png)
 
-https://github.com/user-attachments/assets/previewvideo.mp4
+[![Watch the demo](preview2.png)](previewvideo.mp4)
 
 ## What this does
 
