@@ -328,6 +328,46 @@ fi
 echo ""
 
 # ──────────────────────────────────────────────
+# Session commands — ensure SDDM-safe logout
+# loginctl terminate-user / dispatch exit kill the session in ways that
+# make sddm-helper exit non-zero; SDDM then never relaunches (black screen).
+# omartia-logout unwinds via uwsm so sddm-helper exits cleanly.
+# ──────────────────────────────────────────────
+
+CAELESTIA_SHELL_JSON="$HOME/.config/caelestia/shell.json"
+info "Session commands:"
+
+logout_ok() {
+  python3 - "$1" <<'EOF'
+import json, sys
+c = json.load(open(sys.argv[1]))
+sys.exit(0 if c.get("session", {}).get("commands", {}).get("logout") == ["omarchy-system-logout"] else 1)
+EOF
+}
+
+if [[ ! -f $CAELESTIA_SHELL_JSON ]]; then
+  warn "  no caelestia/shell.json found — skipping"
+elif logout_ok "$CAELESTIA_SHELL_JSON"; then
+  ok "  logout command up to date"
+elif $DRY_RUN; then
+  info "  [dry-run] would set session.commands.logout -> omartia-logout"
+  changed=$((changed+1))
+else
+  cp "$CAELESTIA_SHELL_JSON" "$CAELESTIA_SHELL_JSON.pre-upgrade.bak"
+  python3 - "$CAELESTIA_SHELL_JSON" <<'EOF'
+import json, sys
+p = sys.argv[1]
+c = json.load(open(p))
+c.setdefault("session", {}).setdefault("commands", {})["logout"] = ["omarchy-system-logout"]
+json.dump(c, open(p, "w"), indent=4)
+EOF
+  ok "  logout command set to omartia-logout (backup: caelestia/shell.json.pre-upgrade.bak)"
+  changed=$((changed+1))
+fi
+
+echo ""
+
+# ──────────────────────────────────────────────
 # Config drift report (read-only — never overwritten)
 # ──────────────────────────────────────────────
 

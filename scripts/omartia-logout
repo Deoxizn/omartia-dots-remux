@@ -1,5 +1,0 @@
-#!/usr/bin/env bash
-# omartia:summary=Log out: cleanly stop the uwsm session (SDDM-safe).
-# Ends the session through systemd so sddm-helper exits 0 and SDDM
-# relaunches the greeter instead of black-screening.
-nohup bash -c "sleep 2 && uwsm stop" >/dev/null 2>&1 &

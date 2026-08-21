@@ -102,7 +102,7 @@
                 "hibernate"
             ],
             "logout": [
-                "omartia-logout"
+                "omarchy-system-logout"
             ],
             "reboot": [
                 "reboot"
