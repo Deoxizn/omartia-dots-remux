@@ -50,9 +50,16 @@ Use `./install.sh -y` to skip confirmation prompts.
 ./upgrade.sh
 ```
 This pulls the latest repo, refreshes the menu scripts / theme bridge hook /
-update guard in place, appends any missing menu keybinds to `bindings.lua`,
-and reports config drift without ever touching your edited configs.
-Add `--dry-run` to preview.
+update guard in place, 3-way-merges lua config changes into your live files
+(personal edits preserved; conflicts leave your file untouched with a
+`.conflict` copy for manual resolution), keeps keybinds identical to the repo
+via a managed block at the end of `bindings.lua` (legacy auto-injected blocks
+are stripped automatically — duplicates made toggle binds fire twice and look
+dead), and enforces the SDDM-safe `omarchy-system-logout`.
+`monitors.lua` / `input.lua` are never touched (device-specific); everything
+else is reported as drift. Add `--dry-run` to preview, or `--adopt-lua` to
+adopt repo versions of lua files that have no merge history (yours is backed
+up first).
 
 The installer will:
 1. Install build dependencies (cmake, ninja, qt6, etc.)
@@ -67,7 +74,7 @@ The installer will:
 10. Install the omartia fuzzel menu suite to `~/.local/bin/`
 11. Sync your current theme
 12. Run the session-start preflight (see [Install safety net](#install-safety-net-preflight))
-13. Auto-logout after 5 seconds — **only if every preflight check passed** (press Ctrl+C to cancel)
+13. Auto-logout after 5 seconds — **only if every preflight check passed** (press Ctrl+C to cancel). Uses `omarchy-system-logout` (`uwsm stop`), so sddm-helper exits cleanly and the login screen returns instead of black-screening
 
 ## Install safety net (preflight)
 
