@@ -2,9 +2,12 @@
 
 Drop-in replacement for omarchy-shell (quattro bar) with **Caelestia Shell** — keeps omarchy's theme switching working via a color bridge.
 
-![Preview 1](preview.png)
-![Preview 2](preview2.png)
-![Preview 3](preview3.png)
+<p align="center">
+  <img src="desktop.png" alt="Desktop" width="1280">
+</p>
+<p align="center">
+  <img src="lockscreen2.png" alt="Lock screen" width="1280">
+</p>
 
 [Preview video](previewvideo.mp4)
 
