@@ -105,8 +105,10 @@ if ! $SKIP_QS_CHECK && pacman -Qi quickshell-git &>/dev/null; then
       mkdir -p "$HOME/.local/state/omartia-dots-remux"
       touch "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
     fi
-    run_sudo pacman -Rns quickshell-git --noconfirm
-    run_sudo pacman -S --noconfirm quickshell
+    # Atomic swap: installing stable resolves the conflict by removing the git
+    # variant within one transaction, so omarchy's 'quickshell' dependency is
+    # satisfied throughout (a separate -Rns step would break it)
+    run_sudo pacman -S --ask 4 --noconfirm quickshell
     # Reinstall omarchy-dev now that stable quickshell provides the dependency
     if [[ -f "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed" ]]; then
       info "Reinstalling omarchy-dev (provides omarchy-launch-* commands)..."
