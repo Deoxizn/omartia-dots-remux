@@ -899,10 +899,11 @@ else
   if [[ "$PREFLIGHT_FAIL" -eq 0 ]] && confirm "Log out now to start Caelestia Shell?"; then
     info "Logging out in 5 seconds... (press Ctrl+C to cancel)"
     sleep 5
-    # Exit Hyprland gracefully: on SDDM+autologin systems, killing the session
-    # with loginctl terminate-user makes sddm-helper die non-zero and SDDM
-    # never respawns the greeter — a black screen on a fresh install.
-    if command -v hyprctl >/dev/null 2>&1 && hyprctl dispatch exit >/dev/null 2>&1; then
+    # End the session cleanly so sddm-helper exits 0 and SDDM relaunches:
+    # dispatch exit / terminate-user kill uwsm outright, sddm-helper dies
+    # non-zero and SDDM never respawns the greeter — black screen.
+    if command -v omarchy-system-logout >/dev/null 2>&1; then
+      omarchy-system-logout   # nohup'd: sleep 2 && uwsm stop
       exit 0
     fi
     loginctl terminate-user "$USER"
