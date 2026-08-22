@@ -7,6 +7,28 @@ hl.config({
   },
 })
 
+-- BEGIN omartia-dots-remux managed rounding (auto-synced by upgrade.sh)
+-- Rounded corners matching Caelestia's panel aesthetic. Hyprland's rounding
+-- is a single global value in physical px, so derive it from the highest
+-- connected monitor scale (~12 logical px) and recompute on hotplug.
+local function apply_rounding()
+  local target, max_scale = 12, 1
+  local ok, mons = pcall(hl.get_monitors)
+  if ok and type(mons) == "table" then
+    for _, m in ipairs(mons) do
+      if (m.scale or 1) > max_scale then
+        max_scale = m.scale
+      end
+    end
+  end
+  hl.config({ decoration = { rounding = math.floor(target * max_scale + 0.5) } })
+end
+
+apply_rounding()
+hl.on("monitor.added", apply_rounding)
+hl.on("monitor.removed", apply_rounding)
+-- END omartia-dots-remux managed rounding
+
 hl.config({
   scrolling = {
     column_width = 0.5,
