@@ -140,10 +140,12 @@ gaming rigs, pointless for rarely-used machines. It comes prebuilt from
 
 What it does: adds chaotic-aur to pacman (backing up `pacman.conf` first),
 installs `linux-cachyos-bore` + headers (DKMS modules like NVIDIA rebuild
-automatically), and makes it the default Limine boot entry via a name-based
-`DEFAULT_ENTRY` that survives config regeneration. The stock Arch kernel is
-never removed — if anything ever misbehaves, pick it in the Limine menu and
-revert with one `DEFAULT_ENTRY` edit + `sudo limine-update`.
+automatically), and aims the `default_entry:` header in `/boot/limine.conf`
+at the BORE entry — its index is computed from the live config each run, so
+it survives kernel add/remove and snapshot churn (the header itself survives
+`limine-update`; only Omarchy's manual refresh script resets it). The stock
+Arch kernel is never removed — if anything ever misbehaves, pick it in the
+Limine menu and revert with one `default_entry:` edit + `sudo limine-update`.
 
 **Scope:** chaotic-aur is a plain signed binary repo, not a build system
 change — nothing installs itself, nothing compiles differently, and your

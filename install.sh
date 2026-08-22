@@ -905,16 +905,19 @@ setup_chaotic_kernel() {
   run_sudo pacman -Sy --noconfirm
   run_sudo pacman -S --ask 4 --noconfirm linux-cachyos-bore linux-cachyos-bore-headers
 
-  # Make BORE the auto-boot target. Name-based DEFAULT_ENTRY survives
-  # regeneration by limine-entry-tool (resolved to an index each time),
-  # unlike hardcoding a number.
-  info "  Setting BORE as default Limine boot entry..."
-  if grep -q '^DEFAULT_ENTRY=' /etc/limine-entry-tool.conf 2>/dev/null; then
-    run_sudo sed -i 's|^DEFAULT_ENTRY=.*|DEFAULT_ENTRY="Omarchy/linux-cachyos-bore"|' /etc/limine-entry-tool.conf
-  else
-    printf 'DEFAULT_ENTRY="Omarchy/linux-cachyos-bore"\n' | run_sudo tee -a /etc/limine-entry-tool.conf >/dev/null
-  fi
+  # Regenerate entries so the BORE subentry exists, then aim the static
+  # default_entry header at it. The index counts every entry line in
+  # limine.conf (groups, kernels, snapshots) in document order — computing
+  # it live beats hardcoding a number. The header survives limine-update;
+  # only omarchy-refresh-limine resets it from Omarchy's template.
   run_sudo limine-update
+  if [[ -f /boot/limine.conf ]]; then
+    bore_idx=$(awk '/^[[:space:]]*\//{i++} /^[[:space:]]*\/\/linux-cachyos-bore[[:space:]]*$/{print i; exit}' /boot/limine.conf)
+    if [[ -n $bore_idx ]] && ! grep -q "^default_entry:[[:space:]]*$bore_idx\$" /boot/limine.conf; then
+      info "  default boot entry -> linux-cachyos-bore (#$bore_idx)"
+      run_sudo sed -i "s/^default_entry:.*/default_entry: $bore_idx/" /boot/limine.conf
+    fi
+  fi
 
   ok "BORE kernel installed and set as default boot entry; stock kernel kept as fallback"
 }

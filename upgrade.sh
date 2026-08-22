@@ -539,7 +539,8 @@ echo ""
 
 # ──────────────────────────────────────────────
 # CachyOS BORE kernel — opt-in via --bore. Stock kernel is never removed;
-# DEFAULT_ENTRY is name-based so it survives limine.conf regeneration.
+# the default-entry header in /boot/limine.conf is aimed at BORE by live
+# index computation, so it survives kernel add/remove and snapshot churn.
 # ──────────────────────────────────────────────
 
 setup_chaotic_kernel() {
@@ -564,20 +565,31 @@ setup_chaotic_kernel() {
     rr pacman -S --ask 4 --noconfirm linux-cachyos-bore linux-cachyos-bore-headers
   fi
 
-  if grep -q '^DEFAULT_ENTRY=' /etc/limine-entry-tool.conf 2>/dev/null; then
-    rr sed -i 's|^DEFAULT_ENTRY=.*|DEFAULT_ENTRY="Omarchy/linux-cachyos-bore"|' /etc/limine-entry-tool.conf
-  else
-    printf 'DEFAULT_ENTRY="Omarchy/linux-cachyos-bore"\n' | { $DRY_RUN && info "  [dry-run] would set DEFAULT_ENTRY in /etc/limine-entry-tool.conf" || sudo tee -a /etc/limine-entry-tool.conf >/dev/null; }
-  fi
+  # Regenerate entries first so the BORE subentry exists in limine.conf
   rr limine-update
-  ok "  BORE is now the default boot entry (stock kernel kept as fallback)"
+
+  # Aim the static default_entry header at the BORE subentry. The index
+  # counts every entry line in limine.conf (groups, kernels, snapshots) in
+  # document order — computing it live beats hardcoding a number. The header
+  # survives limine-update; only omarchy-refresh-limine resets it.
+  if [[ -f /boot/limine.conf ]]; then
+    bore_idx=$(awk '/^[[:space:]]*\//{i++} /^[[:space:]]*\/\/linux-cachyos-bore[[:space:]]*$/{print i; exit}' /boot/limine.conf)
+    if [[ -n $bore_idx ]] && ! grep -q "^default_entry:[[:space:]]*$bore_idx\$" /boot/limine.conf; then
+      info "  default boot entry -> linux-cachyos-bore (#$bore_idx)"
+      rr sed -i "s/^default_entry:.*/default_entry: $bore_idx/" /boot/limine.conf
+    else
+      ok "  already the default boot entry"
+    fi
+  fi
+  ok "  BORE ready (stock kernel kept as fallback)"
 }
 
 info "Kernel:"
 if $BORE; then
   setup_chaotic_kernel
 elif pacman -Q linux-cachyos-bore &>/dev/null; then
-  if grep -q '^DEFAULT_ENTRY=' /etc/limine-entry-tool.conf 2>/dev/null; then
+  bore_idx=$(awk '/^[[:space:]]*\//{i++} /^[[:space:]]*\/\/linux-cachyos-bore[[:space:]]*$/{print i; exit}' /boot/limine.conf 2>/dev/null)
+  if [[ -n $bore_idx ]] && grep -q "^default_entry:[[:space:]]*$bore_idx\$" /boot/limine.conf 2>/dev/null; then
     ok "BORE kernel present, default boot entry configured"
   else
     warn "BORE kernel present but stock kernel still auto-boots first"
