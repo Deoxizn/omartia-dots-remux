@@ -145,11 +145,21 @@ automatically), and makes it the default Limine boot entry via a name-based
 never removed — if anything ever misbehaves, pick it in the Limine menu and
 revert with one `DEFAULT_ENTRY` edit + `sudo limine-update`.
 
+**Scope:** chaotic-aur is a plain signed binary repo, not a build system
+change — nothing installs itself, nothing compiles differently, and your
+yay/paru workflow is untouched. Only explicitly-requested packages come from
+it (afterwards the kernel updates through normal `omarchy-update`). Your AUR
+helper will simply *also* offer prebuilt chaotic builds where they exist,
+asking which to use per install. The whole CachyOS kernel family
+(`linux-cachyos`, `-lts`, RT variants...) is available the same way once the
+repo exists. Full opt-out: remove the `[chaotic-aur]` block from
+`/etc/pacman.conf`.
+
 The installer will:
 1. Install build dependencies (cmake, ninja, qt6, etc.)
 2. Build and install Caelestia Shell from source
 3. Backup your existing configs
-4. Copy the new configs (skips hypr files that already exist)
+4. Copy the new configs (skips hypr files that already exist). `looknfeel.lua` ships a managed scale-aware corner-rounding block; on first install you're asked for an explicit Hyprland monitor scale + GTK scale (defaults detected from your panel) instead of Hyprland's DPI-guessed `"auto"`, which tends to oversize UI on laptop screens — `-y` takes the detected defaults
 5. Patch `hyprland.lua` to disable omarchy's default autostart (via Lua `package.loaded`, injected after Omarchy's bootstrap — survives pacman updates and config reloads)
 6. Patch `autostart.lua` to launch Caelestia Shell and take over the non-shell parts of Omarchy's autostart (monitor watch, automount, post-boot hooks)
 7. Set up the systemd service (auto-restart on crash)
@@ -157,10 +167,14 @@ The installer will:
 9. Install `caelestia-system-lock` and the managed `hypridle.conf` so idle lock matches the manual lock path (existing hypridle.conf is never overwritten; upgrades land as `.new`)
 10. Apply Caelestia shell patches from [`patches/`](patches/) — currently a self-heal for Quickshell's Hyprland event tracking, which can go stale across suspend/DPMS/multi-monitor transitions and force-close drawers (launcher/dashboard) the moment they open. Patches are applied idempotently after clone/update and survive upstream pulls
 11. Install the omarchy-update guard — `omarchy-update` ends with `omarchy-restart-shell`, which hard-relaunches omarchy-shell over Caelestia. The guard makes it exit early while Caelestia is running, and a libalpm hook re-applies it after every omarchy package upgrade
-12. Install the omartia fuzzel menu suite and `omartia-media` to `~/.local/bin/`
-13. Sync your current theme
-14. Run the session-start preflight (see [Install safety net](#install-safety-net-preflight))
-15. Auto-logout after 5 seconds — **only if every preflight check passed** (press Ctrl+C to cancel). Uses `omarchy-system-logout` (`uwsm stop`), so the session ends cleanly and you land back at the login screen
+12. Install the omartia fuzzel menu suite and `omartia-media` to `~/.local/bin/` (root menu includes an **About** entry)
+13. Seed `~/.config/fastfetch/config.jsonc` from the system default with a `Stellarchy` OS line — only if you have no own fastfetch config; custom configs are untouched
+14. Deploy Stellarchy screensaver + About art (`~/.config/omarchy/branding/`) — replaces files still identical to Omarchy's stock art, never genuine customization
+15. Set up the `stellarchy` plymouth splash (sparkle logo over Omarchy's script) and rebuild the initramfs so it's live on next boot
+16. Optionally install the CachyOS BORE kernel via chaotic-aur and make it the default Limine entry (interactive prompt, or `--cachyos-kernel`; skipped under `-y` unless the flag is passed) — see [CachyOS BORE kernel](#cachyos-bore-kernel-opt-in)
+17. Sync your current theme
+18. Run the session-start preflight (see [Install safety net](#install-safety-net-preflight))
+19. Auto-logout after 5 seconds — **only if every preflight check passed** (press Ctrl+C to cancel). Uses `omarchy-system-logout` (`uwsm stop`), so the session ends cleanly and you land back at the login screen
 
 ## Install safety net (preflight)
 
