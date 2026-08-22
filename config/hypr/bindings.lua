@@ -61,16 +61,15 @@ o.bind("SUPER + CTRL + E", "Emojis", "caelestia emoji")
 hl.unbind("SUPER + comma")
 o.bind("SUPER + comma", "Clear notifications", "qs -c caelestia ipc call notifs clear")
 
--- omarchy control panels -> Caelestia dashboard / session menu.
--- SUPER+CTRL+D display panel intentionally NOT rebound: it commonly hosts an
+-- Omarchy control-panel chords -> unbound. This remux isn't stock Omarchy,
+-- so old muscle memory isn't a contract: the dashboard has one key
+-- (SUPER + ALT + D above) and aliasing every panel chord to it just makes
+-- five keys do the same thing.
+-- SUPER+CTRL+D display chord intentionally left alone: it commonly hosts an
 -- app binding of your own (e.g. Vesktop).
 for _, key in ipairs({ "SUPER + CTRL + A", "SUPER + CTRL + B", "SUPER + CTRL + W", "SUPER + CTRL + ALT + D" }) do
     hl.unbind(key)
 end
-o.bind("SUPER + CTRL + A", "Audio panel", hl.dsp.global("caelestia:dashboard"))
-o.bind("SUPER + CTRL + B", "Bluetooth panel", hl.dsp.global("caelestia:dashboard"))
-o.bind("SUPER + CTRL + W", "Network panel", hl.dsp.global("caelestia:dashboard"))
-o.bind("SUPER + CTRL + ALT + D", "Calendar panel", hl.dsp.global("caelestia:dashboard"))
 hl.unbind("SUPER + CTRL + P")
 o.bind("SUPER + CTRL + P", "Power panel", hl.dsp.global("caelestia:session"))
 

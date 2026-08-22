@@ -23,6 +23,22 @@ can (see the matrix below), but you should expect Omarchy to *not* behave
 stock out of the box. Read this file before installing; if you want stock
 behavior with a different bar, this remux is not that.
 
+### No plugin support — that's quattro-specific
+
+New users often don't realize that in stock Omarchy, **"the Shell" is a single
+program** (`omarchy-shell`) that draws and controls *everything* visual: the
+bar, menus, launcher, lock screen, notifications and OSD. Plugin support was
+introduced in quattro and lives inside that program only — bar widgets,
+panels, overlays, menus and services from `~/.config/omarchy/plugins/` are
+loaded dynamically into `omarchy-shell` at runtime. They are not an Omarchy or
+Hyprland feature.
+
+Because this remux removes `omarchy-shell`, quattro plugins have nothing to
+load into and will silently disappear after installing. Caelestia Shell has
+its own fixed module set and **no plugin loader**, so there is currently no
+equivalent way to extend it. If you depend on an omarchy-shell plugin, stay on
+stock Omarchy or look for a Caelestia-native alternative.
+
 ### What happens to stock Omarchy parts
 
 | Stock Omarchy | In omartia | Replacement / notes |
@@ -36,15 +52,12 @@ behavior with a different bar, this remux is not that.
 | Emoji picker (`SUPER+CTRL+E`) | **Was dead**, now rebound | `caelestia emoji` |
 | Dismiss notifications (`SUPER+,`) | **Partially replaced** | Clears all notifications via Caelestia IPC; per-notification dismiss has no equivalent |
 | Invoke last / notification history | **Gone** | No Caelestia IPC equivalent exists |
-| Audio/BT/network/calendar panels (`SUPER+CTRL+A/B/W/ALT+D`) | **Rebound** | Open the Caelestia dashboard, which contains those modules |
+| Audio/BT/network/calendar panels (`SUPER+CTRL+A/B/W/ALT+D`) | **Unbound** | Retired — the Caelestia dashboard (`SUPER+Alt+D`) covers audio/BT/network/calendar |
 | Power panel (`SUPER+CTRL+P`) | **Rebound** | Opens the Caelestia session menu |
 | Bar panel chords (`SUPER+CTRL+F1-F9`) | **Unbound** | Caelestia's bar has no panel-at-index IPC |
 | Idle lock / suspend wiring | **Replaced** | Managed `hypridle.conf`: locks through `caelestia-system-lock`, DPMS-off after lock, suspend-then-hibernate at 10 min |
 | Theme switching (`omarchy-theme-set`) | **Works as before** | A hook bridges each theme's colors.toml into Caelestia's M3 scheme live |
 | Window management, workspaces, app binds | **Work as before** | Untouched Omarchy defaults |
-
-Anything not listed here that shells out to `omarchy-shell` elsewhere in your
-own scripts will also be dead — grep for it.
 
 Anything not listed here that shells out to `omarchy-shell` elsewhere in your
 own scripts will also be dead — grep for it.
@@ -150,7 +163,7 @@ systemctl --user start caelestia-shell.service  # bring the shell back now
 | `Media keys` | Play/pause, next, previous — any MPRIS player via `omartia-media` |
 | `SUPER+Ctrl+V` / `SUPER+Ctrl+E` | Clipboard history / emoji picker |
 | `SUPER+,` | Clear notifications |
-| `SUPER+Ctrl+A/B/W/P`, `SUPER+Ctrl+Alt+D` | Dashboard panels / session menu |
+| `SUPER+Ctrl+P` | Session menu |
 | `SUPER+Return` | Terminal |
 | `SUPER+Shift+Return` | Browser |
 | `SUPER+Shift+F` | File manager |
@@ -162,7 +175,8 @@ systemctl --user start caelestia-shell.service  # bring the shell back now
 | `PRINT` | Screenshot |
 
 Everything else inherits from stock Omarchy — run `omartia-keybinds` for the
-full searchable list.
+full searchable list. Stock's panel chords (`SUPER+Ctrl+A/B/W/Alt+D`) are
+unbound; the dashboard on `SUPER+Alt+D` covers what they did.
 
 ## Menu suite
 
@@ -203,6 +217,11 @@ Honest list of what does **not** work like stock Omarchy:
   repo patches around the known drawer-killing staleness in
   [`patches/`](patches/). If Caelestia misbehaves after an upstream update,
   check whether a patch stopped applying (`install.sh` warns when so).
+- **Quattro plugins don't work**: plugin support (bar widgets, panels,
+  overlays, menus, services) shipped with quattro's `omarchy-shell` and is
+  specific to that shell — Omarchy/Hyprland themselves don't provide it. With
+  `omarchy-shell` removed there is nothing to load
+  `~/.config/omarchy/plugins/` into; Caelestia has no plugin system.
 - **`omarchy-shell` IPC callers die**: any personal script calling
   `omarchy-shell <...>` needs porting to `qs -c caelestia ipc call ...`,
   `playerctl`, or the omartia suite.
