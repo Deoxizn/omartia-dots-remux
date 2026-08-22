@@ -350,6 +350,40 @@ fi
 echo ""
 
 # ──────────────────────────────────────────────
+# Lock script + hypridle — keep remux-owned files current
+# caelestia-system-lock is referenced by the power menu, the lock keybind and
+# hypridle's lock_cmd; hypridle.conf wires idle lock/dpms/suspend to it.
+# User edits to hypridle.conf are preserved: repo version lands as .new.
+# ──────────────────────────────────────────────
+
+info "Lock / idle:"
+
+if [[ -f $REPO_DIR/scripts/caelestia-system-lock ]]; then
+  if $DRY_RUN; then
+    info "  [dry-run] would update ~/.local/bin/caelestia-system-lock"
+  else
+    install -m755 "$REPO_DIR/scripts/caelestia-system-lock" "$HOME/.local/bin/"
+    ok "  ~/.local/bin/caelestia-system-lock updated"
+  fi
+fi
+
+HYPRIDLE_SRC="$REPO_DIR/config/hypr/hypridle.conf"
+HYPRIDLE_DST="$HOME/.config/hypr/hypridle.conf"
+if [[ -f $HYPRIDLE_SRC ]]; then
+  if [[ ! -f $HYPRIDLE_DST ]]; then
+    if ! $DRY_RUN; then install -m644 "$HYPRIDLE_SRC" "$HYPRIDLE_DST"; fi
+    ok "  hypr/hypridle.conf installed"
+  elif ! cmp -s "$HYPRIDLE_SRC" "$HYPRIDLE_DST"; then
+    if ! $DRY_RUN; then install -m644 "$HYPRIDLE_SRC" "$HOME/.config/hypr/hypridle.conf.new"; fi
+    warn "  hypridle.conf differs from repo — review hypr/hypridle.conf.new (your file untouched)"
+  else
+    ok "  hypridle.conf up to date"
+  fi
+fi
+
+echo ""
+
+# ──────────────────────────────────────────────
 # Session commands — ensure SDDM-safe logout
 # loginctl terminate-user / dispatch exit kill the session in ways that
 # make sddm-helper exit non-zero; SDDM then never relaunches (black screen).

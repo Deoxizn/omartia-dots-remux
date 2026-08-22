@@ -1,0 +1,45 @@
+#!/bin/bash
+
+# caelestia-system-lock — omartia remux replacement for omarchy-system-lock.
+# Locks via the Caelestia shell's session lock (Quickshell IPC) instead of the
+# retired omarchy-shell, then replicates the rest of omarchy-system-lock:
+# keyboard layout reset, 1password lock, screensaver cleanup.
+
+# qs matches instances by display; recover it for callers without a session
+# (systemd/TTY context), same trick omarchy-shell uses.
+if [[ -z ${WAYLAND_DISPLAY:-} ]]; then
+  socket=$(ls -t "${XDG_RUNTIME_DIR:-/run/user/$UID}"/wayland-[0-9]* 2>/dev/null | grep -v '\.lock$' | head -n1)
+  [[ -n $socket ]] && export WAYLAND_DISPLAY=${socket##*/}
+fi
+
+qs -c caelestia ipc call lock lock >/dev/null
+
+# Set keyboard layout to default (first layout)
+hyprctl switchxkblayout all 0 > /dev/null 2>&1
+
+# Ensure 1password is locked. Use timeout because `1password --lock` can
+# otherwise leave a full Electron helper tree running after each lock.
+if pgrep -x "1password" >/dev/null && omarchy-cmd-present 1password; then
+  (
+    flock -n 9 || exit 0
+    timeout --kill-after=1s 3s 1password --lock >/dev/null 2>&1 || true
+  ) 9>"${XDG_RUNTIME_DIR:-/tmp}/omarchy-1password-lock.lock" &
+fi
+
+# Avoid running screensaver when locked
+pkill -x ttfx 2>/dev/null || true
+# ttfx handles SIGTERM asynchronously, so keep its terminal alive until it exits.
+timeout 1s pidwait -x ttfx 2>/dev/null || true
+pkill -f '[o]rg.omarchy.screensaver' 2>/dev/null || true
+
+# Turn the displays off shortly after locking (omartia remux). Runs for every
+# lock path (menu, keybind, hypridle), gated on still being locked so a quick
+# unlock doesn't kill the screens. hypridle's on-resume wakes them again.
+(
+  sleep 20
+  locked=$(qs -c caelestia ipc call lock isLocked 2>/dev/null)
+  if [[ $locked == *true* ]]; then
+    hyprctl dispatch 'hl.dsp.dpms({ action = "off" })' >/dev/null 2>&1
+    echo "$(date '+%F %T') dpms off after lock" >> "$HOME/.cache/caelestia-screen-off.log"
+  fi
+) >/dev/null 2>&1 &

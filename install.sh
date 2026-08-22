@@ -370,7 +370,7 @@ else
 fi
 
 # Hypr configs — only copy if not present (first install), never silently overwrite
-for f in hyprland.lua autostart.lua looknfeel.lua input.lua; do
+for f in hyprland.lua autostart.lua looknfeel.lua input.lua hypridle.conf; do
   if [[ ! -f "$HOME/.config/hypr/$f" ]]; then
     if ! $DRY_RUN; then
       cp "$REPO_DIR/config/hypr/$f" "$HOME/.config/hypr/$f"
@@ -697,11 +697,13 @@ info "Installing omartia menu suite..."
 
 if ! $DRY_RUN; then
   mkdir -p "$HOME/.local/bin"
+  install -m755 "$REPO_DIR/scripts/caelestia-system-lock" "$HOME/.local/bin/"
   for f in "$REPO_DIR"/scripts/omartia-*; do
     install -m755 "$f" "$HOME/.local/bin/"
   done
 fi
 ok "omartia menus installed (SUPER+ALT+SPACE root, SUPER+ESC power, SUPER+K keybinds)"
+ok "caelestia-system-lock installed (lock keybind + hypridle lock_cmd)"
 
 # ──────────────────────────────────────────────
 # Run initial theme sync
