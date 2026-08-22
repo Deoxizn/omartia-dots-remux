@@ -17,9 +17,11 @@ o.bind("SUPER + N", "Notifications shade", hl.dsp.global("caelestia:sidebar"))
 -- Caelestia dashboard
 o.bind("SUPER + ALT + D", "Dashboard", hl.dsp.global("caelestia:dashboard"))
 
--- Lock via Caelestia (replaces omarchy-system-lock)
+-- Lock via Caelestia (replaces omarchy-system-lock). Uses the full
+-- caelestia-system-lock script, not the bare caelestia:lock IPC — the bare IPC
+-- never turns the monitors off after locking.
 hl.unbind("SUPER + CTRL + L")
-o.bind("SUPER + CTRL + L", "Lock system", hl.dsp.global("caelestia:lock"))
+o.bind("SUPER + CTRL + L", "Lock system", "caelestia-system-lock")
 
 -- Keybinding list (fuzzel; omarchy's summons the removed omarchy-shell)
 hl.unbind("SUPER + K")
