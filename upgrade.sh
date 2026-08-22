@@ -530,6 +530,25 @@ unset BRAND_STOCK
 echo ""
 
 # ──────────────────────────────────────────────
+# CachyOS BORE kernel — informational only. Installing the kernel is an
+# opt-in install.sh decision; here we just flag a missing default entry.
+# ──────────────────────────────────────────────
+
+info "Kernel:"
+if pacman -Q linux-cachyos-bore &>/dev/null; then
+  if grep -q '^DEFAULT_ENTRY=' /etc/limine-entry-tool.conf 2>/dev/null; then
+    ok "BORE kernel present, default boot entry configured"
+  else
+    warn "BORE kernel present but stock kernel still auto-boots first"
+    warn "  fix with: DEFAULT_ENTRY=\"Omarchy/linux-cachyos-bore\" in /etc/limine-entry-tool.conf, then 'sudo limine-update'"
+  fi
+else
+  ok "stock Arch kernel (opt into BORE via install.sh --cachyos-kernel)"
+fi
+
+echo ""
+
+# ──────────────────────────────────────────────
 # Session commands — ensure SDDM-safe logout
 # loginctl terminate-user / dispatch exit kill the session in ways that
 # make sddm-helper exit non-zero; SDDM then never relaunches (black screen).
