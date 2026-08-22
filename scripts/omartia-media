@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+# omartia:media=Control the active MPRIS media player
+# omartia:args=[play-pause|play|pause|next|previous|stop]
+# omartia:examples=omartia-media play-pause | omartia-media next
+#
+# Targets whichever player is currently Playing; falls back to the first
+# player when nothing is. Works with any MPRIS client (Spotify, browsers,
+# mpv, strawberry, vesktop, ...) instead of hardcoding one app.
+
+set -u
+
+cmd="${1:-play-pause}"
+
+mapfile -t players < <(playerctl -s -l 2>/dev/null)
+((${#players[@]})) || exit 0
+
+target=""
+for p in "${players[@]}"; do
+	if [[ $(playerctl -p "$p" status 2>/dev/null) == "Playing" ]]; then
+		target="$p"
+		break
+	fi
+done
+
+[[ -z $target ]] && target="${players[0]}"
+exec playerctl -p "$target" "$cmd"

@@ -29,3 +29,53 @@ o.bind("SUPER + K", "Keybindings", "omartia-keybinds")
 
 -- Power menu (fuzzel)
 o.bind("SUPER + ESCAPE", "Power menu", "omartia-power")
+
+-- ── Sweep: replace Omarchy defaults that call the removed omarchy-shell ──
+-- Stock Omarchy routes these keys into `omarchy-shell`, which this remux
+-- removes — without this block every one of them is a silent no-op.
+-- Replaced with omartia-media (universal MPRIS) and Caelestia equivalents.
+
+-- Media keys -> omartia-media: targets whichever MPRIS player is currently
+-- Playing, falls back to the first player. Works with any app.
+hl.unbind("XF86AudioPlay")
+hl.unbind("XF86AudioPause")
+hl.unbind("XF86AudioNext")
+hl.unbind("XF86AudioPrev")
+hl.unbind("ALT + XF86AudioPlay")
+hl.unbind("ALT + SHIFT + XF86AudioPlay")
+o.bind("XF86AudioPlay", "Play/Pause", "omartia-media play-pause", { locked = true })
+o.bind("XF86AudioPause", "Pause", "omartia-media pause", { locked = true })
+o.bind("XF86AudioNext", "Next track", "omartia-media next", { locked = true })
+o.bind("XF86AudioPrev", "Previous track", "omartia-media previous", { locked = true })
+o.bind("ALT + XF86AudioPlay", "Next track", "omartia-media next", { locked = true })
+o.bind("ALT + SHIFT + XF86AudioPlay", "Previous track", "omartia-media previous", { locked = true })
+
+-- Clipboard & emoji panels -> caelestia CLI
+hl.unbind("SUPER + CTRL + V")
+o.bind("SUPER + CTRL + V", "Clipboard manager", "caelestia clipboard")
+hl.unbind("SUPER + CTRL + E")
+o.bind("SUPER + CTRL + E", "Emojis", "caelestia emoji")
+
+-- Notification dismissal -> caelestia notifs IPC. Caelestia has no per-notif
+-- dismiss / history / invoke-last IPC, so those Omarchy keys stay unbound.
+hl.unbind("SUPER + comma")
+o.bind("SUPER + comma", "Clear notifications", "qs -c caelestia ipc call notifs clear")
+
+-- omarchy control panels -> Caelestia dashboard / session menu.
+-- SUPER+CTRL+D display panel intentionally NOT rebound: it commonly hosts an
+-- app binding of your own (e.g. Vesktop).
+for _, key in ipairs({ "SUPER + CTRL + A", "SUPER + CTRL + B", "SUPER + CTRL + W", "SUPER + CTRL + ALT + D" }) do
+    hl.unbind(key)
+end
+o.bind("SUPER + CTRL + A", "Audio panel", hl.dsp.global("caelestia:dashboard"))
+o.bind("SUPER + CTRL + B", "Bluetooth panel", hl.dsp.global("caelestia:dashboard"))
+o.bind("SUPER + CTRL + W", "Network panel", hl.dsp.global("caelestia:dashboard"))
+o.bind("SUPER + CTRL + ALT + D", "Calendar panel", hl.dsp.global("caelestia:dashboard"))
+hl.unbind("SUPER + CTRL + P")
+o.bind("SUPER + CTRL + P", "Power panel", hl.dsp.global("caelestia:session"))
+
+-- Dead bar-panel chords (omarchy-shell togglePanelAt) — Caelestia's bar has
+-- no panel-at-index IPC; unbind entirely so they don't shadow real keys.
+for panel = 1, 9 do
+    hl.unbind("SUPER + CTRL + code:" .. tostring(panel + 9))
+end

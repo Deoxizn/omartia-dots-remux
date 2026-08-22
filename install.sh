@@ -227,6 +227,28 @@ fi
 
 CAELESTIA_DIR="$HOME/.config/quickshell/caelestia"
 
+# Apply remux patches to the Caelestia Shell checkout. Kept as uncommitted
+# working-tree changes so upstream `git pull --ff-only` keeps working.
+apply_caelestia_patches() {
+  local p
+  for p in "$REPO_DIR"/patches/*.patch; do
+    [[ -e $p ]] || return 0
+    if git -C "$CAELESTIA_DIR" apply --check "$p" 2>/dev/null; then
+      if $DRY_RUN; then
+        info "[dry-run] would apply caelestia patch: $(basename "$p")"
+      else
+        git -C "$CAELESTIA_DIR" apply "$p" \
+          && ok "  caelestia patch applied: $(basename "$p")" \
+          || warn "  caelestia patch failed to apply: $(basename "$p")"
+      fi
+    elif git -C "$CAELESTIA_DIR" apply --reverse --check "$p" 2>/dev/null; then
+      info "  caelestia patch already applied: $(basename "$p")"
+    else
+      warn "  caelestia patch no longer fits upstream ($(basename "$p")) — skipping"
+    fi
+  done
+}
+
 if [[ -d "$CAELESTIA_DIR" ]]; then
   warn "Caelestia Shell already installed at $CAELESTIA_DIR"
   if $DRY_RUN; then
@@ -235,6 +257,7 @@ if [[ -d "$CAELESTIA_DIR" ]]; then
     info "Updating Caelestia Shell..."
     cd "$CAELESTIA_DIR"
     git pull --ff-only || warn "Git pull failed — using existing version"
+    apply_caelestia_patches
     cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ \
       || { err "cmake configure failed"; err "Hint: this may be a quickshell version issue"; err "If on quickshell-git, try: sudo pacman -S quickshell"; exit 1; }
     cmake --build build \
@@ -253,6 +276,7 @@ else
     git clone https://github.com/caelestia-dots/shell.git caelestia \
       || { err "git clone failed — check your network connection"; exit 1; }
     cd caelestia
+    apply_caelestia_patches
     cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ \
       || { err "cmake configure failed"; err "Hint: this may be a quickshell version issue"; err "If on quickshell-git, try: sudo pacman -S quickshell"; exit 1; }
     cmake --build build \

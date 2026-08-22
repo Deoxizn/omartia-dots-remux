@@ -1,0 +1,26 @@
+diff --git i/services/Hypr.qml w/services/Hypr.qml
+index 09db1368..aa8c9cce 100644
+--- i/services/Hypr.qml
++++ w/services/Hypr.qml
+@@ -152,6 +152,21 @@ Singleton {
+         target: Hyprland
+     }
+ 
++    // Self-heal: event-driven refreshes miss updates across suspend/DPMS/multi-monitor
++    // transitions, leaving stale window->workspace memberships that break
++    // fullscreen detection. Periodically resync from the authoritative IPC state.
++    Timer {
++        interval: 10000
++        running: true
++        repeat: true
++        triggeredOnStart: false
++        onTriggered: {
++            Hyprland.refreshToplevels();
++            Hyprland.refreshWorkspaces();
++            Hyprland.refreshMonitors();
++        }
++    }
++
+     Connections {
+         function onLastIpcObjectChanged(): void {
+             const specialName = root.focusedMonitor.lastIpcObject.specialWorkspace.name;
