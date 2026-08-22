@@ -827,7 +827,7 @@ if ! $DRY_RUN; then
     fi
     if [[ ${NEEDS_INITRD:-false} == true ]]; then
       info "  Rebuilding initramfs (splash lives in there)..."
-      run_sudo mkinitcpio -P
+      run_sudo limine-mkinitcpio
     fi
     ok "Plymouth splash: stellarchy theme active"
   else

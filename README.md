@@ -127,7 +127,7 @@ The remux ships its own identity on top of Omarchy. What lands where:
 | Boot splash | `stellarchy` plymouth theme set as default (sparkle logo, Tokyo Night palette) | Opt-in via `./upgrade.sh --plymouth`; afterwards kept refreshed automatically |
 | Script headers / menu About entry | Included | Synced with the menu suite |
 
-Revert the splash anytime: `sudo plymouth-set-default-theme omarchy && sudo mkinitcpio -P`.
+Revert the splash anytime: `sudo plymouth-set-default-theme omarchy && sudo limine-mkinitcpio`.
 
 ### CachyOS BORE kernel (opt-in)
 

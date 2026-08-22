@@ -627,7 +627,7 @@ elif [[ -d $PLYMOUTH_DST ]] || grep -q '^Theme=stellarchy' /etc/plymouth/plymout
     fi
     if [[ ${NEEDS_INITRD:-false} == true ]]; then
       info "  rebuilding initramfs..."
-      sudo mkinitcpio -P
+      sudo limine-mkinitcpio
       ok "  stellarchy splash refreshed"
     else
       ok "  stellarchy splash up to date"
@@ -652,7 +652,7 @@ else
     done
     sudo plymouth-set-default-theme stellarchy
     info "  rebuilding initramfs..."
-    sudo mkinitcpio -P
+    sudo limine-mkinitcpio
     ok "  stellarchy splash adopted"
   fi
 fi
