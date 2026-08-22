@@ -554,7 +554,7 @@ setup_chaotic_kernel() {
       info "  adding chaotic-aur repo..."
       rr pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
       rr pacman-key --lsign-key 3056513887B78AEB
-      rr bash -c "pacman -U --noconfirm 'https://cdn.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'"
+      rr bash -c "pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'"
       [[ -f /etc/pacman.conf.omartia-backup ]] || rr cp /etc/pacman.conf /etc/pacman.conf.omartia-backup
       printf '\n[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist\n' | { $DRY_RUN && info "  [dry-run] would append [chaotic-aur] to /etc/pacman.conf" || sudo tee -a /etc/pacman.conf >/dev/null; }
     else
