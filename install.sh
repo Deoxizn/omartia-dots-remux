@@ -790,6 +790,54 @@ done
 unset BRAND_STOCK
 
 # ──────────────────────────────────────────────
+# Plymouth splash — stellarchy theme.
+# Own theme dir (package updates can't touch it) holding our logo plus
+# copies of Omarchy's small support PNGs; ScriptFile stays pointed at
+# Omarchy's script so upstream fixes flow through. Initrd rebuilt only
+# when something actually changed (the splash loads from initramfs).
+# ──────────────────────────────────────────────
+
+info "Plymouth splash..."
+PLYMOUTH_SRC="$REPO_DIR/branding/plymouth"
+PLYMOUTH_DST="/usr/share/plymouth/themes/stellarchy"
+OMARCHY_PLY="/usr/share/plymouth/themes/omarchy"
+
+if ! $DRY_RUN; then
+  NEEDS_INITRD=false
+  if [[ -d $OMARCHY_PLY ]]; then
+    run_sudo mkdir -p "$PLYMOUTH_DST"
+    for pair in "stellarchy-logo.png:logo.png" "stellarchy.plymouth:stellarchy.plymouth"; do
+      src="$PLYMOUTH_SRC/${pair%%:*}"
+      dst="$PLYMOUTH_DST/${pair##*:}"
+      if [[ ! -f $dst ]] || ! cmp -s "$src" "$dst"; then
+        run_sudo cp "$src" "$dst"
+        NEEDS_INITRD=true
+      fi
+    done
+    # Support art (lock/bullets/progress) mirrors Omarchy's; refreshed on drift
+    for f in bullet.png entry.png lock.png progress_bar.png progress_box.png; do
+      if [[ -f $OMARCHY_PLY/$f ]] && ! cmp -s "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"; then
+        run_sudo cp "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"
+        NEEDS_INITRD=true
+      fi
+    done
+    if ! grep -q '^Theme=stellarchy' /etc/plymouth/plymouthd.conf 2>/dev/null; then
+      run_sudo plymouth-set-default-theme stellarchy
+      NEEDS_INITRD=true
+    fi
+    if [[ ${NEEDS_INITRD:-false} == true ]]; then
+      info "  Rebuilding initramfs (splash lives in there)..."
+      run_sudo mkinitcpio -P
+    fi
+    ok "Plymouth splash: stellarchy theme active"
+  else
+    warn "  Omarchy plymouth theme not found — skipping (splash stays stock)"
+  fi
+else
+  info "[dry-run] would install stellarchy plymouth theme + set default + rebuild initrd"
+fi
+
+# ──────────────────────────────────────────────
 # Install omartia fuzzel menu suite
 # ──────────────────────────────────────────────
 

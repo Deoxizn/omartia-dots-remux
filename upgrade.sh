@@ -549,6 +549,79 @@ fi
 echo ""
 
 # ──────────────────────────────────────────────
+# Plymouth splash — stellarchy theme. Refreshes assets when already
+# active; offers adoption once on systems still on the stock splash.
+# ──────────────────────────────────────────────
+
+info "Plymouth splash:"
+PLYMOUTH_SRC="$REPO_DIR/branding/plymouth"
+PLYMOUTH_DST="/usr/share/plymouth/themes/stellarchy"
+OMARCHY_PLY="/usr/share/plymouth/themes/omarchy"
+
+if [[ ! -d $OMARCHY_PLY ]]; then
+  warn "  Omarchy plymouth theme not found — skipping"
+elif [[ -d $PLYMOUTH_DST ]] || grep -q '^Theme=stellarchy' /etc/plymouth/plymouthd.conf 2>/dev/null; then
+  if $DRY_RUN; then
+    info "  [dry-run] would refresh stellarchy theme assets"
+  else
+    NEEDS_INITRD=false
+    sudo mkdir -p "$PLYMOUTH_DST"
+    for pair in "stellarchy-logo.png:logo.png" "stellarchy.plymouth:stellarchy.plymouth"; do
+      src="$PLYMOUTH_SRC/${pair%%:*}"
+      dst="$PLYMOUTH_DST/${pair##*:}"
+      if [[ ! -f $dst ]] || ! cmp -s "$src" "$dst"; then
+        sudo cp "$src" "$dst"
+        NEEDS_INITRD=true
+      fi
+    done
+    for f in bullet.png entry.png lock.png progress_bar.png progress_box.png; do
+      if [[ -f $OMARCHY_PLY/$f ]] && ! cmp -s "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"; then
+        sudo cp "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"
+        NEEDS_INITRD=true
+      fi
+    done
+    if ! grep -q '^Theme=stellarchy' /etc/plymouth/plymouthd.conf 2>/dev/null; then
+      sudo plymouth-set-default-theme stellarchy
+      NEEDS_INITRD=true
+    fi
+    if [[ ${NEEDS_INITRD:-false} == true ]]; then
+      info "  rebuilding initramfs..."
+      sudo mkinitcpio -P
+      ok "  stellarchy splash refreshed"
+    else
+      ok "  stellarchy splash up to date"
+    fi
+  fi
+else
+  if $DRY_RUN; then
+    info "  [dry-run] would offer adoption of the stellarchy splash"
+  else
+    read -rp "  Adopt the Stellarchy boot splash? [Y/n] " REPLY
+    if [[ "$REPLY" =~ ^[Nn]$ ]]; then
+      ok "  keeping stock splash"
+    else
+      NEEDS_INITRD=false
+      sudo mkdir -p "$PLYMOUTH_DST"
+      for pair in "stellarchy-logo.png:logo.png" "stellarchy.plymouth:stellarchy.plymouth"; do
+        src="$PLYMOUTH_SRC/${pair%%:*}"
+        dst="$PLYMOUTH_DST/${pair##*:}"
+        sudo cp "$src" "$dst"
+        NEEDS_INITRD=true
+      done
+      for f in bullet.png entry.png lock.png progress_bar.png progress_box.png; do
+        [[ -f $OMARCHY_PLY/$f ]] && ! cmp -s "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f" && { sudo cp "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"; }
+      done
+      sudo plymouth-set-default-theme stellarchy
+      info "  rebuilding initramfs..."
+      sudo mkinitcpio -P
+      ok "  stellarchy splash adopted"
+    fi
+  fi
+fi
+
+echo ""
+
+# ──────────────────────────────────────────────
 # Session commands — ensure SDDM-safe logout
 # loginctl terminate-user / dispatch exit kill the session in ways that
 # make sddm-helper exit non-zero; SDDM then never relaunches (black screen).
