@@ -478,6 +478,58 @@ fi
 echo ""
 
 # ──────────────────────────────────────────────
+# Branding (screensaver.txt / about.txt) — Stellarchy wordmark.
+# Installs when missing, replaces files still identical to Omarchy's stock
+# art, and refreshes older omartia deploys. Genuine user customization is
+# never touched.
+# ──────────────────────────────────────────────
+
+info "Branding:"
+BRANDING_DIR="$HOME/.config/omarchy/branding"
+declare -A BRAND_STOCK=(
+  ["screensaver.txt"]="/usr/share/omarchy/logo.txt"
+  ["about.txt"]="/usr/share/omarchy/icon.txt"
+)
+for f in screensaver.txt about.txt; do
+  src="$REPO_DIR/branding/$f"
+  dst="$BRANDING_DIR/$f"
+  stock="${BRAND_STOCK[$f]}"
+  if [[ ! -f $src ]]; then
+    warn "  $f missing from repo — skipping"
+    continue
+  fi
+  mkdir -p "$BRANDING_DIR"
+  if [[ ! -f $dst ]]; then
+    if ! $DRY_RUN; then cp "$src" "$dst"; fi
+    ok "  $f installed"
+    changed=$((changed+1))
+  elif cmp -s "$dst" "$src"; then
+    ok "  $f up to date"
+  elif [[ -n $stock && -f $stock ]] && cmp -s "$dst" "$stock"; then
+    if $DRY_RUN; then
+      info "  [dry-run] would replace stock $f with Stellarchy art"
+    else
+      cp "$src" "$dst"
+    fi
+    ok "  $f rebranded (was stock Omarchy art)"
+    changed=$((changed+1))
+  elif grep -q 'Stellarchy' "$dst"; then
+    if $DRY_RUN; then
+      info "  [dry-run] would refresh $f to current Stellarchy art"
+    else
+      cp "$src" "$dst"
+    fi
+    ok "  $f refreshed (older omartia version)"
+    changed=$((changed+1))
+  else
+    ok "  $f customized — left untouched"
+  fi
+done
+unset BRAND_STOCK
+
+echo ""
+
+# ──────────────────────────────────────────────
 # Session commands — ensure SDDM-safe logout
 # loginctl terminate-user / dispatch exit kill the session in ways that
 # make sddm-helper exit non-zero; SDDM then never relaunches (black screen).

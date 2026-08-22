@@ -757,6 +757,37 @@ else
 fi
 
 # ──────────────────────────────────────────────
+# Branding (screensaver.txt / about.txt) — Stellarchy wordmark.
+# Installs when missing or still stock Omarchy art; never overwrites
+# genuine user customization.
+# ──────────────────────────────────────────────
+
+info "Branding..."
+BRANDING_DIR="$HOME/.config/omarchy/branding"
+declare -A BRAND_STOCK=(
+  ["screensaver.txt"]="/usr/share/omarchy/logo.txt"
+  ["about.txt"]="/usr/share/omarchy/icon.txt"
+)
+for f in screensaver.txt about.txt; do
+  src="$REPO_DIR/branding/$f"
+  dst="$BRANDING_DIR/$f"
+  stock="${BRAND_STOCK[$f]}"
+  [[ -f $src ]] || continue
+  if [[ ! -f $dst ]] || { [[ -n $stock && -f $stock ]] && cmp -s "$dst" "$stock"; }; then
+    if ! $DRY_RUN; then
+      mkdir -p "$BRANDING_DIR"
+      cp "$src" "$dst"
+    fi
+    ok "  branding/$f installed"
+  elif cmp -s "$dst" "$src" || grep -q 'Stellarchy' "$dst"; then
+    ok "  branding/$f already Stellarchy"
+  else
+    warn "  branding/$f customized — left untouched"
+  fi
+done
+unset BRAND_STOCK
+
+# ──────────────────────────────────────────────
 # Install omartia fuzzel menu suite
 # ──────────────────────────────────────────────
 
