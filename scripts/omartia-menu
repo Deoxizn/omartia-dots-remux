@@ -11,8 +11,9 @@ choice=$(
     'Config' \
     'Defaults' \
     'Restart' \
-    'Session' |
-    omartia-fuzzel --dmenu --prompt='Menu: ' --width=22 --lines=8
+    'Session' \
+    'About' |
+    omartia-fuzzel --dmenu --prompt='Menu: ' --width=22 --lines=9
 )
 
 case "$choice" in
@@ -24,4 +25,5 @@ case "$choice" in
   Defaults)    exec omartia-defaults ;;
   Restart)     exec omartia-restart ;;
   Session)     exec hyprctl dispatch global caelestia:session ;;
+  About)       exec omarchy-launch-about ;;
 esac
