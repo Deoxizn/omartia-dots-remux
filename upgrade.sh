@@ -18,18 +18,26 @@ REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 DRY_RUN=false
 NO_PULL=false
 ADOPT_LUA=false
+BORE=false
+PLYMOUTH=false
 
 for arg in "$@"; do
   case "$arg" in
     -n|--dry-run) DRY_RUN=true ;;
     --no-pull) NO_PULL=true ;;
     --adopt-lua) ADOPT_LUA=true ;;
+    --bore) BORE=true ;;
+    --plymouth) PLYMOUTH=true ;;
     -h|--help)
-      echo "Usage: ./upgrade.sh [--dry-run] [--no-pull] [--adopt-lua]"
+      echo "Usage: ./upgrade.sh [--dry-run] [--no-pull] [--adopt-lua] [--bore] [--plymouth]"
       echo "  --dry-run    show what would change without touching anything"
       echo "  --no-pull    skip git pull (sync from current checkout)"
       echo "  --adopt-lua  adopt repo versions of hypr lua configs that have no"
       echo "               sync history (your current file is backed up first)"
+      echo "  --bore       opt into the CachyOS BORE kernel: adds chaotic-aur, installs"
+      echo "               linux-cachyos-bore + headers (prebuilt), makes it the default"
+      echo "               Limine entry. Stock Arch kernel stays installed as fallback."
+      echo "  --plymouth   adopt the Stellarchy boot splash (rebuilds initramfs)."
       exit 0 ;;
   esac
 done
@@ -530,20 +538,53 @@ unset BRAND_STOCK
 echo ""
 
 # ──────────────────────────────────────────────
-# CachyOS BORE kernel — informational only. Installing the kernel is an
-# opt-in install.sh decision; here we just flag a missing default entry.
+# CachyOS BORE kernel — opt-in via --bore. Stock kernel is never removed;
+# DEFAULT_ENTRY is name-based so it survives limine.conf regeneration.
 # ──────────────────────────────────────────────
 
+setup_chaotic_kernel() {
+  rr() { # root runner with dry-run support
+    if $DRY_RUN; then info "  [dry-run] would run: sudo $*"; else sudo "$@"; fi
+  }
+
+  if pacman -Q linux-cachyos-bore &>/dev/null; then
+    ok "  BORE kernel already installed"
+  else
+    if ! grep -q '^\[chaotic-aur\]' /etc/pacman.conf; then
+      info "  adding chaotic-aur repo..."
+      rr pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
+      rr pacman-key --lsign-key 3056513887B78AEB
+      rr bash -c "pacman -U --noconfirm 'https://cdn.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'"
+      [[ -f /etc/pacman.conf.omartia-backup ]] || rr cp /etc/pacman.conf /etc/pacman.conf.omartia-backup
+      printf '\n[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist\n' | { $DRY_RUN && info "  [dry-run] would append [chaotic-aur] to /etc/pacman.conf" || sudo tee -a /etc/pacman.conf >/dev/null; }
+    else
+      ok "  chaotic-aur already configured"
+    fi
+    rr pacman -Sy --noconfirm
+    rr pacman -S --ask 4 --noconfirm linux-cachyos-bore linux-cachyos-bore-headers
+  fi
+
+  if grep -q '^DEFAULT_ENTRY=' /etc/limine-entry-tool.conf 2>/dev/null; then
+    rr sed -i 's|^DEFAULT_ENTRY=.*|DEFAULT_ENTRY="Omarchy/linux-cachyos-bore"|' /etc/limine-entry-tool.conf
+  else
+    printf 'DEFAULT_ENTRY="Omarchy/linux-cachyos-bore"\n' | { $DRY_RUN && info "  [dry-run] would set DEFAULT_ENTRY in /etc/limine-entry-tool.conf" || sudo tee -a /etc/limine-entry-tool.conf >/dev/null; }
+  fi
+  rr limine-update
+  ok "  BORE is now the default boot entry (stock kernel kept as fallback)"
+}
+
 info "Kernel:"
-if pacman -Q linux-cachyos-bore &>/dev/null; then
+if $BORE; then
+  setup_chaotic_kernel
+elif pacman -Q linux-cachyos-bore &>/dev/null; then
   if grep -q '^DEFAULT_ENTRY=' /etc/limine-entry-tool.conf 2>/dev/null; then
     ok "BORE kernel present, default boot entry configured"
   else
     warn "BORE kernel present but stock kernel still auto-boots first"
-    warn "  fix with: DEFAULT_ENTRY=\"Omarchy/linux-cachyos-bore\" in /etc/limine-entry-tool.conf, then 'sudo limine-update'"
+    warn "  fix with: ./upgrade.sh --bore"
   fi
 else
-  ok "stock Arch kernel (opt into BORE via install.sh --cachyos-kernel)"
+  ok "stock Arch kernel (opt in anytime: ./upgrade.sh --bore)"
 fi
 
 echo ""
@@ -593,29 +634,26 @@ elif [[ -d $PLYMOUTH_DST ]] || grep -q '^Theme=stellarchy' /etc/plymouth/plymout
     fi
   fi
 else
-  if $DRY_RUN; then
-    info "  [dry-run] would offer adoption of the stellarchy splash"
+  if ! $PLYMOUTH; then
+    info "stock splash active — adopt anytime with: ./upgrade.sh --plymouth"
+  elif $DRY_RUN; then
+    info "  [dry-run] would adopt the stellarchy splash (rebuilds initramfs)"
   else
-    read -rp "  Adopt the Stellarchy boot splash? [Y/n] " REPLY
-    if [[ "$REPLY" =~ ^[Nn]$ ]]; then
-      ok "  keeping stock splash"
-    else
-      NEEDS_INITRD=false
-      sudo mkdir -p "$PLYMOUTH_DST"
-      for pair in "stellarchy-logo.png:logo.png" "stellarchy.plymouth:stellarchy.plymouth"; do
-        src="$PLYMOUTH_SRC/${pair%%:*}"
-        dst="$PLYMOUTH_DST/${pair##*:}"
-        sudo cp "$src" "$dst"
-        NEEDS_INITRD=true
-      done
-      for f in bullet.png entry.png lock.png progress_bar.png progress_box.png; do
-        [[ -f $OMARCHY_PLY/$f ]] && ! cmp -s "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f" && { sudo cp "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"; }
-      done
-      sudo plymouth-set-default-theme stellarchy
-      info "  rebuilding initramfs..."
-      sudo mkinitcpio -P
-      ok "  stellarchy splash adopted"
-    fi
+    NEEDS_INITRD=false
+    sudo mkdir -p "$PLYMOUTH_DST"
+    for pair in "stellarchy-logo.png:logo.png" "stellarchy.plymouth:stellarchy.plymouth"; do
+      src="$PLYMOUTH_SRC/${pair%%:*}"
+      dst="$PLYMOUTH_DST/${pair##*:}"
+      sudo cp "$src" "$dst"
+      NEEDS_INITRD=true
+    done
+    for f in bullet.png entry.png lock.png progress_bar.png progress_box.png; do
+      [[ -f $OMARCHY_PLY/$f ]] && ! cmp -s "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f" && { sudo cp "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"; }
+    done
+    sudo plymouth-set-default-theme stellarchy
+    info "  rebuilding initramfs..."
+    sudo mkinitcpio -P
+    ok "  stellarchy splash adopted"
   fi
 fi
 

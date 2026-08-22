@@ -87,9 +87,10 @@ cd omartia-dots-remux
 
 Use `./install.sh -y` to skip confirmation prompts.
 
-**Test first without making changes:**
+**Optional flags:**
 ```bash
-./install.sh --dry-run
+./install.sh --cachyos-kernel   # opt into the CachyOS BORE kernel (see below)
+./install.sh --dry-run          # preview everything without touching anything
 ```
 
 **Already running the remux?** Don't reinstall — just upgrade:
@@ -107,6 +108,42 @@ dead), and enforces the SDDM-safe `omarchy-system-logout`.
 else is reported as drift. Add `--dry-run` to preview, or `--adopt-lua` to
 adopt repo versions of lua files that have no merge history (yours is backed
 up first).
+
+**Upgrade flags for opt-in extras:**
+```bash
+./upgrade.sh --bore       # switch to the CachyOS BORE kernel (chaotic-aur, prebuilt)
+./upgrade.sh --plymouth   # adopt the Stellarchy boot splash (rebuilds initramfs)
+```
+
+## Stellarchy branding
+
+The remux ships its own identity on top of Omarchy. What lands where:
+
+| Touchpoint | New installs | Existing installs (`./upgrade.sh`) |
+|---|---|---|
+| Idle screensaver art | Installed | Installed if missing or still stock Omarchy art; **your own customization is never overwritten** |
+| About logo (`about.txt`) | Installed | Same stock-detection rule |
+| fastfetch OS line | If you have no own config, one is seeded from `/etc/fastfetch` with a `Stellarchy` OS line; custom configs are untouched | Same |
+| Boot splash | `stellarchy` plymouth theme set as default (sparkle logo, Tokyo Night palette) | Opt-in via `./upgrade.sh --plymouth`; afterwards kept refreshed automatically |
+| Script headers / menu About entry | Included | Synced with the menu suite |
+
+Revert the splash anytime: `sudo plymouth-set-default-theme omarchy && sudo mkinitcpio -P`.
+
+### CachyOS BORE kernel (opt-in)
+
+BORE tunes CPU scheduling for desktop/game interactivity — a good fit for
+gaming rigs, pointless for rarely-used machines. It comes prebuilt from
+[chaotic-aur](https://aur.chaotic.cx), so no compiling.
+
+- **New installs:** answer the prompt, or pass `--cachyos-kernel`
+- **Existing installs:** `./upgrade.sh --bore`
+
+What it does: adds chaotic-aur to pacman (backing up `pacman.conf` first),
+installs `linux-cachyos-bore` + headers (DKMS modules like NVIDIA rebuild
+automatically), and makes it the default Limine boot entry via a name-based
+`DEFAULT_ENTRY` that survives config regeneration. The stock Arch kernel is
+never removed — if anything ever misbehaves, pick it in the Limine menu and
+revert with one `DEFAULT_ENTRY` edit + `sudo limine-update`.
 
 The installer will:
 1. Install build dependencies (cmake, ninja, qt6, etc.)
