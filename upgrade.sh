@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+# ███████╗████████╗███████╗██╗     ██╗      █████╗ ██████╗  ██████╗██╗  ██╗██╗   ██╗
+# ██╔════╝╚══██╔══╝██╔════╝██║     ██║     ██╔══██╗██╔══██╗██╔════╝██║  ██║╚██╗ ██╔╝
+# ███████╗   ██║   █████╗  ██║     ██║     ███████║██████╔╝██║     ███████║ ╚████╔╝
+# ╚════██║   ██║   ██╔══╝  ██║     ██║     ██╔══██║██╔══██╗██║     ██╔══██║  ╚██╔╝
+# ███████║   ██║   ███████╗███████╗███████╗██║  ██║██║  ██║╚██████╗██║  ██║   ██║
+# ╚══════╝   ╚═╝   ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝
+
 # omartia-dots-remux upgrader
 # Syncs an existing remux install with the repo: refreshes menu scripts,
 # theme bridge hook, update guard, merges lua config updates (personal
@@ -262,6 +269,68 @@ fi
 echo ""
 
 # ──────────────────────────────────────────────
+# Corner rounding (looknfeel.lua) — managed block overlay
+# Scale-aware rounding matching Caelestia panels (~12 logical px on the
+# highest-scale monitor), recomputed on monitor hotplug so mixed-DPI
+# multi-monitor setups and different laptops all land correctly.
+# Appended if missing, refreshed in place when the repo updates it.
+# Personal code elsewhere in looknfeel.lua stays untouched.
+# ──────────────────────────────────────────────
+
+LOOKNFEEL_FILE="$HOME/.config/hypr/looknfeel.lua"
+REPO_LOOKNFEEL="$REPO_DIR/config/hypr/looknfeel.lua"
+info "Corner rounding:"
+
+ROUND_BEGIN="-- BEGIN omartia-dots-remux managed rounding (auto-synced by upgrade.sh)"
+ROUND_END="-- END omartia-dots-remux managed rounding"
+
+if [[ ! -f $REPO_LOOKNFEEL ]]; then
+  warn "  repo looknfeel.lua not found — skipping"
+elif [[ ! -f $LOOKNFEEL_FILE ]]; then
+  ok "  no live looknfeel.lua — the lua merge section installs one"
+else
+  round_block="$(mktemp)"
+  awk -v b="$ROUND_BEGIN" -v e="$ROUND_END" '$0 == b {f = 1} f {print} $0 == e {exit}' "$REPO_LOOKNFEEL" > "$round_block"
+
+  rb_line=$(grep -nF -e "$ROUND_BEGIN" "$LOOKNFEEL_FILE" | head -1 | cut -d: -f1) || true
+  re_line=$(grep -nF -e "$ROUND_END" "$LOOKNFEEL_FILE" | head -1 | cut -d: -f1) || true
+
+  if [[ -n $rb_line && -n $re_line ]]; then
+    old_block="$(mktemp)"
+    sed -n "${rb_line},${re_line}p" "$LOOKNFEEL_FILE" > "$old_block"
+    if cmp -s "$old_block" "$round_block"; then
+      ok "  managed rounding block up to date"
+    elif $DRY_RUN; then
+      info "  [dry-run] would update managed rounding block"
+      changed=$((changed+1))
+    else
+      tmp="$(mktemp)"
+      { head -n $((rb_line - 1)) "$LOOKNFEEL_FILE"; cat "$round_block"; tail -n +"$((re_line + 1))" "$LOOKNFEEL_FILE"; } > "$tmp"
+      mv "$tmp" "$LOOKNFEEL_FILE"
+      ok "  managed rounding block updated — run 'hyprctl reload' to apply"
+      changed=$((changed+1))
+    fi
+    rm -f "$old_block"
+  elif [[ -n $rb_line || -n $re_line ]]; then
+    warn "  malformed managed rounding block (only one marker found) — left untouched"
+  elif grep -q "apply_rounding" "$LOOKNFEEL_FILE"; then
+    warn "  unmanaged rounding code found in looknfeel.lua — left untouched"
+    warn "    (wrap it in the managed markers yourself, or delete it and re-run upgrade.sh)"
+  else
+    if $DRY_RUN; then
+      info "  [dry-run] would append managed rounding block ($(wc -l < "$round_block") lines) to hypr/looknfeel.lua"
+    else
+      { echo ""; cat "$round_block"; } >> "$LOOKNFEEL_FILE"
+      ok "  managed rounding block appended — run 'hyprctl reload' to apply"
+    fi
+    changed=$((changed+1))
+  fi
+  rm -f "$round_block"
+fi
+
+echo ""
+
+# ──────────────────────────────────────────────
 # Keybinds (bindings.lua) — managed block overlay
 # Your personal lines stay untouched above the managed block; the full repo
 # keybind set is appended inside it. Hyprland applies binds top-down with
@@ -379,6 +448,31 @@ if [[ -f $HYPRIDLE_SRC ]]; then
   else
     ok "  hypridle.conf up to date"
   fi
+fi
+
+echo ""
+
+# ──────────────────────────────────────────────
+# Fastfetch branding (Stellarchy OS line) — seed once if user never
+# customized fastfetch. Mirrors install.sh; never touches an existing config.
+# ──────────────────────────────────────────────
+
+FF_DIR="$HOME/.config/fastfetch"
+info "Fastfetch branding:"
+if [[ -f $FF_DIR/config.jsonc ]]; then
+  ok "  custom fastfetch config present — left untouched"
+elif [[ ! -f /etc/fastfetch/config.jsonc ]]; then
+  warn "  /etc/fastfetch/config.jsonc not found — skipping"
+else
+  if $DRY_RUN; then
+    info "  [dry-run] would seed ~/.config/fastfetch/config.jsonc (system default + Stellarchy line)"
+  else
+    mkdir -p "$FF_DIR"
+    cp /etc/fastfetch/config.jsonc "$FF_DIR/config.jsonc"
+    sed -i 's/Omarchy \$version/Stellarchy (Omarchy \$version)/' "$FF_DIR/config.jsonc"
+    ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy line)"
+  fi
+  changed=$((changed+1))
 fi
 
 echo ""

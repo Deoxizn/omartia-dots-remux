@@ -1,4 +1,11 @@
 #!/usr/bin/env bash
+# ███████╗████████╗███████╗██╗     ██╗      █████╗ ██████╗  ██████╗██╗  ██╗██╗   ██╗
+# ██╔════╝╚══██╔══╝██╔════╝██║     ██║     ██╔══██╗██╔══██╗██╔════╝██║  ██║╚██╗ ██╔╝
+# ███████╗   ██║   █████╗  ██║     ██║     ███████║██████╔╝██║     ███████║ ╚████╔╝
+# ╚════██║   ██║   ██╔══╝  ██║     ██║     ██╔══██║██╔══██╗██║     ██╔══██║  ╚██╔╝
+# ███████║   ██║   ███████╗███████╗███████╗██║  ██║██║  ██║╚██████╗██║  ██║   ██║
+# ╚══════╝   ╚═╝   ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝
+
 # omartia-dots-remux installer
 # Replaces omarchy-shell with Caelestia Shell + theme bridge
 # https://github.com/deoxizn/omartia-dots-remux
@@ -327,7 +334,11 @@ else
   info "Installing config files..."
 fi
 
-# Auto-detect monitor config for monitors.lua (only on first install)
+# Auto-detect monitor config for monitors.lua (only on first install).
+# Hyprland's "auto" scale guesses from panel DPI and overshoots on many
+# 1080p laptops (everything looks zoomed in), so we write EXPLICIT numbers.
+# Interactive installs get asked; -y takes the detected defaults.
+# Note: corner rounding in looknfeel.lua is scale-aware either way.
 if [[ ! -f "$HOME/.config/hypr/monitors.lua" ]]; then
   if $DRY_RUN; then
     info "[dry-run] would auto-detect monitors for monitors.lua"
@@ -335,28 +346,61 @@ if [[ ! -f "$HOME/.config/hypr/monitors.lua" ]]; then
     info "  Detecting monitors..."
     MONITOR_JSON=$(hyprctl monitors -j 2>/dev/null)
     if [[ -n "$MONITOR_JSON" ]]; then
-      MAX_RES=$(echo "$MONITOR_JSON" | python3 -c "
+      read -r DETECTED_SCALE DETECTED_GDK <<< "$(echo "$MONITOR_JSON" | python3 -c "
 import sys, json
-monitors = json.load(sys.stdin)
+try:
+    monitors = json.load(sys.stdin)
+except Exception:
+    print(1, 1); sys.exit()
 max_h = max((m.get('height', 0) for m in monitors), default=1080)
-if max_h <= 1080:
-    print(1)
-elif max_h <= 1440:
-    print(1.5)
+if max_h <= 1200:
+    scale, gdk = 1, 1
+elif max_h <= 1600:
+    scale, gdk = 1.25, 1
+elif max_h <= 2160:
+    scale, gdk = 1.5, 1
 else:
-    print(2)
-" 2>/dev/null || echo "1")
+    scale, gdk = 2, 2
+print(scale, gdk)
+" 2>/dev/null || echo "1 1")"
+      MONITOR_SCALE="${DETECTED_SCALE:-1}"
+      GDK_SCALE_INT="${DETECTED_GDK:-1}"
+
+      if ! $YES; then
+        echo ""
+        info "Display scaling (Hyprland 'auto' often picks oversized scales on laptops)"
+        read -rp "  Monitor scale [${MONITOR_SCALE}]: " SCALE_REPLY
+        if [[ "$SCALE_REPLY" == "auto" ]]; then
+          MONITOR_SCALE="auto"
+        elif [[ "$SCALE_REPLY" =~ ^[0-9]+([.][0-9]+)?$ && -n "$SCALE_REPLY" ]]; then
+          MONITOR_SCALE="$SCALE_REPLY"
+        fi
+        read -rp "  GTK scale / GDK_SCALE, integer [${GDK_SCALE_INT}]: " GDK_REPLY
+        [[ "$GDK_REPLY" =~ ^[12]$ ]] && GDK_SCALE_INT="$GDK_REPLY"
+        echo ""
+      fi
+
+      # "auto" is a string in Lua; numeric scales are written bare
+      if [[ "$MONITOR_SCALE" == "auto" ]]; then
+        SCALE_LUA="\"auto\""
+      else
+        SCALE_LUA="$MONITOR_SCALE"
+      fi
+
       cat > "$HOME/.config/hypr/monitors.lua" << MONITORS_EOF
 -- See https://wiki.hypr.land/Configuring/Basics/Monitors/
 -- List current monitors and supported resolutions with: hyprctl monitors all
 
-local omarchy_gdk_scale = ${MAX_RES}
-local omarchy_monitor_scale = "auto"
+-- Explicit scale instead of Hyprland's DPI-guessed "auto" (which tends to
+-- oversize UI on mid-DPI laptop panels). Corner rounding in looknfeel.lua
+-- adapts to this value automatically.
+local omarchy_gdk_scale = ${GDK_SCALE_INT}
+local omarchy_monitor_scale = ${SCALE_LUA}
 
 hl.env("GDK_SCALE", tostring(omarchy_gdk_scale))
 hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy_monitor_scale })
 MONITORS_EOF
-      ok "  hypr/monitors.lua (auto-detected, GDK_SCALE=${MAX_RES})"
+      ok "  hypr/monitors.lua (monitor scale=${MONITOR_SCALE}, GDK_SCALE=${GDK_SCALE_INT})"
     else
       cp "$REPO_DIR/config/hypr/monitors.lua" "$HOME/.config/hypr/monitors.lua"
       ok "  hypr/monitors.lua (fallback default)"
@@ -688,6 +732,29 @@ if ! $DRY_RUN; then
   run_sudo /usr/local/bin/omartia-guard-restart-shell.sh
 fi
 ok "Update guard installed (blocks omarchy-update from relaunching omarchy-shell)"
+
+# ──────────────────────────────────────────────
+# Brand default fastfetch (Stellarchy OS line)
+# ──────────────────────────────────────────────
+
+# Users who never touched fastfetch have no ~/.config/fastfetch/config.jsonc,
+# so seed one from the system default with the OS line branded. A user-level
+# copy always wins over /etc and survives omarchy-settings-dev updates.
+info "Fastfetch branding..."
+
+FF_DIR="$HOME/.config/fastfetch"
+if [[ -f $FF_DIR/config.jsonc ]]; then
+  warn "  custom fastfetch config found — left untouched"
+elif [[ ! -f /etc/fastfetch/config.jsonc ]]; then
+  warn "  /etc/fastfetch/config.jsonc not found — skipping"
+else
+  if ! $DRY_RUN; then
+    mkdir -p "$FF_DIR"
+    cp /etc/fastfetch/config.jsonc "$FF_DIR/config.jsonc"
+    sed -i 's/Omarchy \$version/Stellarchy (Omarchy \$version)/' "$FF_DIR/config.jsonc"
+  fi
+  ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy line)"
+fi
 
 # ──────────────────────────────────────────────
 # Install omartia fuzzel menu suite
