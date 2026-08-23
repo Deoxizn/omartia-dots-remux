@@ -347,9 +347,7 @@ Any omarchy theme works automatically. No per-theme configuration needed.
 ## Requirements
 
 - Omarchy Quattro installed
-- Quickshell (`qs` or `quickshell` in PATH)
 - cmake, ninja, base-devel (installer handles these and other deps)
-- AUR helper (yay or paru) for libcava, caelestia-cli
 
 ## Credits
 
