@@ -11,9 +11,8 @@ choice=$(
     'Config' \
     'Defaults' \
     'Restart' \
-    'Session' \
-    'About' |
-    stellarchy-fuzzel --dmenu --prompt='✦ ..Stellarchy.. ✦ ' --width=26 --lines=9
+    'Session' |
+    stellarchy-fuzzel --dmenu --prompt='✦ ..Stellarchy.. ✦ ' --width=26 --lines=8
 )
 
 case "$choice" in
@@ -25,5 +24,4 @@ case "$choice" in
   Defaults)    exec stellarchy-defaults ;;
   Restart)     exec stellarchy-restart ;;
   Session)     exec hyprctl dispatch global caelestia:session ;;
-  About)       exec omarchy-launch-about ;;
 esac
