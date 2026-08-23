@@ -633,6 +633,39 @@ changed=$((changed+1))
 echo ""
 
 # ──────────────────────────────────────────────
+# SDDM greeter — refresh the stellarchy theme on drift.
+# Vendored identity (logo/metadata/theme.conf) synced from the repo; QML and
+# entry art re-mirrored from Omarchy's theme so upstream fixes flow through.
+# Current= only flips when still stock omarchy.
+# ──────────────────────────────────────────────
+
+if [[ -d /usr/share/sddm/themes/omarchy ]]; then
+  info "SDDM greeter:"
+  SDDM_SRC="$REPO_DIR/branding/sddm-theme"
+  SDDM_DST="/usr/share/sddm/themes/stellarchy"
+  SDDM_CONF="/etc/sddm.conf.d/10-theme.conf"
+  if $DRY_RUN; then
+    info "  [dry-run] would sync $SDDM_DST from repo + mirror Omarchy support art"
+  elif sudo mkdir -p "$SDDM_DST" 2>/dev/null; then
+    for f in logo.png metadata.desktop theme.conf Main.qml bullet.png entry.png entry-failed.png lock.png lock-failed.png; do
+      src="$SDDM_SRC/$f"; dst="$SDDM_DST/$f"
+      if [[ -f $src ]] && { [[ ! -f $dst ]] || ! cmp -s "$src" "$dst"; }; then
+        sudo cp "$src" "$dst" && ok "  updated: $f"
+      elif [[ ! -f $src && -f /usr/share/sddm/themes/omarchy/$f ]] && ! cmp -s "/usr/share/sddm/themes/omarchy/$f" "$dst"; then
+        sudo cp "/usr/share/sddm/themes/omarchy/$f" "$dst" && ok "  mirrored: $f"
+      fi
+    done
+    if [[ -f $SDDM_CONF ]] && grep -q '^Current=omarchy' "$SDDM_CONF"; then
+      sudo sed -i 's/^Current=.*/Current=stellarchy/' "$SDDM_CONF" && ok "  switched greeter → stellarchy"
+    fi
+    ok "  stellarchy theme in place"
+  else
+    warn "  Could not create $SDDM_DST (sudo?) — skipping"
+  fi
+  echo ""
+fi
+
+# ──────────────────────────────────────────────
 # Branding (screensaver.txt / about.txt) — Stellarchy wordmark.
 # Installs when missing, replaces files still identical to Omarchy's stock
 # art, and refreshes older stellarchy deploys. Genuine user customization is

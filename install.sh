@@ -922,6 +922,44 @@ else
 fi
 
 # ──────────────────────────────────────────────
+# SDDM greeter — stellarchy theme.
+# Own theme dir (package updates can't touch it). Logo + identity files are
+# vendored; QML and entry art mirror Omarchy's and refresh on drift so
+# upstream fixes flow through. Current= only flips when still stock omarchy —
+# a deliberate manual choice is never overridden.
+# ──────────────────────────────────────────────
+
+info "SDDM greeter..."
+SDDM_SRC="$REPO_DIR/branding/sddm-theme"
+SDDM_DST="/usr/share/sddm/themes/stellarchy"
+OMARCHY_SDDM="/usr/share/sddm/themes/omarchy"
+SDDM_CONF="/etc/sddm.conf.d/10-theme.conf"
+
+if ! $DRY_RUN; then
+  if [[ -d $OMARCHY_SDDM ]]; then
+    run_sudo mkdir -p "$SDDM_DST"
+    for f in logo.png metadata.desktop theme.conf; do
+      if [[ ! -f $SDDM_DST/$f ]] || ! cmp -s "$SDDM_SRC/$f" "$SDDM_DST/$f"; then
+        run_sudo cp "$SDDM_SRC/$f" "$SDDM_DST/$f"
+      fi
+    done
+    for f in Main.qml bullet.png entry.png entry-failed.png lock.png lock-failed.png; do
+      if [[ -f $OMARCHY_SDDM/$f ]] && ! cmp -s "$OMARCHY_SDDM/$f" "$SDDM_DST/$f"; then
+        run_sudo cp "$OMARCHY_SDDM/$f" "$SDDM_DST/$f"
+      fi
+    done
+    if [[ -f $SDDM_CONF ]] && grep -q '^Current=omarchy' "$SDDM_CONF"; then
+      run_sudo sed -i 's/^Current=.*/Current=stellarchy/' "$SDDM_CONF"
+    fi
+    ok "SDDM greeter: stellarchy theme active"
+  else
+    warn "  Omarchy SDDM theme not found — skipping (greeter stays stock)"
+  fi
+else
+  info "[dry-run] would install stellarchy SDDM greeter theme (+ switch Current= if stock)"
+fi
+
+# ──────────────────────────────────────────────
 # Install stellarchy fuzzel menu suite
 # ──────────────────────────────────────────────
 

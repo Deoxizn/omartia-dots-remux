@@ -143,6 +143,19 @@ if grep -q '^Theme=stellarchy' /etc/plymouth/plymouthd.conf 2>/dev/null; then
   fi
 fi
 
+# SDDM greeter — remove the stellarchy theme and restore the stock selection,
+# so the login screen never points at a theme dir that no longer exists.
+if [[ -d /usr/share/sddm/themes/stellarchy ]]; then
+  info "Removing stellarchy SDDM theme..."
+  sudo rm -rf /usr/share/sddm/themes/stellarchy
+  if [[ -f /etc/sddm.conf.d/10-theme.conf ]] && grep -q '^Current=stellarchy' /etc/sddm.conf.d/10-theme.conf; then
+    sudo sed -i 's/^Current=.*/Current=omarchy/' /etc/sddm.conf.d/10-theme.conf
+    ok "  Theme removed, greeter back to omarchy"
+  else
+    ok "  Theme removed"
+  fi
+fi
+
 # Reinstall omarchy-dev if it was removed during install
 OMARCHY_DEV_FLAG="$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
 if [[ -f "$OMARCHY_DEV_FLAG" ]]; then
