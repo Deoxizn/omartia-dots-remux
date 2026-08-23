@@ -53,6 +53,45 @@ ok()    { echo -e "${GREEN}[omartia]${NC} $*"; }
 warn()  { echo -e "${YELLOW}[omartia]${NC} $*"; }
 err()   { echo -e "${RED}[omartia]${NC} $*" >&2; }
 
+rebuild_initrd() {
+  if ! mountpoint -q /boot; then
+    warn "  /boot is not mounted — refusing to leave boot images half-built."
+    warn "  Mount the ESP (e.g. mount /dev/nvme0n1p1 /boot) and rerun: sudo limine-mkinitcpio"
+    return 1
+  fi
+  info "  rebuilding initramfs (limine-mkinitcpio)..."
+  if ! sudo limine-mkinitcpio; then
+    warn "  limine-mkinitcpio FAILED — UKIs are stale. DO NOT reboot until a rebuild succeeds."
+    warn "  Escape hatch: echo -e '[Daemon]\nTheme=omarchy' > /etc/plymouth/plymouthd.conf && sudo limine-mkinitcpio"
+    return 1
+  fi
+}
+
+# The mkinitcpio plymouth hook packs ONLY the active theme's directory.
+# A .plymouth whose ScriptFile points at another theme's dir ships an
+# initramfs with no boot script: plymouth renders nothing, so the splash
+# AND LUKS password prompt are invisible — black screen, boot looks dead.
+theme_selfcontained() {
+  local dir="$1" name="$2" sf
+  sf="$(sed -n 's/^ *ScriptFile *= *//p' "$dir/$name.plymouth" 2>/dev/null)"
+  if [[ -z $sf ]]; then
+    err "  $name.plymouth has no ScriptFile line"
+    return 1
+  fi
+  case "$sf" in
+    "$dir"/*) ;;
+    *)
+      err "  $name.plymouth ScriptFile ($sf) lives outside its own theme dir —"
+      err "  vendor the script into $dir instead."
+      return 1 ;;
+  esac
+  if [[ ! -f $sf ]]; then
+    err "  ScriptFile missing: $sf"
+    return 1
+  fi
+  return 0
+}
+
 changed=0
 
 copy_if_changed() { # <src> <dst> <label>
@@ -613,7 +652,7 @@ OMARCHY_PLY="/usr/share/plymouth/themes/omarchy"
 
 if [[ ! -d $OMARCHY_PLY ]]; then
   warn "  Omarchy plymouth theme not found — skipping"
-elif [[ -d $PLYMOUTH_DST ]] || grep -q '^Theme=stellarchy' /etc/plymouth/plymouthd.conf 2>/dev/null; then
+elif grep -q '^Theme=stellarchy' /etc/plymouth/plymouthd.conf 2>/dev/null; then
   if $DRY_RUN; then
     info "  [dry-run] would refresh stellarchy theme assets"
   else
@@ -627,19 +666,26 @@ elif [[ -d $PLYMOUTH_DST ]] || grep -q '^Theme=stellarchy' /etc/plymouth/plymout
         NEEDS_INITRD=true
       fi
     done
-    for f in bullet.png entry.png lock.png progress_bar.png progress_box.png; do
+    for f in bullet.png entry.png lock.png progress_bar.png progress_box.png omarchy.script; do
       if [[ -f $OMARCHY_PLY/$f ]] && ! cmp -s "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"; then
         sudo cp "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"
         NEEDS_INITRD=true
       fi
     done
+    if ! theme_selfcontained "$PLYMOUTH_DST" stellarchy; then
+      err "  stellarchy theme is not self-contained — refusing to rebuild initramfs"
+      err "  (a cross-dir ScriptFile ships a splash-less initramfs: black screen)."
+      exit 1
+    fi
     if ! grep -q '^Theme=stellarchy' /etc/plymouth/plymouthd.conf 2>/dev/null; then
       sudo plymouth-set-default-theme stellarchy
       NEEDS_INITRD=true
     fi
     if [[ ${NEEDS_INITRD:-false} == true ]]; then
-      info "  rebuilding initramfs..."
-      sudo limine-mkinitcpio
+      if ! rebuild_initrd; then
+        err "  splash refresh incomplete — fix the above before rebooting"
+        exit 1
+      fi
       ok "  stellarchy splash refreshed"
     else
       ok "  stellarchy splash up to date"
@@ -659,12 +705,18 @@ else
       sudo cp "$src" "$dst"
       NEEDS_INITRD=true
     done
-    for f in bullet.png entry.png lock.png progress_bar.png progress_box.png; do
+    for f in bullet.png entry.png lock.png progress_bar.png progress_box.png omarchy.script; do
       [[ -f $OMARCHY_PLY/$f ]] && ! cmp -s "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f" && { sudo cp "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"; }
     done
+    if ! theme_selfcontained "$PLYMOUTH_DST" stellarchy; then
+      err "  adoption aborted — stellarchy theme is not self-contained (would boot to a black screen)."
+      exit 1
+    fi
     sudo plymouth-set-default-theme stellarchy
-    info "  rebuilding initramfs..."
-    sudo limine-mkinitcpio
+    if ! rebuild_initrd; then
+      err "  adoption failed mid-way — fix the above before rebooting"
+      exit 1
+    fi
     ok "  stellarchy splash adopted"
   fi
 fi

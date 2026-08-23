@@ -66,6 +66,48 @@ run_sudo() {
   sudo "$@"
 }
 
+rebuild_initrd() {
+  if ! mountpoint -q /boot; then
+    warn "  /boot is not mounted — refusing to leave boot images half-built."
+    warn "  Mount the ESP (e.g. mount /dev/nvme0n1p1 /boot) and rerun: sudo limine-mkinitcpio"
+    return 1
+  fi
+  info "  Rebuilding initramfs (splash lives in there)..."
+  if ! run_sudo limine-mkinitcpio; then
+    warn "  limine-mkinitcpio FAILED — UKIs are stale. DO NOT reboot until a rebuild succeeds."
+    warn "  Escape hatch: echo -e '[Daemon]\nTheme=omarchy' > /etc/plymouth/plymouthd.conf && sudo limine-mkinitcpio"
+    return 1
+  fi
+}
+
+# The mkinitcpio plymouth hook packs ONLY the active theme's directory
+# (plus text/details fallbacks). A .plymouth whose ScriptFile points at
+# another theme's dir ships an initramfs with no boot script at all:
+# plymouth renders nothing, so splash AND LUKS password prompt are invisible
+# — a black screen that looks like a dead boot. Refuse to activate any
+# theme that isn't self-contained.
+theme_selfcontained() {
+  local dir="$1" name="$2" sf
+  sf="$(sed -n 's/^ *ScriptFile *= *//p' "$dir/$name.plymouth" 2>/dev/null)"
+  if [[ -z $sf ]]; then
+    err "  $name.plymouth has no ScriptFile line"
+    return 1
+  fi
+  case "$sf" in
+    "$dir"/*) ;;
+    *)
+      err "  $name.plymouth ScriptFile ($sf) lives outside its own theme dir —"
+      err "  the initramfs would ship without it (black screen where the LUKS"
+      err "  prompt should be). Vendor the script into $dir instead."
+      return 1 ;;
+  esac
+  if [[ ! -f $sf ]]; then
+    err "  ScriptFile missing: $sf"
+    return 1
+  fi
+  return 0
+}
+
 # ──────────────────────────────────────────────
 # Preflight checks
 # ──────────────────────────────────────────────
@@ -814,20 +856,29 @@ if ! $DRY_RUN; then
         NEEDS_INITRD=true
       fi
     done
-    # Support art (lock/bullets/progress) mirrors Omarchy's; refreshed on drift
-    for f in bullet.png entry.png lock.png progress_bar.png progress_box.png; do
+    # Support art (lock/bullets/progress) and boot script mirror Omarchy's;
+    # refreshed on drift. The script MUST be vendored here: the initramfs
+    # hook only packs this theme's dir, so a cross-dir ScriptFile reference
+    # would leave the splash (and LUKS prompt) invisible.
+    for f in bullet.png entry.png lock.png progress_bar.png progress_box.png omarchy.script; do
       if [[ -f $OMARCHY_PLY/$f ]] && ! cmp -s "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"; then
         run_sudo cp "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"
         NEEDS_INITRD=true
       fi
     done
+    if ! theme_selfcontained "$PLYMOUTH_DST" stellarchy; then
+      warn "  Aborting install before an unbootable reboot — fix the theme, then rerun the installer."
+      exit 1
+    fi
     if ! grep -q '^Theme=stellarchy' /etc/plymouth/plymouthd.conf 2>/dev/null; then
       run_sudo plymouth-set-default-theme stellarchy
       NEEDS_INITRD=true
     fi
     if [[ ${NEEDS_INITRD:-false} == true ]]; then
-      info "  Rebuilding initramfs (splash lives in there)..."
-      run_sudo limine-mkinitcpio
+      if ! rebuild_initrd; then
+        warn "  Aborting install before an unbootable reboot — fix the above, then rerun the installer."
+        exit 1
+      fi
     fi
     ok "Plymouth splash: stellarchy theme active"
   else

@@ -5,7 +5,7 @@ ModuleName=script
 
 [script]
 ImageDir=/usr/share/plymouth/themes/stellarchy
-ScriptFile=/usr/share/plymouth/themes/omarchy/omarchy.script
+ScriptFile=/usr/share/plymouth/themes/stellarchy/omarchy.script
 ConsoleLogBackgroundColor=0x1a1b26
 MonospaceFont=Cantarell 11
 Font=Cantarell 11

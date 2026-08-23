@@ -120,6 +120,22 @@ if [[ -f "$HOME/.local/state/caelestia/scheme.json" ]]; then
   ok "  Removed Caelestia scheme state"
 fi
 
+# Restore the stock splash if stellarchy is active — leaving it set after
+# the theme dir stops being maintained risks an unbootable-looking boot.
+if grep -q '^Theme=stellarchy' /etc/plymouth/plymouthd.conf 2>/dev/null; then
+  info "Restoring stock Omarchy splash..."
+  sudo plymouth-set-default-theme omarchy
+  if mountpoint -q /boot && command -v limine-mkinitcpio &>/dev/null; then
+    if sudo limine-mkinitcpio; then
+      ok "  Stock splash restored, initramfs rebuilt"
+    else
+      warn "  limine-mkinitcpio failed — run it manually before rebooting"
+    fi
+  else
+    warn "  /boot not mounted or limine-mkinitcpio missing — run: sudo limine-mkinitcpio"
+  fi
+fi
+
 # Reinstall omarchy-dev if it was removed during install
 OMARCHY_DEV_FLAG="$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
 if [[ -f "$OMARCHY_DEV_FLAG" ]]; then

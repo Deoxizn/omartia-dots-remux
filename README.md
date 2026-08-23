@@ -129,6 +129,8 @@ The remux ships its own identity on top of Omarchy. What lands where:
 
 Revert the splash anytime: `sudo plymouth-set-default-theme omarchy && sudo limine-mkinitcpio`.
 
+The `stellarchy` theme dir vendors Omarchy's `omarchy.script` instead of referencing it across theme dirs: mkinitcpio's plymouth hook only packs the active theme's own directory into the initramfs, so a cross-dir `ScriptFile=` ships an initramfs with no splash script at all — plymouth renders nothing, and both the splash *and the LUKS passphrase prompt* are invisible (a black screen that looks like a dead boot). Install/upgrade refresh the vendored script from upstream on every run and refuse to switch themes or rebuild the initramfs if the theme isn't self-contained.
+
 ### CachyOS BORE kernel (opt-in)
 
 BORE tunes CPU scheduling for desktop/game interactivity — a good fit for
@@ -172,7 +174,7 @@ The installer will:
 12. Install the omartia fuzzel menu suite and `omartia-media` to `~/.local/bin/` (root menu includes an **About** entry)
 13. Seed `~/.config/fastfetch/config.jsonc` from the system default with a `Stellarchy` OS line — only if you have no own fastfetch config; custom configs are untouched
 14. Deploy Stellarchy screensaver + About art (`~/.config/omarchy/branding/`) — replaces files still identical to Omarchy's stock art, never genuine customization
-15. Set up the `stellarchy` plymouth splash (sparkle logo over Omarchy's script) and rebuild the initramfs so it's live on next boot
+15. Set up the `stellarchy` plymouth splash (sparkle logo, vendored Omarchy boot script) and rebuild the initramfs so it's live on next boot
 16. Optionally install the CachyOS BORE kernel via chaotic-aur and make it the default Limine entry (interactive prompt, or `--cachyos-kernel`; skipped under `-y` unless the flag is passed) — see [CachyOS BORE kernel](#cachyos-bore-kernel-opt-in)
 17. Sync your current theme
 18. Run the session-start preflight (see [Install safety net](#install-safety-net-preflight))
