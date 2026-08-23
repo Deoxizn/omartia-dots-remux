@@ -18,29 +18,59 @@ REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
 DRY_RUN=false
 NO_PULL=false
 ADOPT_LUA=false
-BORE=false
+KERNEL=""
 PLYMOUTH=false
+
+# CachyOS kernel variants installable via chaotic-aur: variant -> base package.
+declare -A KERNEL_PKGS=(
+  [default]="linux-cachyos"
+  [bore]="linux-cachyos-bore"
+  [eevdf]="linux-cachyos-eevdf"
+  [lts]="linux-cachyos-lts"
+  [rt-bore]="linux-cachyos-rt-bore"
+)
 
 for arg in "$@"; do
   case "$arg" in
     -n|--dry-run) DRY_RUN=true ;;
     --no-pull) NO_PULL=true ;;
     --adopt-lua) ADOPT_LUA=true ;;
-    --bore) BORE=true ;;
+    --kernel)
+      # value consumed from the next argv slot below
+      KERNEL=__PENDING__ ;;
+    --kernel=?*)
+      KERNEL=${arg#--kernel=} ;;
     --plymouth) PLYMOUTH=true ;;
     -h|--help)
-      echo "Usage: ./upgrade.sh [--dry-run] [--no-pull] [--adopt-lua] [--bore] [--plymouth]"
+      echo "Usage: ./upgrade.sh [--dry-run] [--no-pull] [--adopt-lua] [--kernel K] [--plymouth]"
       echo "  --dry-run    show what would change without touching anything"
       echo "  --no-pull    skip git pull (sync from current checkout)"
       echo "  --adopt-lua  adopt repo versions of hypr lua configs that have no"
       echo "               sync history (your current file is backed up first)"
-      echo "  --bore       opt into the CachyOS BORE kernel: adds chaotic-aur, installs"
-      echo "               linux-cachyos-bore + headers (prebuilt), makes it the default"
-      echo "               Limine entry. Stock Arch kernel stays installed as fallback."
+      echo "  --kernel K   opt into a CachyOS kernel via chaotic-aur. K is one of:"
+      echo "                 default  linux-cachyos        (EEVDF, their current default)"
+      echo "                 bore     linux-cachyos-bore   (gaming/interactivity)"
+      echo "                 eevdf    linux-cachyos-eevdf  (explicit EEVDF build)"
+      echo "                 lts      linux-cachyos-lts    (long-term support)"
+      echo "                 rt-bore  linux-cachyos-rt-bore(real-time + BORE)"
+      echo "               Installs the kernel + headers (prebuilt), makes it the"
+      echo "               default Limine entry. Stock Arch kernel stays as fallback."
       echo "  --plymouth   adopt the Stellarchy boot splash (rebuilds initramfs)."
       exit 0 ;;
+    *)
+      if [[ $KERNEL == __PENDING__ ]]; then
+        KERNEL=$arg
+      else
+        printf '\033[0;31m[stellarchy]\033[0m %s\n' "Unknown argument: $arg (see --help)"
+        exit 1
+      fi ;;
   esac
 done
+
+if [[ -n $KERNEL && -z ${KERNEL_PKGS[$KERNEL]:-} ]]; then
+  printf '\033[0;31m[stellarchy]\033[0m %s\n' "--kernel: unknown variant '$KERNEL' (valid: ${!KERNEL_PKGS[*]} )"
+  exit 1
+fi
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -616,18 +646,21 @@ unset BRAND_STOCK
 echo ""
 
 # ──────────────────────────────────────────────
-# CachyOS BORE kernel — opt-in via --bore. Stock kernel is never removed;
-# the default-entry header in /boot/limine.conf is aimed at BORE by live
-# index computation, so it survives kernel add/remove and snapshot churn.
+# CachyOS kernel — opt-in via --kernel K. Stock kernel is never
+# removed; the default-entry header in /boot/limine.conf is aimed at the chosen
+# kernel by live index computation, so it survives kernel add/remove and
+# snapshot churn.
 # ──────────────────────────────────────────────
 
 setup_chaotic_kernel() {
+  local kern="${KERNEL:-bore}"
+  local base="${KERNEL_PKGS[$kern]}"
   rr() { # root runner with dry-run support
     if $DRY_RUN; then info "  [dry-run] would run: sudo $*"; else sudo "$@"; fi
   }
 
-  if pacman -Q linux-cachyos-bore &>/dev/null; then
-    ok "  BORE kernel already installed"
+  if pacman -Q "$base" &>/dev/null; then
+    ok "  $base already installed"
   else
     if ! grep -q '^\[chaotic-aur\]' /etc/pacman.conf; then
       info "  adding chaotic-aur repo..."
@@ -640,41 +673,41 @@ setup_chaotic_kernel() {
       ok "  chaotic-aur already configured"
     fi
     rr pacman -Sy --noconfirm
-    rr pacman -S --ask 4 --noconfirm linux-cachyos-bore linux-cachyos-bore-headers
+    rr pacman -S --ask 4 --noconfirm "$base" "$base-headers"
   fi
 
-  # Regenerate entries first so the BORE subentry exists in limine.conf
+  # Regenerate entries first so this kernel's subentry exists in limine.conf
   rr limine-update
 
-  # Aim the static default_entry header at the BORE subentry. The index
+  # Aim the static default_entry header at the chosen subentry. The index
   # counts every entry line in limine.conf (groups, kernels, snapshots) in
   # document order — computing it live beats hardcoding a number. The header
   # survives limine-update; only omarchy-refresh-limine resets it.
   if [[ -f /boot/limine.conf ]]; then
-    bore_idx=$(awk '/^[[:space:]]*\//{i++} /^[[:space:]]*\/\/linux-cachyos-bore[[:space:]]*$/{print i; exit}' /boot/limine.conf)
-    if [[ -n $bore_idx ]] && ! grep -q "^default_entry:[[:space:]]*$bore_idx\$" /boot/limine.conf; then
-      info "  default boot entry -> linux-cachyos-bore (#$bore_idx)"
-      rr sed -i "s/^default_entry:.*/default_entry: $bore_idx/" /boot/limine.conf
+    kern_idx=$(awk -v b="$base" '/^[[:space:]]*\//{i++} $0 ~ "^[[:space:]]*//"b"[[:space:]]*$"{print i; exit}' /boot/limine.conf)
+    if [[ -n $kern_idx ]] && ! grep -q "^default_entry:[[:space:]]*$kern_idx\$" /boot/limine.conf; then
+      info "  default boot entry -> $base (#$kern_idx)"
+      rr sed -i "s/^default_entry:.*/default_entry: $kern_idx/" /boot/limine.conf
     else
       ok "  already the default boot entry"
     fi
   fi
-  ok "  BORE ready (stock kernel kept as fallback)"
+  ok "  $base ready (stock kernel kept as fallback)"
 }
 
 info "Kernel:"
-if $BORE; then
+if [[ -n $KERNEL ]]; then
   setup_chaotic_kernel
-elif pacman -Q linux-cachyos-bore &>/dev/null; then
-  bore_idx=$(awk '/^[[:space:]]*\//{i++} /^[[:space:]]*\/\/linux-cachyos-bore[[:space:]]*$/{print i; exit}' /boot/limine.conf 2>/dev/null)
-  if [[ -n $bore_idx ]] && grep -q "^default_entry:[[:space:]]*$bore_idx\$" /boot/limine.conf 2>/dev/null; then
-    ok "BORE kernel present, default boot entry configured"
+elif installed_cachyos=$(pacman -Qq 2>/dev/null | grep '^linux-cachyos' | grep -v headers | head -1) && [[ -n $installed_cachyos ]]; then
+  kern_idx=$(awk -v b="$installed_cachyos" '/^[[:space:]]*\//{i++} $0 ~ "^[[:space:]]*//"b"[[:space:]]*$"{print i; exit}' /boot/limine.conf 2>/dev/null)
+  if [[ -n $kern_idx ]] && grep -q "^default_entry:[[:space:]]*$kern_idx\$" /boot/limine.conf 2>/dev/null; then
+    ok "$installed_cachyos present, default boot entry configured"
   else
-    warn "BORE kernel present but stock kernel still auto-boots first"
-    warn "  fix with: ./upgrade.sh --bore"
+    warn "$installed_cachyos present but stock kernel still auto-boots first"
+    warn "  fix with: ./upgrade.sh --kernel bore"
   fi
 else
-  ok "stock Arch kernel (opt in anytime: ./upgrade.sh --bore)"
+  ok "stock Arch kernel (opt in anytime: ./upgrade.sh --kernel <${!KERNEL_PKGS[*]}>)"
 fi
 
 echo ""

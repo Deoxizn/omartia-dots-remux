@@ -91,7 +91,6 @@ Use `./install.sh -y` to skip confirmation prompts.
 
 **Optional flags:**
 ```bash
-./install.sh --cachyos-kernel   # opt into the CachyOS BORE kernel (see below)
 ./install.sh --dry-run          # preview everything without touching anything
 ```
 
@@ -113,9 +112,22 @@ up first).
 
 **Upgrade flags for opt-in extras:**
 ```bash
-./upgrade.sh --bore       # switch to the CachyOS BORE kernel (chaotic-aur, prebuilt)
+./upgrade.sh --kernel default   # switch to the CachyOS kernel (chaotic-aur, prebuilt)
 ./upgrade.sh --plymouth   # adopt the Stellarchy boot splash (rebuilds initramfs)
+
+# Flags combine — one run does everything (plus the normal sync):
+./upgrade.sh --kernel bore --plymouth
 ```
+
+Kernel variants (`--kernel <name>`), all prebuilt from chaotic-aur:
+
+| Variant | Package | One-liner |
+|---|---|---|
+| `default` | `linux-cachyos` | EEVDF scheduler + CachyOS optimizations — the balanced choice |
+| `bore` | `linux-cachyos-bore` | BORE scheduler — lowest latency under load; the gaming pick |
+| `eevdf` | `linux-cachyos-eevdf` | Explicit EEVDF build (no CachyOS scheduler extras) |
+| `lts` | `linux-cachyos-lts` | Long-term support kernel — fewest surprises |
+| `rt-bore` | `linux-cachyos-rt-bore` | Real-time patches + BORE |
 
 ## Stellarchy branding
 
@@ -133,19 +145,21 @@ Revert the splash anytime: `sudo plymouth-set-default-theme omarchy && sudo limi
 
 The `stellarchy` theme dir vendors Omarchy's `omarchy.script` instead of referencing it across theme dirs: mkinitcpio's plymouth hook only packs the active theme's own directory into the initramfs, so a cross-dir `ScriptFile=` ships an initramfs with no splash script at all — plymouth renders nothing, and both the splash *and the LUKS passphrase prompt* are invisible (a black screen that looks like a dead boot). Install/upgrade refresh the vendored script from upstream on every run and refuse to switch themes or rebuild the initramfs if the theme isn't self-contained.
 
-### CachyOS BORE kernel (opt-in)
+### CachyOS kernel (opt-in, post-install)
 
-BORE tunes CPU scheduling for desktop/game interactivity — a good fit for
-gaming rigs, pointless for rarely-used machines. It comes prebuilt from
-[chaotic-aur](https://aur.chaotic.cx), so no compiling.
+CachyOS kernels tune CPU scheduling — BORE for desktop/game interactivity, a
+good fit for gaming rigs, pointless for rarely-used machines. They come
+prebuilt from [chaotic-aur](https://aur.chaotic.cx), so no compiling.
+Deliberately **not** part of the initial install — opt in afterwards:
 
-- **New installs:** answer the prompt, or pass `--cachyos-kernel`
-- **Existing installs:** `./upgrade.sh --bore`
+```bash
+./upgrade.sh --kernel <variant>   # default | bore | eevdf | lts | rt-bore
+```
 
 What it does: adds chaotic-aur to pacman (backing up `pacman.conf` first),
-installs `linux-cachyos-bore` + headers (DKMS modules like NVIDIA rebuild
+installs the chosen kernel + headers (DKMS modules like NVIDIA rebuild
 automatically), and aims the `default_entry:` header in `/boot/limine.conf`
-at the BORE entry — its index is computed from the live config each run, so
+at that kernel's entry — its index is computed from the live config each run, so
 it survives kernel add/remove and snapshot churn (the header itself survives
 `limine-update`; only Omarchy's manual refresh script resets it). The stock
 Arch kernel is never removed — if anything ever misbehaves, pick it in the
@@ -177,7 +191,8 @@ The installer will:
 13. Seed `~/.config/fastfetch/config.jsonc` from the system default with a `Stellarchy` OS line — only if you have no own fastfetch config; custom configs are untouched
 14. Deploy Stellarchy screensaver + About art (`~/.config/omarchy/branding/`) — replaces files still identical to Omarchy's stock art, never genuine customization
 15. Set up the `stellarchy` plymouth splash (sparkle logo, vendored Omarchy boot script) and rebuild the initramfs so it's live on next boot
-16. Optionally install the CachyOS BORE kernel via chaotic-aur and make it the default Limine entry (interactive prompt, or `--cachyos-kernel`; skipped under `-y` unless the flag is passed) — see [CachyOS BORE kernel](#cachyos-bore-kernel-opt-in)
+
+The stock Arch kernel ships untouched — opt into a CachyOS kernel any time after install with [`./upgrade.sh --kernel <variant>`](#cachyos-kernel-opt-in-post-install).
 17. Sync your current theme
 18. Run the session-start preflight (see [Install safety net](#install-safety-net-preflight))
 19. Auto-logout after 5 seconds — **only if every preflight check passed** (press Ctrl+C to cancel). Uses `omarchy-system-logout` (`uwsm stop`), so the session ends cleanly and you land back at the login screen

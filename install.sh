@@ -20,7 +20,6 @@ OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
 YES=false
 SKIP_QS_CHECK=false
 DRY_RUN=false
-CACHYOS_KERNEL=false
 
 # Parse args
 for arg in "$@"; do
@@ -28,7 +27,6 @@ for arg in "$@"; do
     -y|--yes) YES=true ;;
     --skip-quickshell-check) SKIP_QS_CHECK=true ;;
     --dry-run) DRY_RUN=true ;;
-    --cachyos-kernel) CACHYOS_KERNEL=true ;;
   esac
 done
 
@@ -940,66 +938,6 @@ if [[ -f "$HOME/.local/state/omarchy/current/theme/colors.toml" ]]; then
 else
   warn "No active theme found — run 'omarchy-theme-set <name>' then this script again"
 fi
-
-# ──────────────────────────────────────────────
-# Optional: CachyOS BORE kernel (chaotic-aur, prebuilt)
-# Desktop/gaming scheduler tuning. The stock Arch kernel is never removed —
-# both entries appear in the Limine menu, so a bad update is a menu pick away.
-# Opt-in only: interactive prompt, or --cachyos-kernel for scripted installs.
-# Never triggered by -y alone.
-# ──────────────────────────────────────────────
-
-setup_chaotic_kernel() {
-  local assent="${1:-false}"
-
-  if pacman -Q linux-cachyos-bore &>/dev/null; then
-    ok "CachyOS BORE kernel already installed — updates flow via pacman -Syu"
-    return 0
-  fi
-
-  if ! $assent; then
-    info "Optional: CachyOS BORE kernel via chaotic-aur (prebuilt, stock kernel stays as fallback)"
-    confirm "Install linux-cachyos-bore now?" || { info "Skipping CachyOS kernel"; return 0; }
-  else
-    info "Installing CachyOS BORE kernel (--cachyos-kernel)"
-  fi
-
-  if ! grep -q '^\[chaotic-aur\]' /etc/pacman.conf; then
-    info "  Adding chaotic-aur repo..."
-    run_sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
-    run_sudo pacman-key --lsign-key 3056513887B78AEB
-    run_sudo bash -c "pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'"
-    run_sudo cp /etc/pacman.conf /etc/pacman.conf.stellarchy-backup
-    printf '\n[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist\n' | run_sudo tee -a /etc/pacman.conf >/dev/null
-  else
-    ok "  chaotic-aur already configured"
-  fi
-
-  run_sudo pacman -Sy --noconfirm
-  run_sudo pacman -S --ask 4 --noconfirm linux-cachyos-bore linux-cachyos-bore-headers
-
-  # Regenerate entries so the BORE subentry exists, then aim the static
-  # default_entry header at it. The index counts every entry line in
-  # limine.conf (groups, kernels, snapshots) in document order — computing
-  # it live beats hardcoding a number. The header survives limine-update;
-  # only omarchy-refresh-limine resets it from Omarchy's template.
-  run_sudo limine-update
-  if [[ -f /boot/limine.conf ]]; then
-    bore_idx=$(awk '/^[[:space:]]*\//{i++} /^[[:space:]]*\/\/linux-cachyos-bore[[:space:]]*$/{print i; exit}' /boot/limine.conf)
-    if [[ -n $bore_idx ]] && ! grep -q "^default_entry:[[:space:]]*$bore_idx\$" /boot/limine.conf; then
-      info "  default boot entry -> linux-cachyos-bore (#$bore_idx)"
-      run_sudo sed -i "s/^default_entry:.*/default_entry: $bore_idx/" /boot/limine.conf
-    fi
-  fi
-
-  ok "BORE kernel installed and set as default boot entry; stock kernel kept as fallback"
-}
-
-if $CACHYOS_KERNEL || ! $YES; then
-  setup_chaotic_kernel "$CACHYOS_KERNEL"
-fi
-
-echo ""
 
 # ──────────────────────────────────────────────
 # Session-start preflight (black screen guard)
