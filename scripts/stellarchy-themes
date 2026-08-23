@@ -11,5 +11,5 @@ choice=$(
 
 case "$choice" in
   "Theme list")    exec stellarchy-themes-list ;;
-  "Install theme") exec omarchy-launch-or-focus-tui omarchy-theme-install ;;
+  "Install theme") exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-theme-install ;;
 esac

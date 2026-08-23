@@ -68,3 +68,8 @@ hl.window_rule({
 })
 
 hl.window_rule({ match = { class = "org.gnome.Calculator" }, float = true })
+
+-- Screensaver (power menu): fullscreen TTE art, same treatment as stock Omarchy
+hl.window_rule({ match = { class = "org.omarchy.screensaver" }, fullscreen = true })
+hl.window_rule({ match = { class = "org.omarchy.screensaver" }, float = true })
+hl.window_rule({ match = { class = "org.omarchy.screensaver" }, animation = "slide" })

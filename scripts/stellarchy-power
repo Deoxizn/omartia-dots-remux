@@ -1,16 +1,17 @@
 #!/bin/bash
 
-# stellarchy:summary=Power menu: lock, logout, suspend, hibernate, reboot, shutdown.
+# stellarchy:summary=Power menu: screensaver, lock, logout, suspend, hibernate, reboot, shutdown.
 
 choice=$(
   printf '%s\n' \
+    'Screensaver' \
     'Lock' \
     'Logout' \
     'Suspend' \
     'Hibernate' \
     'Reboot' \
     'Shutdown' |
-    stellarchy-fuzzel --dmenu --prompt='Power: ' --width=22 --lines=6
+    stellarchy-fuzzel --dmenu --prompt='Power: ' --width=22 --lines=7
 ) || exit 0
 
 # Destructive actions require selecting "Confirm" (Esc cancels).
@@ -19,7 +20,8 @@ confirm() {
 }
 
 case "$choice" in
-  Lock)      exec caelestia-system-lock ;;
+  Screensaver) exec omarchy-launch-screensaver force ;;
+  Lock)        exec caelestia-system-lock ;;
   Logout)    exec omarchy-system-logout ;;
   Suspend)   exec systemctl suspend ;;
   Hibernate) exec systemctl hibernate ;;

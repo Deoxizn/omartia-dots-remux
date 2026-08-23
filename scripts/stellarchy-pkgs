@@ -11,7 +11,7 @@ choice=$(
 ) || exec stellarchy-menu   # Esc = back to root menu
 
 case "$choice" in
-  "Install packages")  exec omarchy-launch-or-focus-tui omarchy-pkg-install ;;
-  "Remove packages")   exec omarchy-launch-or-focus-tui omarchy-pkg-remove ;;
-  "Install from AUR")  exec omarchy-launch-or-focus-tui omarchy-pkg-aur-install ;;
+  "Install packages")  exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-pkg-install ;;
+  "Remove packages")   exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-pkg-remove ;;
+  "Install from AUR")  exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-pkg-aur-install ;;
 esac
