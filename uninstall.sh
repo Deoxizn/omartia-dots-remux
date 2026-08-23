@@ -98,6 +98,12 @@ if [[ -f /usr/local/bin/stellarchy-guard-restart-shell.sh ]]; then
   ok "  Removed update guard"
 fi
 
+# Remove splash guard
+if [[ -f /usr/local/bin/stellarchy-plymouth-refresh.sh ]]; then
+  sudo rm -f /usr/local/bin/stellarchy-plymouth-refresh.sh /usr/share/libalpm/hooks/95-stellarchy-plymouth-refresh.hook
+  ok "  Removed splash guard"
+fi
+
 # Remove stellarchy menu suite scripts
 shopt -s nullglob
 menu_scripts=("$HOME/.local/bin/"stellarchy-*)

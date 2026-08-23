@@ -286,6 +286,26 @@ else
   warn "  guard not installed — skipping (run install.sh to add it)"
 fi
 
+# ──────────────────────────────────────────────
+# Splash guard — re-applies the Stellarchy splash after kernel installs.
+# Without it a kernel installed between upgrades builds its UKI from
+# whatever theme state existed mid-transaction; the hook detects an adopted
+# splash and rebuilds so the new kernel boots with stellarchy.
+# ──────────────────────────────────────────────
+
+info "Splash guard:"
+ply_refresh_src="$REPO_DIR/hooks/libalpm/stellarchy-plymouth-refresh.sh"
+ply_hook_src="$REPO_DIR/hooks/libalpm/stellarchy-plymouth-refresh.hook"
+ply_refresh_dst="/usr/local/bin/stellarchy-plymouth-refresh.sh"
+ply_hook_dst="/usr/share/libalpm/hooks/95-stellarchy-plymouth-refresh.hook"
+
+if [[ -f $ply_refresh_dst || -f $guard_dst ]]; then
+  sync_root_file "$ply_refresh_src" "$ply_refresh_dst" "splash guard script" 755
+  sync_root_file "$ply_hook_src" "$ply_hook_dst" "splash libalpm hook" 644
+else
+  warn "  root hooks not deployed by installer — skipping (run install.sh to add them)"
+fi
+
 echo ""
 
 # ──────────────────────────────────────────────
@@ -751,17 +771,19 @@ setup_chaotic_kernel() {
   # Regenerate entries first so this kernel's subentry exists in limine.conf
   rr limine-update
 
-  # Aim the static default_entry header at the chosen subentry. The index
-  # counts every entry line in limine.conf (groups, kernels, snapshots) in
-  # document order — computing it live beats hardcoding a number. The header
-  # survives limine-update; only omarchy-refresh-limine resets it.
+  # Aim the static default_entry header at the chosen subentry. Limine
+  # accepts an entry path ("OS/kernel") alongside numeric indices — a path
+  # keeps pointing at the same kernel through add/remove and snapshot churn,
+  # where a computed index silently shifts onto whatever takes the removed
+  # entry's place (e.g. the Snapshots submenu). The header survives
+  # limine-update; only omarchy-refresh-limine resets it.
   if [[ -f /boot/limine.conf ]]; then
-    kern_idx=$(awk -v b="$base" '/^[[:space:]]*\//{i++} $0 ~ "^[[:space:]]*//"b"[[:space:]]*$"{print i; exit}' /boot/limine.conf)
-    if [[ -n $kern_idx ]] && ! grep -q "^default_entry:[[:space:]]*$kern_idx\$" /boot/limine.conf; then
-      info "  default boot entry -> $base (#$kern_idx)"
-      rr sed -i "s/^default_entry:.*/default_entry: $kern_idx/" /boot/limine.conf
-    else
+    want="+Omarchy/$base"
+    if grep -q "^default_entry:[[:space:]]*$want\$" /boot/limine.conf; then
       ok "  already the default boot entry"
+    else
+      info "  default boot entry -> $base"
+      rr sed -i "s|^default_entry:.*|default_entry: $want|" /boot/limine.conf
     fi
   fi
   ok "  $base ready (stock kernel kept as fallback)"
@@ -771,9 +793,19 @@ info "Kernel:"
 if [[ -n $KERNEL ]]; then
   setup_chaotic_kernel
 elif installed_cachyos=$(pacman -Qq 2>/dev/null | grep '^linux-cachyos' | grep -v headers | head -1) && [[ -n $installed_cachyos ]]; then
-  kern_idx=$(awk -v b="$installed_cachyos" '/^[[:space:]]*\//{i++} $0 ~ "^[[:space:]]*//"b"[[:space:]]*$"{print i; exit}' /boot/limine.conf 2>/dev/null)
-  if [[ -n $kern_idx ]] && grep -q "^default_entry:[[:space:]]*$kern_idx\$" /boot/limine.conf 2>/dev/null; then
+  want="+Omarchy/$installed_cachyos"
+  cur="$(sed -n 's/^default_entry:[[:space:]]*//p' /boot/limine.conf 2>/dev/null || true)"
+  if [[ $cur == "$want" ]]; then
     ok "$installed_cachyos present, default boot entry configured"
+  elif [[ $cur =~ ^[0-9]+$ ]]; then
+    # Stale numeric index from before the path-format switch: kernel
+    # add/remove shifts numbered entries onto the wrong target (e.g. the
+    # Snapshots submenu) — repoint it at the chosen kernel by name.
+    warn "stale numeric default_entry ($cur) — repointing at $installed_cachyos"
+    if ! $DRY_RUN; then
+      sudo sed -i "s|^default_entry:.*|default_entry: $want|" /boot/limine.conf
+    fi
+    ok "$installed_cachyos is now the default boot entry"
   else
     warn "$installed_cachyos present but stock kernel still auto-boots first"
     warn "  fix with: ./upgrade.sh --kernel bore"

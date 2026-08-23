@@ -15,6 +15,8 @@
 
 Omarchy × Caelestia · `omartia-dots-remux`
 
+[stellarchy.dirty.pizza](https://stellarchy.dirty.pizza)
+
 </div>
 
 Replaces omarchy-shell (quattro bar, menus, lock) with **Caelestia Shell** — keeps omarchy's theme switching working via a color bridge. Read [READ THIS FIRST](#read-this-first) before installing: this is a shell replacement, not a theme.
@@ -99,16 +101,21 @@ Use `./install.sh -y` to skip confirmation prompts.
 ./upgrade.sh
 ```
 This pulls the latest repo, refreshes the menu scripts / theme bridge hook /
-update guard in place, 3-way-merges lua config changes into your live files
-(personal edits preserved; conflicts leave your file untouched with a
-`.conflict` copy for manual resolution), keeps keybinds identical to the repo
-via a managed block at the end of `bindings.lua` (legacy auto-injected blocks
+update guard / splash guard in place, 3-way-merges lua config changes into
+your live files (personal edits preserved; conflicts leave your file untouched
+with a `.conflict` copy for manual resolution), keeps keybinds identical to
+the repo via a managed block at the end of `bindings.lua` (legacy auto-injected blocks
 are stripped automatically — duplicates made toggle binds fire twice and look
-dead), and enforces the SDDM-safe `omarchy-system-logout`.
-`monitors.lua` / `input.lua` are never touched (device-specific); everything
-else is reported as drift. Add `--dry-run` to preview, or `--adopt-lua` to
-adopt repo versions of lua files that have no merge history (yours is backed
-up first).
+dead), re-applies Stellarchy branding (idle screensaver art, about art,
+fastfetch OS line, SDDM greeter — stock or stale copies are refreshed; your
+own customizations are never overwritten), enforces the SDDM-safe
+`omarchy-system-logout`, keeps the CachyOS kernel's `default_entry:` aimed at
+the right entry if you opted in, and refreshes the Stellarchy boot splash when
+adopted (a libalpm hook also re-applies it to kernels installed between
+upgrades). `monitors.lua` / `input.lua` are never touched (device-specific);
+everything else is reported as drift. Add `--dry-run` to preview, or
+`--adopt-lua` to adopt repo versions of lua files that have no merge history
+(yours is backed up first).
 
 **Upgrade flags for opt-in extras:**
 ```bash
@@ -138,7 +145,7 @@ The remux ships its own identity on top of Omarchy. What lands where:
 | Idle screensaver art | Installed | Installed if missing or still stock Omarchy art; **your own customization is never overwritten** |
 | About logo (`about.txt`) | Installed | Same stock-detection rule |
 | fastfetch OS line | If you have no own config, one is seeded from `/etc/fastfetch` with a `Stellarchy` OS line; custom configs are untouched | Same |
-| Boot splash | `stellarchy` plymouth theme set as default (sparkle logo, Tokyo Night palette) | Opt-in via `./upgrade.sh --plymouth`; afterwards kept refreshed automatically |
+| Boot splash | `stellarchy` plymouth theme set as default (sparkle logo, Tokyo Night palette) | Opt-in via `./upgrade.sh --plymouth`; afterwards kept refreshed automatically and re-applied to any kernel installed later (splash guard libalpm hook) |
 | Script headers / menu About entry | Included | Synced with the menu suite |
 
 Revert the splash anytime: `sudo plymouth-set-default-theme omarchy && sudo limine-mkinitcpio`.
@@ -159,11 +166,14 @@ Deliberately **not** part of the initial install — opt in afterwards:
 What it does: adds chaotic-aur to pacman (backing up `pacman.conf` first),
 installs the chosen kernel + headers (DKMS modules like NVIDIA rebuild
 automatically), and aims the `default_entry:` header in `/boot/limine.conf`
-at that kernel's entry — its index is computed from the live config each run, so
-it survives kernel add/remove and snapshot churn (the header itself survives
-`limine-update`; only Omarchy's manual refresh script resets it). The stock
-Arch kernel is never removed — if anything ever misbehaves, pick it in the
-Limine menu and revert with one `default_entry:` edit + `sudo limine-update`.
+at that kernel's entry. The header uses Limine's entry-path form
+(`+Omarchy/linux-cachyos`), so it keeps pointing at the same kernel through
+kernel add/remove and snapshot churn — a numeric index would silently shift
+onto whatever entry takes a removed one's place (e.g. the Snapshots submenu).
+The header itself survives `limine-update`; only Omarchy's manual refresh
+script resets it. The stock Arch kernel is never removed — if anything ever
+misbehaves, pick it in the Limine menu and revert with one `default_entry:`
+edit + `sudo limine-update`.
 
 **Scope:** chaotic-aur is a plain signed binary repo, not a build system
 change — nothing installs itself, nothing compiles differently, and your
