@@ -604,13 +604,28 @@ echo ""
 
 info "Stellarchy identity overlay:"
 OVERLAY="$HOME/.config/stellarchy/os-release"
+LOGO_PATH="$HOME/.config/fastfetch/stellarchy.png"
 if [[ -f $OVERLAY ]]; then
-  ok "  already present — left untouched"
+  if ! grep -q '^LOGO=' "$OVERLAY"; then
+    if $DRY_RUN; then
+      info "  [dry-run] would add missing LOGO entry to $OVERLAY"
+    else
+      printf 'LOGO=%s\n' "$LOGO_PATH" >> "$OVERLAY"
+      ok "  added missing LOGO entry to $OVERLAY"
+    fi
+  else
+    ok "  already present — left untouched"
+  fi
 elif $DRY_RUN; then
-  info "  [dry-run] would seed $OVERLAY (NAME/PRETTY_NAME → Stellarchy)"
+  info "  [dry-run] would seed $OVERLAY (NAME/PRETTY_NAME/LOGO → Stellarchy)"
 else
   mkdir -p "$HOME/.config/stellarchy"
-  printf 'NAME="Stellarchy"\nPRETTY_NAME="Stellarchy"\n' > "$OVERLAY"
+  {
+    printf '# Stellarchy identity overlay — read by the Caelestia shell via patches/0002.\n'
+    printf 'NAME="Stellarchy"\n'
+    printf 'PRETTY_NAME="Stellarchy"\n'
+    printf 'LOGO=%s\n' "$LOGO_PATH"
+  } > "$OVERLAY"
   ok "  seeded $OVERLAY"
 fi
 changed=$((changed+1))
