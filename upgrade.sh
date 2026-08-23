@@ -512,12 +512,17 @@ elif [[ ! -f /etc/fastfetch/config.jsonc ]]; then
   warn "  /etc/fastfetch/config.jsonc not found — skipping"
 else
   if $DRY_RUN; then
-    info "  [dry-run] would seed ~/.config/fastfetch/config.jsonc (system default + Stellarchy line)"
+    info "  [dry-run] would seed ~/.config/fastfetch/config.jsonc (system default + Stellarchy line + logo)"
   else
     mkdir -p "$FF_DIR"
     cp /etc/fastfetch/config.jsonc "$FF_DIR/config.jsonc"
-    sed -i 's/Omarchy \$version/Stellarchy (Omarchy \$version)/' "$FF_DIR/config.jsonc"
-    ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy line)"
+    cp "$REPO_DIR/stellarchy-nobg.png" "$FF_DIR/stellarchy-nobg.png"
+    sed -i \
+      -e 's/Omarchy \$version/Stellarchy (Omarchy \$version)/' \
+      -e 's|"type": "file"|"type": "sixel"|' \
+      -e 's|"source": "~/.config/omarchy/branding/about.txt"|"source": "~/.config/fastfetch/stellarchy-nobg.png",\n    "width": 70,\n    "height": 30|' \
+      "$FF_DIR/config.jsonc"
+    ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy line + logo)"
   fi
   changed=$((changed+1))
 fi

@@ -782,8 +782,8 @@ ok "Update guard installed (blocks omarchy-update from relaunching omarchy-shell
 # ──────────────────────────────────────────────
 
 # Users who never touched fastfetch have no ~/.config/fastfetch/config.jsonc,
-# so seed one from the system default with the OS line branded. A user-level
-# copy always wins over /etc and survives omarchy-settings-dev updates.
+# so seed one from the system default with the OS line and logo branded. A
+# user-level copy always wins over /etc and survives omarchy-settings-dev updates.
 info "Fastfetch branding..."
 
 FF_DIR="$HOME/.config/fastfetch"
@@ -795,9 +795,14 @@ else
   if ! $DRY_RUN; then
     mkdir -p "$FF_DIR"
     cp /etc/fastfetch/config.jsonc "$FF_DIR/config.jsonc"
-    sed -i 's/Omarchy \$version/Stellarchy (Omarchy \$version)/' "$FF_DIR/config.jsonc"
+    cp "$REPO_DIR/stellarchy-nobg.png" "$FF_DIR/stellarchy-nobg.png"
+    sed -i \
+      -e 's/Omarchy \$version/Stellarchy (Omarchy \$version)/' \
+      -e 's|"type": "file"|"type": "sixel"|' \
+      -e 's|"source": "~/.config/omarchy/branding/about.txt"|"source": "~/.config/fastfetch/stellarchy-nobg.png",\n    "width": 70,\n    "height": 30|' \
+      "$FF_DIR/config.jsonc"
   fi
-  ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy line)"
+  ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy line + logo)"
 fi
 
 # ──────────────────────────────────────────────
