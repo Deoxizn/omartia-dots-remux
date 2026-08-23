@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="stellarchy-nobg.png" alt="Stellarchy" width="180">
+<img src="stellarchy.png" alt="Stellarchy" width="180">
 
 ```
 ███████╗████████╗███████╗██╗     ██╗      █████╗ ██████╗  ██████╗██╗  ██╗██╗   ██╗
