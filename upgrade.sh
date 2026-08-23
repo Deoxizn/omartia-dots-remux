@@ -516,11 +516,11 @@ else
   else
     mkdir -p "$FF_DIR"
     cp /etc/fastfetch/config.jsonc "$FF_DIR/config.jsonc"
-    cp "$REPO_DIR/stellarchy-nobg.png" "$FF_DIR/stellarchy-nobg.png"
+    cp "$REPO_DIR/stellarchy.png" "$FF_DIR/stellarchy.png"
     sed -i \
       -e 's/Omarchy \$version/Stellarchy (Omarchy \$version)/' \
       -e 's|"type": "file"|"type": "sixel"|' \
-      -e 's|"source": "~/.config/omarchy/branding/about.txt"|"source": "~/.config/fastfetch/stellarchy-nobg.png",\n    "width": 70,\n    "height": 30|' \
+      -e 's|"source": "~/.config/omarchy/branding/about.txt"|"source": "~/.config/fastfetch/stellarchy.png",\n    "width": 70,\n    "height": 30|' \
       "$FF_DIR/config.jsonc"
     ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy line + logo)"
   fi
