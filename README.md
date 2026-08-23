@@ -145,7 +145,7 @@ The remux ships its own identity on top of Omarchy. What lands where:
 | Idle screensaver art | Installed | Installed if missing or still stock Omarchy art; **your own customization is never overwritten** |
 | About logo (`about.txt`) | Installed | Same stock-detection rule |
 | fastfetch OS line | If you have no own config, one is seeded from `/etc/fastfetch` with a `Stellarchy` OS line; custom configs are untouched | Same |
-| Boot splash | `stellarchy` plymouth theme set as default (sparkle logo, Tokyo Night palette) | Opt-in via `./upgrade.sh --plymouth`; afterwards kept refreshed automatically and re-applied to any kernel installed later (splash guard libalpm hook) |
+| Boot splash | `stellarchy` plymouth theme set as default (Tokyo Night palette) | Opt-in via `./upgrade.sh --plymouth`; afterwards kept refreshed automatically and re-applied to any kernel installed later (splash guard libalpm hook) |
 | Script headers / menu About entry | Included | Synced with the menu suite |
 
 Revert the splash anytime: `sudo plymouth-set-default-theme omarchy && sudo limine-mkinitcpio`.
@@ -200,7 +200,7 @@ The installer will:
 12. Install the stellarchy fuzzel menu suite and `stellarchy-media` to `~/.local/bin/` (root menu includes an **About** entry)
 13. Seed `~/.config/fastfetch/config.jsonc` from the system default with a `Stellarchy` OS line — only if you have no own fastfetch config; custom configs are untouched
 14. Deploy Stellarchy screensaver + About art (`~/.config/omarchy/branding/`) — replaces files still identical to Omarchy's stock art, never genuine customization
-15. Set up the `stellarchy` plymouth splash (sparkle logo, vendored Omarchy boot script) and rebuild the initramfs so it's live on next boot
+15. Set up the `stellarchy` plymouth splash (vendored Omarchy boot script) and rebuild the initramfs so it's live on next boot
 
 The stock Arch kernel ships untouched — opt into a CachyOS kernel any time after install with [`./upgrade.sh --kernel <variant>`](#cachyos-kernel-opt-in-post-install).
 17. Sync your current theme
@@ -346,8 +346,7 @@ Any omarchy theme works automatically. No per-theme configuration needed.
 
 ## Requirements
 
-- Arch Linux (or Arch-based distro)
-- Omarchy 4.0 (quattro) installed
+- Omarchy Quattro installed
 - Quickshell (`qs` or `quickshell` in PATH)
 - cmake, ninja, base-devel (installer handles these and other deps)
 - AUR helper (yay or paru) for libcava, caelestia-cli
@@ -356,4 +355,4 @@ Any omarchy theme works automatically. No per-theme configuration needed.
 
 - [Omarchy](https://github.com/basecamp/omarchy) — window manager, theme system, keybindings
 - [Caelestia Shell](https://github.com/caelestia-dots/shell) — desktop shell, lock screen, launcher
-- Original [stellarchy-dots](https://github.com/Z-Rh0/stellarchy-dots) — inspiration for combining both
+- Original [omartia-dots](https://github.com/Z-Rh0/omartia-dots) — inspiration for combining both
