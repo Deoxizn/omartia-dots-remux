@@ -12,10 +12,10 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-info()  { echo -e "${CYAN}[omartia]${NC} $*"; }
-ok()    { echo -e "${GREEN}[omartia]${NC} $*"; }
-warn()  { echo -e "${YELLOW}[omartia]${NC} $*"; }
-err()   { echo -e "${RED}[omartia]${NC} $*" >&2; }
+info()  { echo -e "${CYAN}[stellarchy]${NC} $*"; }
+ok()    { echo -e "${GREEN}[stellarchy]${NC} $*"; }
+warn()  { echo -e "${YELLOW}[stellarchy]${NC} $*"; }
+err()   { echo -e "${RED}[stellarchy]${NC} $*" >&2; }
 
 # Find latest backup
 if [[ ! -d "$BACKUP_DIR" ]]; then
@@ -93,17 +93,24 @@ if [[ -f "$HOME/.config/omarchy/hooks/theme-set.d/caelestia-sync.sh" ]]; then
 fi
 
 # Remove update guard (guard self-neutralizes once Caelestia is gone)
-if [[ -f /usr/local/bin/omartia-guard-restart-shell.sh ]]; then
-  sudo rm -f /usr/local/bin/omartia-guard-restart-shell.sh /usr/share/libalpm/hooks/omartia-restart-shell-guard.hook
+if [[ -f /usr/local/bin/stellarchy-guard-restart-shell.sh ]]; then
+  sudo rm -f /usr/local/bin/stellarchy-guard-restart-shell.sh /usr/share/libalpm/hooks/stellarchy-restart-shell-guard.hook
   ok "  Removed update guard"
 fi
 
-# Remove omartia menu suite scripts
+# Remove stellarchy menu suite scripts
 shopt -s nullglob
-menu_scripts=("$HOME/.local/bin/"omartia-*)
+menu_scripts=("$HOME/.local/bin/"stellarchy-*)
 if (( ${#menu_scripts[@]} )); then
   rm -f "${menu_scripts[@]}"
-  ok "  Removed omartia menu scripts (${#menu_scripts[@]})"
+  ok "  Removed stellarchy menu scripts (${#menu_scripts[@]})"
+fi
+
+# Remove legacy pre-rename omartia-* scripts (older installs)
+legacy_scripts=("$HOME/.local/bin/"omartia-*)
+if (( ${#legacy_scripts[@]} )); then
+  rm -f "${legacy_scripts[@]}"
+  ok "  Removed legacy omartia-* scripts (${#legacy_scripts[@]})"
 fi
 shopt -u nullglob
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# omartia:summary=Restart menu: reload Hyprland, restart terminal or shell, refresh theme.
+# stellarchy:summary=Restart menu: reload Hyprland, restart terminal or shell, refresh theme.
 
 choice=$(
   printf '%s\n' \
@@ -8,8 +8,8 @@ choice=$(
     'Restart terminal' \
     'Restart Caelestia' \
     'Refresh theme' |
-    omartia-fuzzel --dmenu --prompt='Restart: ' --width=28 --lines=4
-) || exec omartia-menu   # Esc = back to root menu
+    stellarchy-fuzzel --dmenu --prompt='Restart: ' --width=28 --lines=4
+) || exec stellarchy-menu   # Esc = back to root menu
 
 case "$choice" in
   "Reload Hyprland")   exec omarchy restart hyprctl ;;

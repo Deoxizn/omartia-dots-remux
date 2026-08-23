@@ -1,6 +1,6 @@
 -- omartia-dots-remux: Keybindings
 -- Minimal overrides — replaces omarchy-menu with the Caelestia launcher and
--- the omartia fuzzel menu suite. Everything else inherits from omarchy
+-- the stellarchy fuzzel menu suite. Everything else inherits from omarchy
 -- defaults (window mgmt, workspaces, apps).
 -- Add your own personal bindings below.
 
@@ -8,8 +8,8 @@
 hl.unbind("SUPER + SPACE")
 o.bind("SUPER + SPACE", "Caelestia launcher", hl.dsp.global("caelestia:launcher"))
 
--- Omartia menu suite (fuzzel)
-o.bind("SUPER + ALT + SPACE", "Omartia menu", "omartia-menu")
+-- Stellarchy menu suite (fuzzel)
+o.bind("SUPER + ALT + SPACE", "Stellarchy menu", "stellarchy-menu")
 
 -- Caelestia sidebar / notifications shade
 o.bind("SUPER + N", "Notifications shade", hl.dsp.global("caelestia:sidebar"))
@@ -25,17 +25,17 @@ o.bind("SUPER + CTRL + L", "Lock system", "caelestia-system-lock")
 
 -- Keybinding list (fuzzel; omarchy's summons the removed omarchy-shell)
 hl.unbind("SUPER + K")
-o.bind("SUPER + K", "Keybindings", "omartia-keybinds")
+o.bind("SUPER + K", "Keybindings", "stellarchy-keybinds")
 
 -- Power menu (fuzzel)
-o.bind("SUPER + ESCAPE", "Power menu", "omartia-power")
+o.bind("SUPER + ESCAPE", "Power menu", "stellarchy-power")
 
 -- ── Sweep: replace Omarchy defaults that call the removed omarchy-shell ──
 -- Stock Omarchy routes these keys into `omarchy-shell`, which this remux
 -- removes — without this block every one of them is a silent no-op.
--- Replaced with omartia-media (universal MPRIS) and Caelestia equivalents.
+-- Replaced with stellarchy-media (universal MPRIS) and Caelestia equivalents.
 
--- Media keys -> omartia-media: targets whichever MPRIS player is currently
+-- Media keys -> stellarchy-media: targets whichever MPRIS player is currently
 -- Playing, falls back to the first player. Works with any app.
 hl.unbind("XF86AudioPlay")
 hl.unbind("XF86AudioPause")
@@ -43,12 +43,12 @@ hl.unbind("XF86AudioNext")
 hl.unbind("XF86AudioPrev")
 hl.unbind("ALT + XF86AudioPlay")
 hl.unbind("ALT + SHIFT + XF86AudioPlay")
-o.bind("XF86AudioPlay", "Play/Pause", "omartia-media play-pause", { locked = true })
-o.bind("XF86AudioPause", "Pause", "omartia-media pause", { locked = true })
-o.bind("XF86AudioNext", "Next track", "omartia-media next", { locked = true })
-o.bind("XF86AudioPrev", "Previous track", "omartia-media previous", { locked = true })
-o.bind("ALT + XF86AudioPlay", "Next track", "omartia-media next", { locked = true })
-o.bind("ALT + SHIFT + XF86AudioPlay", "Previous track", "omartia-media previous", { locked = true })
+o.bind("XF86AudioPlay", "Play/Pause", "stellarchy-media play-pause", { locked = true })
+o.bind("XF86AudioPause", "Pause", "stellarchy-media pause", { locked = true })
+o.bind("XF86AudioNext", "Next track", "stellarchy-media next", { locked = true })
+o.bind("XF86AudioPrev", "Previous track", "stellarchy-media previous", { locked = true })
+o.bind("ALT + XF86AudioPlay", "Next track", "stellarchy-media next", { locked = true })
+o.bind("ALT + SHIFT + XF86AudioPlay", "Previous track", "stellarchy-media previous", { locked = true })
 
 -- Clipboard & emoji panels -> caelestia CLI
 hl.unbind("SUPER + CTRL + V")

@@ -582,8 +582,8 @@ dispatch_binding() {
 
 back_target=""
 if [[ $1 == "--menu" ]]; then
-  # Launched from the omartia root menu: Esc goes back instead of closing.
-  back_target="omartia-menu"
+  # Launched from the stellarchy root menu: Esc goes back instead of closing.
+  back_target="stellarchy-menu"
   shift
 fi
 
@@ -591,8 +591,8 @@ if [[ $1 == "--print" || $1 == "-p" ]]; then
   output_keybindings
 else
   records=$(output_binding_records)
-  # omartia: fuzzel dmenu instead of omarchy-shell summon (shell is replaced by Caelestia)
-  if ! selection=$(cut -f1 <<<"$records" | omartia-fuzzel --dmenu --prompt='Keybindings: ' --width=90); then
+  # stellarchy: fuzzel dmenu instead of omarchy-shell summon (shell is replaced by Caelestia)
+  if ! selection=$(cut -f1 <<<"$records" | stellarchy-fuzzel --dmenu --prompt='Keybindings: ' --width=90); then
     [[ -n $back_target ]] && exec "$back_target"
     exit 0
   fi

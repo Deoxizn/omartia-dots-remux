@@ -39,10 +39,10 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-info()  { echo -e "${CYAN}[omartia]${NC} $*"; }
-ok()    { echo -e "${GREEN}[omartia]${NC} $*"; }
-warn()  { echo -e "${YELLOW}[omartia]${NC} $*"; }
-err()   { echo -e "${RED}[omartia]${NC} $*" >&2; }
+info()  { echo -e "${CYAN}[stellarchy]${NC} $*"; }
+ok()    { echo -e "${GREEN}[stellarchy]${NC} $*"; }
+warn()  { echo -e "${YELLOW}[stellarchy]${NC} $*"; }
+err()   { echo -e "${RED}[stellarchy]${NC} $*" >&2; }
 
 confirm() {
   if $YES; then return 0; fi
@@ -487,14 +487,14 @@ else
 -- omartia-dots-remux: Caelestia bindings (auto-injected)
 hl.unbind("SUPER + SPACE")
 o.bind("SUPER + SPACE", "Caelestia launcher", hl.dsp.global("caelestia:launcher"))
-o.bind("SUPER + ALT + SPACE", "Omartia menu", "omartia-menu")
+o.bind("SUPER + ALT + SPACE", "Stellarchy menu", "stellarchy-menu")
 o.bind("SUPER + N", "Notifications shade", hl.dsp.global("caelestia:sidebar"))
 o.bind("SUPER + ALT + D", "Dashboard", hl.dsp.global("caelestia:dashboard"))
 hl.unbind("SUPER + CTRL + L")
 o.bind("SUPER + CTRL + L", "Lock system", hl.dsp.global("caelestia:lock"))
 hl.unbind("SUPER + K")
-o.bind("SUPER + K", "Keybindings", "omartia-keybinds")
-o.bind("SUPER + ESCAPE", "Power menu", "omartia-power")
+o.bind("SUPER + K", "Keybindings", "stellarchy-keybinds")
+o.bind("SUPER + ESCAPE", "Power menu", "stellarchy-power")
 CAELESTIA_BINDINGS
     fi
     ok "  hypr/bindings.lua (patched)"
@@ -771,9 +771,9 @@ ok "Theme bridge hook installed"
 info "Installing omarchy-update shell guard..."
 
 if ! $DRY_RUN; then
-  run_sudo install -m755 "$REPO_DIR/hooks/libalpm/omartia-guard-restart-shell.sh" /usr/local/bin/
-  run_sudo install -m644 "$REPO_DIR/hooks/libalpm/omartia-restart-shell-guard.hook" /usr/share/libalpm/hooks/
-  run_sudo /usr/local/bin/omartia-guard-restart-shell.sh
+  run_sudo install -m755 "$REPO_DIR/hooks/libalpm/stellarchy-guard-restart-shell.sh" /usr/local/bin/
+  run_sudo install -m644 "$REPO_DIR/hooks/libalpm/stellarchy-restart-shell-guard.hook" /usr/share/libalpm/hooks/
+  run_sudo /usr/local/bin/stellarchy-guard-restart-shell.sh
 fi
 ok "Update guard installed (blocks omarchy-update from relaunching omarchy-shell)"
 
@@ -803,6 +803,23 @@ else
       "$FF_DIR/config.jsonc"
   fi
   ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy line + logo)"
+fi
+
+# ──────────────────────────────────────────────
+# Stellarchy identity overlay (~/.config/stellarchy/os-release) — read by the
+# Caelestia shell via patches/0002 so lockscreen/About show Stellarchy while
+# /etc/os-release stays untouched (fastfetch reports real Omarchy info).
+# ──────────────────────────────────────────────
+
+OVERLAY="$HOME/.config/stellarchy/os-release"
+if [[ -f $OVERLAY ]]; then
+  ok "  identity overlay present — left untouched"
+else
+  if ! $DRY_RUN; then
+    mkdir -p "$HOME/.config/stellarchy"
+    printf 'NAME="Stellarchy"\nPRETTY_NAME="Stellarchy"\n' > "$OVERLAY"
+  fi
+  ok "  seeded $OVERLAY"
 fi
 
 # ──────────────────────────────────────────────
@@ -894,19 +911,19 @@ else
 fi
 
 # ──────────────────────────────────────────────
-# Install omartia fuzzel menu suite
+# Install stellarchy fuzzel menu suite
 # ──────────────────────────────────────────────
 
-info "Installing omartia menu suite..."
+info "Installing stellarchy menu suite..."
 
 if ! $DRY_RUN; then
   mkdir -p "$HOME/.local/bin"
   install -m755 "$REPO_DIR/scripts/caelestia-system-lock" "$HOME/.local/bin/"
-  for f in "$REPO_DIR"/scripts/omartia-*; do
+  for f in "$REPO_DIR"/scripts/stellarchy-*; do
     install -m755 "$f" "$HOME/.local/bin/"
   done
 fi
-ok "omartia menus installed (SUPER+ALT+SPACE root, SUPER+ESC power, SUPER+K keybinds)"
+ok "stellarchy menus installed (SUPER+ALT+SPACE root, SUPER+ESC power, SUPER+K keybinds)"
 ok "caelestia-system-lock installed (lock keybind + hypridle lock_cmd)"
 
 # ──────────────────────────────────────────────
@@ -952,7 +969,7 @@ setup_chaotic_kernel() {
     run_sudo pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
     run_sudo pacman-key --lsign-key 3056513887B78AEB
     run_sudo bash -c "pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'"
-    run_sudo cp /etc/pacman.conf /etc/pacman.conf.omartia-backup
+    run_sudo cp /etc/pacman.conf /etc/pacman.conf.stellarchy-backup
     printf '\n[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist\n' | run_sudo tee -a /etc/pacman.conf >/dev/null
   else
     ok "  chaotic-aur already configured"
@@ -992,7 +1009,7 @@ echo ""
 # could leave the session with no shell at all (the historic black screen).
 # ──────────────────────────────────────────────
 
-PREFLIGHT_LOG="$HOME/omartia-preflight.log"
+PREFLIGHT_LOG="$HOME/stellarchy-preflight.log"
 PREFLIGHT_FAIL=0
 
 if ! $DRY_RUN; then
@@ -1002,7 +1019,7 @@ if ! $DRY_RUN; then
   pf_fail() { echo "FAIL: $*" | tee -a "$PREFLIGHT_LOG"; PREFLIGHT_FAIL=1; }
 
   : > "$PREFLIGHT_LOG"
-  echo "omartia session-start preflight — $(date)" >> "$PREFLIGHT_LOG"
+  echo "stellarchy session-start preflight — $(date)" >> "$PREFLIGHT_LOG"
 
   HYPRLAND_FILE="$HOME/.config/hypr/hyprland.lua"
   AUTOSTART_FILE="$HOME/.config/hypr/autostart.lua"
@@ -1182,7 +1199,7 @@ else
   echo ""
   info "To uninstall: $REPO_DIR/uninstall.sh"
   info "Caelestia didn't start after install? Press Ctrl+Alt+F4 for a TTY, log in, then:"
-  info "  cat ~/omartia-preflight.log && systemctl --user start caelestia-shell.service"
+  info "  cat ~/stellarchy-preflight.log && systemctl --user start caelestia-shell.service"
   echo ""
 
   # Auto-logout after 5 seconds so Caelestia Shell starts (preflight must pass)

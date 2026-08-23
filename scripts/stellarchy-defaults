@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# omartia:summary=Defaults submenu: pick the default browser, editor, terminal, or coding agent.
+# stellarchy:summary=Defaults submenu: pick the default browser, editor, terminal, or coding agent.
 
 choice=$(
   printf '%s\n' \
@@ -8,8 +8,8 @@ choice=$(
     'Editor' \
     'Terminal' \
     'Agent' |
-    omartia-fuzzel --dmenu --prompt='Defaults: ' --width=24 --lines=4
-) || exec omartia-menu   # Esc = back to root menu
+    stellarchy-fuzzel --dmenu --prompt='Defaults: ' --width=24 --lines=4
+) || exec stellarchy-menu   # Esc = back to root menu
 
 case "$choice" in
   Browser)  type="browser" ;;
@@ -80,8 +80,8 @@ max_lines=$(( ${#entries[@]} < 9 ? ${#entries[@]} : 9 ))
 
 pick_choice=$(
   printf '%s' "$menu" |
-    omartia-fuzzel --dmenu --prompt="${type^}: " --width=26 --lines=$max_lines
-) || exec omartia-defaults   # Esc = back to Defaults menu
+    stellarchy-fuzzel --dmenu --prompt="${type^}: " --width=26 --lines=$max_lines
+) || exec stellarchy-defaults   # Esc = back to Defaults menu
 
 [[ -n $pick_choice ]] || exit 0
 pick=${pick_choice#✓ }

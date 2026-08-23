@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# omartia:summary=Update menu: system, themes, firmware, or switch update channel.
+# stellarchy:summary=Update menu: system, themes, firmware, or switch update channel.
 
 current=$(omarchy channel current 2>/dev/null)
 
@@ -10,8 +10,8 @@ choice=$(
     'Update themes' \
     'Update firmware' \
     "Update channel${current:+ ($current)}" |
-    omartia-fuzzel --dmenu --prompt='Update: ' --width=30 --lines=4
-) || exec omartia-menu   # Esc = back to root menu
+    stellarchy-fuzzel --dmenu --prompt='Update: ' --width=30 --lines=4
+) || exec stellarchy-menu   # Esc = back to root menu
 
 case "$choice" in
   "Update system")   exec omarchy-launch-or-focus-tui omarchy-update ;;
@@ -25,8 +25,8 @@ esac
 chan_choice=$(
   printf '%s\n' stable rc edge dev |
     awk -v cur="$current" '$0 == cur { print "✓ " $0; next } { print }' |
-    omartia-fuzzel --dmenu --prompt='Channel: ' --width=22 --lines=4
-) || exec omartia-update   # Esc = back to Update menu
+    stellarchy-fuzzel --dmenu --prompt='Channel: ' --width=22 --lines=4
+) || exec stellarchy-update   # Esc = back to Update menu
 
 channel=${chan_choice#✓ }
 [[ -n $channel ]] && exec omarchy-launch-or-focus-tui omarchy-channel-set "$channel"

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# caelestia-system-lock — omartia remux replacement for omarchy-system-lock.
+# caelestia-system-lock — stellarchy remux replacement for omarchy-system-lock.
 # Locks via the Caelestia shell's session lock (Quickshell IPC) instead of the
 # retired omarchy-shell, then replicates the rest of omarchy-system-lock:
 # keyboard layout reset, 1password lock, screensaver cleanup.
@@ -32,7 +32,7 @@ pkill -x ttfx 2>/dev/null || true
 timeout 1s pidwait -x ttfx 2>/dev/null || true
 pkill -f '[o]rg.omarchy.screensaver' 2>/dev/null || true
 
-# Turn the displays off shortly after locking (omartia remux). Runs for every
+# Turn the displays off shortly after locking (stellarchy remux). Runs for every
 # lock path (menu, keybind, hypridle), gated on still being locked so a quick
 # unlock doesn't kill the screens. hypridle's on-resume wakes them again.
 (

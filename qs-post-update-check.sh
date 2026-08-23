@@ -5,7 +5,7 @@ fail=0
 ok() { printf '  \033[32mOK \033[0m %s\n' "$*"; }
 bad() { printf '  \033[31m!! \033[0m %s\n' "$*"; fail=1; }
 
-echo "omartia quickshell post-update check"
+echo "stellarchy quickshell post-update check"
 echo "------------------------------------"
 
 if out=$(quickshell --version 2>&1); then

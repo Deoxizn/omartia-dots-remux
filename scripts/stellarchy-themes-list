@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# omartia:summary=Switch Omarchy themes via a themed fuzzel menu with preview images.
+# stellarchy:summary=Switch Omarchy themes via a themed fuzzel menu with preview images.
 
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}"
 cache_dir="${XDG_CACHE_HOME:-$HOME/.cache}/omarchy/theme-selector/previews"
@@ -57,10 +57,10 @@ choice=$(
       printf '%s%s\n' "$marker" "$name"
     fi
   done |
-    omartia-fuzzel --dmenu --width=44 --lines=5 \
+    stellarchy-fuzzel --dmenu --width=44 --lines=5 \
       --line-height=150 --horizontal-pad=12 --vertical-pad=6 \
       --hide-prompt
-) || exec omartia-themes   # Esc = back to Themes submenu
+) || exec stellarchy-themes   # Esc = back to Themes submenu
 
 # Drop any residual icon metadata, then the current-theme marker.
 theme=$(printf '%s' "$choice" | sed -E 's/icon\x1f.*//')

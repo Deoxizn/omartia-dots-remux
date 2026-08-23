@@ -48,10 +48,10 @@ YELLOW='\033[1;33m'
 CYAN='\033[0;36m'
 NC='\033[0m'
 
-info()  { echo -e "${CYAN}[omartia]${NC} $*"; }
-ok()    { echo -e "${GREEN}[omartia]${NC} $*"; }
-warn()  { echo -e "${YELLOW}[omartia]${NC} $*"; }
-err()   { echo -e "${RED}[omartia]${NC} $*" >&2; }
+info()  { echo -e "${CYAN}[stellarchy]${NC} $*"; }
+ok()    { echo -e "${GREEN}[stellarchy]${NC} $*"; }
+warn()  { echo -e "${YELLOW}[stellarchy]${NC} $*"; }
+err()   { echo -e "${RED}[stellarchy]${NC} $*" >&2; }
 
 rebuild_initrd() {
   if ! mountpoint -q /boot; then
@@ -159,7 +159,7 @@ echo ""
 info "Menu suite scripts:"
 
 shopt -s nullglob
-repo_scripts=("$REPO_DIR"/scripts/omartia-*)
+repo_scripts=("$REPO_DIR"/scripts/stellarchy-*)
 if (( ${#repo_scripts[@]} == 0 )); then
   warn "  no scripts found in repo"
 fi
@@ -167,9 +167,22 @@ for src in "${repo_scripts[@]}"; do
   copy_if_changed "$src" "$HOME/.local/bin/$(basename "$src")" "$(basename "$src")"
 done
 # Scripts removed upstream but still installed locally
-for dst in "$HOME/.local/bin/"omartia-*; do
+for dst in "$HOME/.local/bin/"stellarchy-*; do
   [[ -f "$REPO_DIR/scripts/$(basename "$dst")" ]] || warn "  $(basename "$dst") no longer in repo — left in place, remove manually if unwanted"
 done
+shopt -u nullglob
+
+# Pre-rename binaries (scripts were omartia-* before the stellarchy rebrand)
+shopt -s nullglob
+legacy_scripts=("$HOME/.local/bin/"omartia-*)
+if (( ${#legacy_scripts[@]} )); then
+  if $DRY_RUN; then
+    info "  [dry-run] would remove ${#legacy_scripts[@]} legacy omartia-* scripts"
+  else
+    rm -f "${legacy_scripts[@]}"
+    ok "  removed ${#legacy_scripts[@]} legacy omartia-* scripts"
+  fi
+fi
 shopt -u nullglob
 
 echo ""
@@ -189,10 +202,10 @@ echo ""
 # ──────────────────────────────────────────────
 
 info "Update guard:"
-guard_src="$REPO_DIR/hooks/libalpm/omartia-guard-restart-shell.sh"
-hook_src="$REPO_DIR/hooks/libalpm/omartia-restart-shell-guard.hook"
-guard_dst="/usr/local/bin/omartia-guard-restart-shell.sh"
-hook_dst="/usr/share/libalpm/hooks/omartia-restart-shell-guard.hook"
+guard_src="$REPO_DIR/hooks/libalpm/stellarchy-guard-restart-shell.sh"
+hook_src="$REPO_DIR/hooks/libalpm/stellarchy-restart-shell-guard.hook"
+guard_dst="/usr/local/bin/stellarchy-guard-restart-shell.sh"
+hook_dst="/usr/share/libalpm/hooks/stellarchy-restart-shell-guard.hook"
 
 sync_root_file() { # <src> <dst> <label> <mode>
   local src="$1" dst="$2" label="$3" mode="$4"
@@ -231,7 +244,7 @@ echo ""
 # ──────────────────────────────────────────────
 
 SKIP_LUA=(monitors.lua input.lua bindings.lua)
-BASE_DIR="$HOME/.config/hypr/.omartia-base"
+BASE_DIR="$HOME/.config/hypr/.stellarchy-base"
 info "Hypr Lua configs (merge from repo):"
 
 shopt -s nullglob
@@ -402,13 +415,13 @@ else
   MANAGED_BEGIN="-- BEGIN omartia-dots-remux managed keybinds (auto-synced by upgrade.sh — personal edits belong outside this block)"
   MANAGED_END="-- END omartia-dots-remux managed keybinds"
 
-  # Strip legacy auto-injected omartia blocks (predecessors of the managed
+  # Strip legacy auto-injected stellarchy blocks (predecessors of the managed
   # block). Duplicates make toggle binds (sidebar/dashboard) fire twice and
   # appear dead. A legacy block = its marker comment plus the command lines
   # after it, up to the next blank line.
   if grep -q -- "-- omartia-dots-remux: .*auto-injected" "$BINDINGS_FILE"; then
     if $DRY_RUN; then
-      info "  [dry-run] would remove legacy omartia auto-injected binding block(s)"
+      info "  [dry-run] would remove legacy stellarchy auto-injected binding block(s)"
       changed=$((changed+1))
     else
       tmp="$(mktemp)"
@@ -530,9 +543,30 @@ fi
 echo ""
 
 # ──────────────────────────────────────────────
+# Stellarchy identity overlay (~/.config/stellarchy/os-release). Read by the
+# Caelestia shell via patches/0002 so lockscreen/About show Stellarchy without
+# touching /etc/os-release — fastfetch & omarchy tooling report real info.
+# ──────────────────────────────────────────────
+
+info "Stellarchy identity overlay:"
+OVERLAY="$HOME/.config/stellarchy/os-release"
+if [[ -f $OVERLAY ]]; then
+  ok "  already present — left untouched"
+elif $DRY_RUN; then
+  info "  [dry-run] would seed $OVERLAY (NAME/PRETTY_NAME → Stellarchy)"
+else
+  mkdir -p "$HOME/.config/stellarchy"
+  printf 'NAME="Stellarchy"\nPRETTY_NAME="Stellarchy"\n' > "$OVERLAY"
+  ok "  seeded $OVERLAY"
+fi
+changed=$((changed+1))
+
+echo ""
+
+# ──────────────────────────────────────────────
 # Branding (screensaver.txt / about.txt) — Stellarchy wordmark.
 # Installs when missing, replaces files still identical to Omarchy's stock
-# art, and refreshes older omartia deploys. Genuine user customization is
+# art, and refreshes older stellarchy deploys. Genuine user customization is
 # never touched.
 # ──────────────────────────────────────────────
 
@@ -571,7 +605,7 @@ for f in screensaver.txt about.txt; do
     else
       cp "$src" "$dst"
     fi
-    ok "  $f refreshed (older omartia version)"
+    ok "  $f refreshed (older stellarchy version)"
     changed=$((changed+1))
   else
     ok "  $f customized — left untouched"
@@ -600,7 +634,7 @@ setup_chaotic_kernel() {
       rr pacman-key --recv-key 3056513887B78AEB --keyserver keyserver.ubuntu.com
       rr pacman-key --lsign-key 3056513887B78AEB
       rr bash -c "pacman -U --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'"
-      [[ -f /etc/pacman.conf.omartia-backup ]] || rr cp /etc/pacman.conf /etc/pacman.conf.omartia-backup
+      [[ -f /etc/pacman.conf.stellarchy-backup ]] || rr cp /etc/pacman.conf /etc/pacman.conf.stellarchy-backup
       printf '\n[chaotic-aur]\nInclude = /etc/pacman.d/chaotic-mirrorlist\n' | { $DRY_RUN && info "  [dry-run] would append [chaotic-aur] to /etc/pacman.conf" || sudo tee -a /etc/pacman.conf >/dev/null; }
     else
       ok "  chaotic-aur already configured"
@@ -732,7 +766,7 @@ echo ""
 # Session commands — ensure SDDM-safe logout
 # loginctl terminate-user / dispatch exit kill the session in ways that
 # make sddm-helper exit non-zero; SDDM then never relaunches (black screen).
-# omartia-logout unwinds via uwsm so sddm-helper exits cleanly.
+# stellarchy-logout unwinds via uwsm so sddm-helper exits cleanly.
 # ──────────────────────────────────────────────
 
 CAELESTIA_SHELL_JSON="$HOME/.config/caelestia/shell.json"
@@ -762,7 +796,7 @@ c = json.load(open(p))
 c.setdefault("session", {}).setdefault("commands", {})["logout"] = ["omarchy-system-logout"]
 json.dump(c, open(p, "w"), indent=4)
 EOF
-  ok "  logout command set to omartia-logout (backup: caelestia/shell.json.pre-upgrade.bak)"
+  ok "  logout command set to stellarchy-logout (backup: caelestia/shell.json.pre-upgrade.bak)"
   changed=$((changed+1))
 fi
 
@@ -802,5 +836,5 @@ elif $DRY_RUN; then
   info "$changed item(s) would be synced."
 else
   ok "$changed item(s) synced."
-  echo -e "${CYAN}[omartia]${NC} If keybinds changed, run: ${YELLOW}hyprctl reload${NC}"
+  echo -e "${CYAN}[stellarchy]${NC} If keybinds changed, run: ${YELLOW}hyprctl reload${NC}"
 fi

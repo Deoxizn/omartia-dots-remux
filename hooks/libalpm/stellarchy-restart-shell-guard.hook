@@ -7,6 +7,6 @@ Target = omarchy
 Target = omarchy-settings-dev
 
 [Action]
-Description = omartia remux: re-apply Caelestia guard to omarchy-restart-shell
+Description = stellarchy remux: re-apply Caelestia guard to omarchy-restart-shell
 When = PostTransaction
-Exec = /usr/local/bin/omartia-guard-restart-shell.sh
+Exec = /usr/local/bin/stellarchy-guard-restart-shell.sh

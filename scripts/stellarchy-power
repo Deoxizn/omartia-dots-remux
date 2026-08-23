@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# omartia:summary=Power menu: lock, logout, suspend, hibernate, reboot, shutdown.
+# stellarchy:summary=Power menu: lock, logout, suspend, hibernate, reboot, shutdown.
 
 choice=$(
   printf '%s\n' \
@@ -10,12 +10,12 @@ choice=$(
     'Hibernate' \
     'Reboot' \
     'Shutdown' |
-    omartia-fuzzel --dmenu --prompt='Power: ' --width=22 --lines=6
+    stellarchy-fuzzel --dmenu --prompt='Power: ' --width=22 --lines=6
 ) || exit 0
 
 # Destructive actions require selecting "Confirm" (Esc cancels).
 confirm() {
-  [[ $(printf 'Confirm\n' | omartia-fuzzel --dmenu --prompt="$1: " --width=22 --lines=1) == "Confirm" ]]
+  [[ $(printf 'Confirm\n' | stellarchy-fuzzel --dmenu --prompt="$1: " --width=22 --lines=1) == "Confirm" ]]
 }
 
 case "$choice" in

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# omartia:summary=Edit Hyprland config files in your default editor.
+# stellarchy:summary=Edit Hyprland config files in your default editor.
 
 hypr_dir="$HOME/.config/hypr"
 
@@ -36,8 +36,8 @@ done < <(find "$hypr_dir" -maxdepth 1 \( -name '*.lua' -o -name '*.conf' \) -typ
 
 choice=$(
   printf '%s' "$menu" |
-    omartia-fuzzel --dmenu --prompt='Config: ' --width=30 --lines=10
-) || exec omartia-menu   # Esc = back to root menu
+    stellarchy-fuzzel --dmenu --prompt='Config: ' --width=30 --lines=10
+) || exec stellarchy-menu   # Esc = back to root menu
 
 [[ -n $choice ]] || exit 0
 file=${file_for[$choice]:-}

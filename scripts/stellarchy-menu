@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# stellarchy:summary=Stellarchy root menu: keybindings, themes, packages, and session.
+
+choice=$(
+  printf '%s\n' \
+    'Keybindings' \
+    'Themes' \
+    'Packages' \
+    'Update' \
+    'Config' \
+    'Defaults' \
+    'Restart' \
+    'Session' \
+    'About' |
+    stellarchy-fuzzel --dmenu --prompt='✦ ..Stellarchy.. ✦ ' --width=26 --lines=9
+)
+
+case "$choice" in
+  Keybindings) exec stellarchy-keybinds --menu ;;
+  Themes)      exec stellarchy-themes ;;
+  Packages)    exec stellarchy-pkgs ;;
+  Update)      exec stellarchy-update ;;
+  Config)      exec stellarchy-config ;;
+  Defaults)    exec stellarchy-defaults ;;
+  Restart)     exec stellarchy-restart ;;
+  Session)     exec hyprctl dispatch global caelestia:session ;;
+  About)       exec omarchy-launch-about ;;
+esac

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="stellarchy.png" alt="Stellarchy" width="180">
+<img src="stellarchy.png" alt="Stellarchy" width="450">
 
 ```
 ███████╗████████╗███████╗██╗     ██╗      █████╗ ██████╗  ██████╗██╗  ██╗██╗   ██╗
@@ -58,13 +58,13 @@ stock Omarchy or look for a Caelestia-native alternative.
 
 ### What happens to stock Omarchy parts
 
-| Stock Omarchy | In omartia | Replacement / notes |
+| Stock Omarchy | In stellarchy | Replacement / notes |
 |---|---|---|
 | omarchy-shell (bar, notifications, OSD) | **Removed** | Caelestia Shell provides all three |
 | omarchy-shell lock screen | **Removed** | Caelestia session lock via `caelestia-system-lock` (also turns displays off ~20s after locking) |
-| omarchy-shell menus (root/power/keybinds/themes/packages/update/config/defaults) | **Removed** | Fuzzel suite `omartia-*`, themed from the live Caelestia scheme |
-| `omarchy-menu toggle apps/root` | **Rebound** | SUPER+Space → Caelestia launcher, SUPER+Alt+Space → Omartia root menu |
-| Media keys (`XF86Audio*`) | **Were dead**, now rebound | `omartia-media` — controls whichever MPRIS player is currently playing (Spotify, browser, mpv, anything); no hardcoded app |
+| omarchy-shell menus (root/power/keybinds/themes/packages/update/config/defaults) | **Removed** | Fuzzel suite `stellarchy-*`, themed from the live Caelestia scheme |
+| `omarchy-menu toggle apps/root` | **Rebound** | SUPER+Space → Caelestia launcher, SUPER+Alt+Space → Stellarchy root menu |
+| Media keys (`XF86Audio*`) | **Were dead**, now rebound | `stellarchy-media` — controls whichever MPRIS player is currently playing (Spotify, browser, mpv, anything); no hardcoded app |
 | Clipboard panel (`SUPER+CTRL+V`) | **Was dead**, now rebound | `caelestia clipboard` |
 | Emoji picker (`SUPER+CTRL+E`) | **Was dead**, now rebound | `caelestia emoji` |
 | Dismiss notifications (`SUPER+,`) | **Partially replaced** | Clears all notifications via Caelestia IPC; per-notification dismiss has no equivalent |
@@ -173,7 +173,7 @@ The installer will:
 9. Install `caelestia-system-lock` and the managed `hypridle.conf` so idle lock matches the manual lock path (existing hypridle.conf is never overwritten; upgrades land as `.new`)
 10. Apply Caelestia shell patches from [`patches/`](patches/) — currently a self-heal for Quickshell's Hyprland event tracking, which can go stale across suspend/DPMS/multi-monitor transitions and force-close drawers (launcher/dashboard) the moment they open. Patches are applied idempotently after clone/update and survive upstream pulls
 11. Install the omarchy-update guard — `omarchy-update` ends with `omarchy-restart-shell`, which hard-relaunches omarchy-shell over Caelestia. The guard makes it exit early while Caelestia is running, and a libalpm hook re-applies it after every omarchy package upgrade
-12. Install the omartia fuzzel menu suite and `omartia-media` to `~/.local/bin/` (root menu includes an **About** entry)
+12. Install the stellarchy fuzzel menu suite and `stellarchy-media` to `~/.local/bin/` (root menu includes an **About** entry)
 13. Seed `~/.config/fastfetch/config.jsonc` from the system default with a `Stellarchy` OS line — only if you have no own fastfetch config; custom configs are untouched
 14. Deploy Stellarchy screensaver + About art (`~/.config/omarchy/branding/`) — replaces files still identical to Omarchy's stock art, never genuine customization
 15. Set up the `stellarchy` plymouth splash (sparkle logo, vendored Omarchy boot script) and rebuild the initramfs so it's live on next boot
@@ -201,7 +201,7 @@ Before the installer offers to log you out, it verifies the exact chain your
 
 Your PC stays fully usable as stock Omarchy — logging out or rebooting is safe.
 The terminal prints exactly which checks failed; everything, including what was
-rolled back, lands in `~/omartia-preflight.log`. Send that file for help or hand
+rolled back, lands in `~/stellarchy-preflight.log`. Send that file for help or hand
 it to your AI agent, then fix and re-run `./install.sh` — or `./uninstall.sh`
 to remove everything.
 
@@ -209,7 +209,7 @@ to remove everything.
 existed)? Press `Ctrl+Alt+F4` for a TTY, log in, then:
 
 ```bash
-cat ~/omartia-preflight.log                     # see what's wrong
+cat ~/stellarchy-preflight.log                     # see what's wrong
 systemctl --user start caelestia-shell.service  # bring the shell back now
 ```
 
@@ -227,12 +227,12 @@ systemctl --user start caelestia-shell.service  # bring the shell back now
 | Binding | Action |
 |---|---|
 | `SUPER+Space` | Caelestia launcher (apps, wallpaper, schemes, system) |
-| `SUPER+Alt+Space` | Omartia root menu |
+| `SUPER+Alt+Space` | Stellarchy root menu |
 | `SUPER+N` | Caelestia sidebar / notifications shade |
 | `SUPER+Alt+D` | Caelestia dashboard (media, weather, stats, network, BT) |
 | `SUPER+Escape` | Power menu (confirm guard on reboot/shutdown) |
 | `SUPER+Ctrl+L` | Lock via Caelestia (`caelestia-system-lock`) |
-| `Media keys` | Play/pause, next, previous — any MPRIS player via `omartia-media` |
+| `Media keys` | Play/pause, next, previous — any MPRIS player via `stellarchy-media` |
 | `SUPER+Ctrl+V` / `SUPER+Ctrl+E` | Clipboard history / emoji picker |
 | `SUPER+,` | Clear notifications |
 | `SUPER+Ctrl+P` | Session menu |
@@ -246,7 +246,7 @@ systemctl --user start caelestia-shell.service  # bring the shell back now
 | `SUPER+Arrow` | Move/resize windows |
 | `PRINT` | Screenshot |
 
-Everything else inherits from stock Omarchy — run `omartia-keybinds` for the
+Everything else inherits from stock Omarchy — run `stellarchy-keybinds` for the
 full searchable list. Stock's panel chords (`SUPER+Ctrl+A/B/W/Alt+D`) are
 unbound; the dashboard on `SUPER+Alt+D` covers what they did.
 
@@ -254,24 +254,24 @@ unbound; the dashboard on `SUPER+Alt+D` covers what they did.
 
 The omarchy-shell menus are recreated as standalone fuzzel scripts in
 [`scripts/`](scripts/) (installed to `~/.local/bin/`). All of them are themed
-from the live Caelestia scheme via the shared `omartia-fuzzel` wrapper, so
+from the live Caelestia scheme via the shared `stellarchy-fuzzel` wrapper, so
 they restyle automatically on every theme switch. Esc navigates back one menu
 level.
 
 | Script | Purpose |
 |---|---|
-| `omartia-menu` | Root menu: Keybindings, Themes, Packages, Update, Config, Defaults, Restart, Session |
-| `omartia-power` | Lock, logout, suspend, hibernate, reboot, shutdown (destructive actions require Confirm) |
-| `omartia-keybinds` | Searchable keybinding list that dispatches binds (`--menu` for Esc-back) |
-| `omartia-themes` / `omartia-themes-list` | Theme switcher with preview thumbnails + git theme install |
-| `omartia-pkgs` | Package TUI launcher: install, remove, AUR |
-| `omartia-update` | System/theme/firmware updates + package channel switcher |
-| `omartia-config` | Edit `~/.config/hypr/*.{lua,conf}` in your default editor |
-| `omartia-defaults` | Default browser/editor/terminal/agent pickers (includes installed beta/nightly browsers) |
-| `omartia-restart` | Reload Hyprland, restart terminal/Caelestia shell, refresh theme |
-| `omartia-media` | Universal MPRIS media control — targets whichever player is currently playing |
+| `stellarchy-menu` | Root menu: Keybindings, Themes, Packages, Update, Config, Defaults, Restart, Session |
+| `stellarchy-power` | Lock, logout, suspend, hibernate, reboot, shutdown (destructive actions require Confirm) |
+| `stellarchy-keybinds` | Searchable keybinding list that dispatches binds (`--menu` for Esc-back) |
+| `stellarchy-themes` / `stellarchy-themes-list` | Theme switcher with preview thumbnails + git theme install |
+| `stellarchy-pkgs` | Package TUI launcher: install, remove, AUR |
+| `stellarchy-update` | System/theme/firmware updates + package channel switcher |
+| `stellarchy-config` | Edit `~/.config/hypr/*.{lua,conf}` in your default editor |
+| `stellarchy-defaults` | Default browser/editor/terminal/agent pickers (includes installed beta/nightly browsers) |
+| `stellarchy-restart` | Reload Hyprland, restart terminal/Caelestia shell, refresh theme |
+| `stellarchy-media` | Universal MPRIS media control — targets whichever player is currently playing |
 | `caelestia-system-lock` | Lock via Caelestia + kb-layout reset + 1Password lock + delayed display-off (used by keybind, power menu and hypridle) |
-| `omartia-fuzzel` | Shared fuzzel wrapper — reads colors from `~/.local/state/caelestia/scheme.json` |
+| `stellarchy-fuzzel` | Shared fuzzel wrapper — reads colors from `~/.local/state/caelestia/scheme.json` |
 
 ## Known limitations
 
@@ -296,7 +296,7 @@ Honest list of what does **not** work like stock Omarchy:
   `~/.config/omarchy/plugins/` into; Caelestia has no plugin system.
 - **`omarchy-shell` IPC callers die**: any personal script calling
   `omarchy-shell <...>` needs porting to `qs -c caelestia ipc call ...`,
-  `playerctl`, or the omartia suite.
+  `playerctl`, or the stellarchy suite.
 
 ## Uninstall
 
@@ -331,4 +331,4 @@ Any omarchy theme works automatically. No per-theme configuration needed.
 
 - [Omarchy](https://github.com/basecamp/omarchy) — window manager, theme system, keybindings
 - [Caelestia Shell](https://github.com/caelestia-dots/shell) — desktop shell, lock screen, launcher
-- Original [omartia-dots](https://github.com/Z-Rh0/omartia-dots) — inspiration for combining both
+- Original [stellarchy-dots](https://github.com/Z-Rh0/stellarchy-dots) — inspiration for combining both

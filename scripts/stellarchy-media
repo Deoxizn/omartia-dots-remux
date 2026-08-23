@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# omartia:media=Control the active MPRIS media player
-# omartia:args=[play-pause|play|pause|next|previous|stop]
-# omartia:examples=omartia-media play-pause | omartia-media next
+# stellarchy:media=Control the active MPRIS media player
+# stellarchy:args=[play-pause|play|pause|next|previous|stop]
+# stellarchy:examples=stellarchy-media play-pause | stellarchy-media next
 #
 # Targets whichever player is currently Playing; falls back to the first
 # player when nothing is. Works with any MPRIS client (Spotify, browsers,

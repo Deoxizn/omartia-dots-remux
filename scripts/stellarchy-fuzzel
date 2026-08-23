@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# omartia: fuzzel wrapper themed from the active Caelestia scheme.
-# All omartia menus launch through this so theming lives in one place.
-# Usage: omartia-fuzzel [fuzzel args...]
+# stellarchy: fuzzel wrapper themed from the active Caelestia scheme.
+# All stellarchy menus launch through this so theming lives in one place.
+# Usage: stellarchy-fuzzel [fuzzel args...]
 
 scheme="${XDG_STATE_HOME:-$HOME/.local/state}/caelestia/scheme.json"
 

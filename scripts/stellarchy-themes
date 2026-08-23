@@ -1,0 +1,15 @@
+#!/bin/bash
+
+# stellarchy:summary=Themes submenu: browse the theme list or install a new theme.
+
+choice=$(
+  printf '%s\n' \
+    'Theme list' \
+    'Install theme' |
+    stellarchy-fuzzel --dmenu --prompt='Themes: ' --width=26 --lines=2
+) || exec stellarchy-menu   # Esc = back to root menu
+
+case "$choice" in
+  "Theme list")    exec stellarchy-themes-list ;;
+  "Install theme") exec omarchy-launch-or-focus-tui omarchy-theme-install ;;
+esac
