@@ -159,6 +159,30 @@ if [[ ! -f "$HOME/.config/caelestia/shell.json" ]]; then
 fi
 
 # ──────────────────────────────────────────────
+# Caelestia shell patches — re-applied on every upgrade so remux patches
+# (e.g. patches/0002 os-release overlay) survive upstream shell updates.
+# Kept as uncommitted working-tree changes; already-applied patches are a no-op.
+# ──────────────────────────────────────────────
+
+CAELESTIA_DIR="$HOME/.config/quickshell/caelestia"
+if [[ -d "$CAELESTIA_DIR/.git" ]]; then
+  info "Caelestia shell patches:"
+  for p in "$REPO_DIR"/patches/*.patch; do
+    [[ -e $p ]] || break
+    if git -C "$CAELESTIA_DIR" apply --check "$p" 2>/dev/null; then
+      git -C "$CAELESTIA_DIR" apply "$p" \
+        && ok "  applied: $(basename "$p")" \
+        || warn "  failed to apply: $(basename "$p")"
+    elif git -C "$CAELESTIA_DIR" apply --reverse --check "$p" 2>/dev/null; then
+      ok "  already applied: $(basename "$p")"
+    else
+      warn "  no longer fits upstream ($(basename "$p")) — skipping"
+    fi
+  done
+  echo ""
+fi
+
+# ──────────────────────────────────────────────
 # Pull latest
 # ──────────────────────────────────────────────
 
