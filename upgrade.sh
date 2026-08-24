@@ -604,6 +604,17 @@ echo ""
 
 info "Lock / idle:"
 
+# hypridle drives screensaver/lock/dpms/suspend — stock Omarchy doesn't ship it
+# as a dependency, so installs predating install.sh's dep list may lack it.
+if ! pacman -Q hypridle &>/dev/null; then
+  if $DRY_RUN; then
+    info "  [dry-run] would install hypridle"
+  else
+    warn "  hypridle missing — installing"
+    sudo pacman -S --noconfirm --needed hypridle && ok "  hypridle installed"
+  fi
+fi
+
 if [[ -f $REPO_DIR/scripts/caelestia-system-lock ]]; then
   if $DRY_RUN; then
     info "  [dry-run] would update ~/.local/bin/caelestia-system-lock"

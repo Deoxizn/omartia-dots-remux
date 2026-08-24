@@ -267,7 +267,8 @@ DEPS_PKGS=()
 for pkg in cmake ninja base-devel \
   qt6-base qt6-declarative qt6-svg qt6-shadertools qt6-multimedia qt6-wayland qt6-5compat \
   aubio libqalculate libpipewire lm_sensors \
-  grim slurp wl-clipboard libnotify dart-sass cliphist fuzzel ttf-material-symbols-variable; do
+  grim slurp wl-clipboard libnotify dart-sass cliphist fuzzel ttf-material-symbols-variable \
+  hypridle; do
   if ! pacman -Qi "$pkg" &>/dev/null; then
     DEPS_PKGS+=("$pkg")
   fi
