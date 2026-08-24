@@ -807,6 +807,16 @@ EOF
 fi
 ok "  caelestia-shell.service (auto-restart enabled)"
 
+# Stock Omarchy's sleep-lock monitor calls omarchy-shell IPC that no longer
+# exists here and holds a sleep-delay inhibitor — hypridle + caelestia-system-lock
+# own idle/suspend locking now (hypridle.conf before_sleep_cmd).
+if systemctl --user is-enabled --quiet omarchy-sleep-lock.service 2>/dev/null; then
+  if ! $DRY_RUN; then
+    systemctl --user disable --now omarchy-sleep-lock.service 2>/dev/null || true
+  fi
+  ok "  omarchy-sleep-lock.service disabled (hypridle owns idle/sleep locking)"
+fi
+
 # ──────────────────────────────────────────────
 # Install theme bridge hook
 # ──────────────────────────────────────────────
@@ -1128,6 +1138,18 @@ PFPY
     pf_pass "autostart.lua registers the Caelestia launch handler"
   else
     pf_fail "autostart.lua missing Caelestia launch handler"
+  fi
+
+  if grep -q -- "-- hypridle" "$AUTOSTART_FILE" 2>/dev/null; then
+    pf_pass "autostart.lua launches hypridle (idle daemon)"
+  else
+    pf_fail "autostart.lua never launches hypridle — screensaver, lock, DPMS and auto-suspend would all be dead"
+  fi
+
+  if ! systemctl --user is-enabled --quiet omarchy-sleep-lock.service 2>/dev/null; then
+    pf_pass "omarchy-sleep-lock.service disabled (no stock monitor fighting the idle stack)"
+  else
+    pf_fail "omarchy-sleep-lock.service still enabled — run: systemctl --user disable --now omarchy-sleep-lock.service"
   fi
 
   LUAC_BIN="$(command -v luac5.4 || command -v luac5.3 || command -v luac || true)"

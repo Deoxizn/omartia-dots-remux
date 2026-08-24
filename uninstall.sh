@@ -64,6 +64,15 @@ for f in "$LATEST_BACKUP"/*.lua "$LATEST_BACKUP"/*.conf; do
   ok "  Restored hypr/$BASENAME"
 done
 
+# Remove remux lock script from the old install layout (pre-~/.local/bin)
+if [[ -f "$HOME/.config/hypr/scripts/caelestia-system-lock" ]]; then
+  cmp -s "$HOME/.config/hypr/scripts/caelestia-system-lock" "$HOME/.local/bin/caelestia-system-lock" \
+    || cp "$HOME/.local/bin/caelestia-system-lock" "$HOME/.config/hypr/scripts/caelestia-system-lock"
+  rm "$HOME/.config/hypr/scripts/caelestia-system-lock"
+  rm -rf "$HOME/.config/hypr/scripts"
+  ok "  Removed hypr/scripts/caelestia-system-lock (old layout)"
+fi
+
 # Remove Caelestia autostart override from hyprland.lua if backup didn't have it
 HYPRLAND_FILE="$HOME/.config/hypr/hyprland.lua"
 if [[ -f "$HYPRLAND_FILE" ]] && ! grep -q 'require("default.hypr.autostart")' "$LATEST_BACKUP/hyprland.lua" 2>/dev/null; then
@@ -125,6 +134,15 @@ if [[ -f "$HOME/.config/systemd/user/caelestia-shell.service" ]]; then
   rm "$HOME/.config/systemd/user/caelestia-shell.service"
   systemctl --user daemon-reload
   ok "  Removed caelestia-shell.service"
+fi
+
+# Hand idle/sleep locking back to stock Omarchy's monitor (install.sh disabled it)
+if ! systemctl --user is-enabled --quiet omarchy-sleep-lock.service 2>/dev/null; then
+  if systemctl --user enable omarchy-sleep-lock.service 2>/dev/null; then
+    ok "  Re-enabled omarchy-sleep-lock.service"
+  else
+    info "  omarchy-sleep-lock.service not present — skipped"
+  fi
 fi
 
 # Remove scheme.json (Caelestia runtime state)

@@ -627,6 +627,18 @@ if [[ -f $HYPRIDLE_SRC ]]; then
   fi
 fi
 
+# Installs predating install.sh's sleep-lock handling still carry stock Omarchy's
+# monitor: it calls omarchy-shell IPC that no longer exists here and holds a
+# sleep-delay inhibitor — hypridle + caelestia-system-lock own idle/suspend locking.
+if systemctl --user is-enabled --quiet omarchy-sleep-lock.service 2>/dev/null; then
+  if $DRY_RUN; then
+    info "  [dry-run] would disable omarchy-sleep-lock.service"
+  else
+    systemctl --user disable --now omarchy-sleep-lock.service 2>/dev/null || true
+    ok "  omarchy-sleep-lock.service disabled (hypridle owns idle/sleep locking)"
+  fi
+fi
+
 echo ""
 
 # ──────────────────────────────────────────────

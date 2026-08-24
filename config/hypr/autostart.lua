@@ -8,6 +8,8 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("bash -c 'systemctl --user import-environment $(env | cut -d\"=\" -f 1) && dbus-update-activation-environment --systemd --all && systemctl --user start caelestia-shell.service'")
 
   -- Non-shell parts of Omarchy's default autostart
+  -- hypridle drives screensaver + caelestia-system-lock (see hypridle.conf)
+  hl.exec_cmd("uwsm-app -- hypridle")
   hl.exec_cmd("omarchy-provision-first-run")
   hl.exec_cmd("omarchy-powerprofiles-init")
   hl.exec_cmd(o.launch("omarchy-hyprland-monitor-watch"))
