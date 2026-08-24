@@ -21,7 +21,9 @@ Omarchy × Caelestia · `omartia-dots-remux`
 
 Replaces omarchy-shell (quattro bar, menus, lock) with **Caelestia Shell** — keeps omarchy's theme switching working via a color bridge. Read [READ THIS FIRST](#read-this-first) before installing: this is a shell replacement, not a theme.
 
-Curious how this came together? Every change made to these dots and the system around them is logged by date in the [CHANGELOG](CHANGELOG.md).
+<p align="center">
+  <a href="CHANGELOG.md">CHANGELOG</a>
+</p>
 
 <p align="center">
   <img src="desktop.png" alt="Desktop" width="1280">
@@ -85,7 +87,7 @@ Honest list of the remaining gaps:
   `omarchy-shell <...>` needs porting to `qs -c caelestia ipc call ...`,
   `playerctl`, or the stellarchy suite.
 
-## Quick install
+## Install
 
 ```bash
 git clone https://github.com/deoxizn/omartia-dots-remux.git
@@ -93,14 +95,47 @@ cd omartia-dots-remux
 ./install.sh
 ```
 
-Use `./install.sh -y` to skip confirmation prompts.
+Use `./install.sh -y` to skip confirmation prompts, or `--dry-run` to preview everything without touching anything.
 
-**Optional flags:**
+### What it does
+
+- Build and install Caelestia Shell from source (all deps handled)
+- Back up existing configs, then diff-check the main Hyprland lua files (`hyprland.lua`, `autostart.lua`, `looknfeel.lua`, `bindings.lua`): remux-owned ones are left alone, stock/unowned ones are backed up (`*.pre-install.bak`) and replaced with the repo versions — a fresh Omarchy ships all of them, so without this the documented keybinds and autostart would silently never land. `monitors.lua` / `input.lua` are device-specific and only ever created if missing
+- Ask for monitor + GTK scale on first install (drives a scale-aware corner-rounding block in `looknfeel.lua`; `-y` takes detected defaults)
+- Disable Omarchy's shell autostart (survives pacman updates and config reloads) and launch Caelestia instead via `autostart.lua` + an auto-restarting systemd service
+- Set up the theme bridge hook, `caelestia-system-lock` and the managed `hypridle.conf`
+- Apply Caelestia patches idempotently ([`patches/`](patches/)) and install the omarchy-update guard (a libalpm hook re-applies it after every omarchy upgrade)
+- Install the fuzzel menu suite + `stellarchy-media` (see [Menu suite](#menu-suite)), seed the fastfetch OS line, deploy branding art
+- Set up the Stellarchy boot splash and rebuild the initramfs so it's live on next boot
+- Sync your current theme
+- Run the session-start preflight, then auto-logout after 5s if every check passed (Ctrl+C cancels) — logout uses `omarchy-system-logout` (`uwsm stop`) so the session ends cleanly
+
+After logging back in: check `~/.config/hypr/monitors.lua` and `input.lua` match your displays/keyboard (they're only ever created if missing), then test `SUPER+Space` (launcher), `SUPER+Ctrl+L` (lock) and `omarchy-theme-set <theme>`.
+
+### Session-start preflight (safety net)
+
+Before offering to log you out, the installer verifies the chain your next
+login depends on: autostart stub placement, upstream API hooks, valid Lua
+configs, and `caelestia-shell.service` health (enabled, real binary,
+systemd-analyze clean).
+
+**All checks pass** → normal logout prompt. **Any check fails** → automatic
+rollback to fully usable stock Omarchy (configs restored from backup, service
+disabled) instead of a dead session. Everything, including what was rolled
+back, lands in `~/stellarchy-preflight.log` — send it for help or hand it to
+your AI agent, then fix and re-run.
+
+Caelestia didn't start after an older install? Press `Ctrl+Alt+F4` for a TTY,
+log in, then:
+
 ```bash
-./install.sh --dry-run          # preview everything without touching anything
+cat ~/stellarchy-preflight.log                     # see what's wrong
+systemctl --user start caelestia-shell.service     # bring the shell back now
 ```
 
-**Already running the remux?** Don't reinstall — just upgrade:
+### Upgrading an existing install
+
+Already running the remux? Don't reinstall — just upgrade:
 ```bash
 ./upgrade.sh
 ```
@@ -116,6 +151,8 @@ behavior actually exists on every machine. `monitors.lua` / `input.lua` are
 device-specific and never touched. Add `--dry-run` to preview, or `--adopt-lua`
 to adopt repo versions of lua files that have no merge history (yours is backed
 up first).
+
+**Reinstalling?** Remux-owned hypr configs are never overwritten — edit them directly or restore from backup at `~/.config/omartia-dots-remux-backup/`. Stock/unowned main lua files (`hyprland.lua`, `autostart.lua`, `looknfeel.lua`, `bindings.lua`) get backed up in place (`*.pre-install.bak` / `*.pre-upgrade.bak`) and replaced with the repo versions; `monitors.lua` and `input.lua` are always left alone.
 
 **Upgrade flags for opt-in extras:**
 ```bash
@@ -172,44 +209,6 @@ Limine's path-based `default_entry:` header follows the kernel by name, so it
 survives snapshot churn. The stock Arch kernel is never removed — revert any
 time via the Limine menu + one `default_entry:` edit. Full opt-out: remove the
 `[chaotic-aur]` block from `/etc/pacman.conf`.
-
-## What install.sh does
-
-- Build and install Caelestia Shell from source (all deps handled)
-- Back up existing configs, then diff-check the main Hyprland lua files (`hyprland.lua`, `autostart.lua`, `looknfeel.lua`, `bindings.lua`): remux-owned ones are left alone, stock/unowned ones are backed up (`*.pre-install.bak`) and replaced with the repo versions — a fresh Omarchy ships all of them, so without this the documented keybinds and autostart would silently never land. `monitors.lua` / `input.lua` are device-specific and only ever created if missing
-- Ask for monitor + GTK scale on first install (drives a scale-aware corner-rounding block in `looknfeel.lua`; `-y` takes detected defaults)
-- Disable Omarchy's shell autostart (survives pacman updates and config reloads) and launch Caelestia instead via `autostart.lua` + an auto-restarting systemd service
-- Set up the theme bridge hook, `caelestia-system-lock` and the managed `hypridle.conf`
-- Apply Caelestia patches idempotently ([`patches/`](patches/)) and install the omarchy-update guard (a libalpm hook re-applies it after every omarchy upgrade)
-- Install the fuzzel menu suite + `stellarchy-media` (see [Menu suite](#menu-suite)), seed the fastfetch OS line, deploy branding art
-- Set up the Stellarchy boot splash and rebuild the initramfs so it's live on next boot
-- Sync your current theme
-- Run the session-start preflight, then auto-logout after 5s if every check passed (Ctrl+C cancels) — logout uses `omarchy-system-logout` (`uwsm stop`) so the session ends cleanly
-
-After logging back in: check `~/.config/hypr/monitors.lua` and `input.lua` match your displays/keyboard (they're only ever created if missing), then test `SUPER+Space` (launcher), `SUPER+Ctrl+L` (lock) and `omarchy-theme-set <theme>`.
-
-**Reinstalling?** Remux-owned hypr configs are never overwritten — edit them directly or restore from backup at `~/.config/omartia-dots-remux-backup/`. Stock/unowned main lua files (`hyprland.lua`, `autostart.lua`, `looknfeel.lua`, `bindings.lua`) get backed up in place (`*.pre-install.bak`) and replaced with the repo versions; `monitors.lua` and `input.lua` are always left alone.
-
-### Session-start preflight (safety net)
-
-Before offering to log you out, the installer verifies the chain your next
-login depends on: autostart stub placement, upstream API hooks, valid Lua
-configs, and `caelestia-shell.service` health (enabled, real binary,
-systemd-analyze clean).
-
-**All checks pass** → normal logout prompt. **Any check fails** → automatic
-rollback to fully usable stock Omarchy (configs restored from backup, service
-disabled) instead of a dead session. Everything, including what was rolled
-back, lands in `~/stellarchy-preflight.log` — send it for help or hand it to
-your AI agent, then fix and re-run.
-
-Caelestia didn't start after an older install? Press `Ctrl+Alt+F4` for a TTY,
-log in, then:
-
-```bash
-cat ~/stellarchy-preflight.log                     # see what's wrong
-systemctl --user start caelestia-shell.service     # bring the shell back now
-```
 
 ## Keybindings
 
