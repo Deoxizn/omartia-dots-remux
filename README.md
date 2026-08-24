@@ -113,6 +113,7 @@ Use `./install.sh -y` to skip confirmation prompts, or `--dry-run` to preview ev
 - Ask for monitor + GTK scale on first install (drives a scale-aware corner-rounding block in `looknfeel.lua`; `-y` takes detected defaults)
 - Disable Omarchy's shell autostart (survives pacman updates and config reloads) and launch Caelestia instead via `autostart.lua` + an auto-restarting systemd service
 - Set up the theme bridge hook, `caelestia-system-lock` and the managed `hypridle.conf`
+- Own the idle/sleep stack: `autostart.lua` launches `hypridle`, and stock Omarchy's `omarchy-sleep-lock.service` is disabled (it calls omarchy-shell IPC that no longer exists here and holds a sleep-delay inhibitor). Caelestia's built-in idle timeouts (`shell.json`) act as backstop; uninstall hands locking back to the stock monitor
 - Apply Caelestia patches idempotently ([`patches/`](patches/)) and install the omarchy-update guard (a libalpm hook re-applies it after every omarchy upgrade)
 - Install the fuzzel menu suite + `stellarchy-media` (see [Menu suite](#menu-suite)), seed the fastfetch OS line, deploy branding art
 - Set up the Stellarchy boot splash and rebuild the initramfs so it's live on next boot
@@ -125,8 +126,9 @@ After logging back in: check `~/.config/hypr/monitors.lua` and `input.lua` match
 
 Before offering to log you out, the installer verifies the chain your next
 login depends on: autostart stub placement, upstream API hooks, valid Lua
-configs, and `caelestia-shell.service` health (enabled, real binary,
-systemd-analyze clean).
+configs, that `autostart.lua` actually launches `hypridle` (and that the stock
+sleep-lock monitor is disabled), and `caelestia-shell.service` health (enabled,
+real binary, systemd-analyze clean).
 
 **All checks pass** → normal logout prompt. **Any check fails** → automatic
 rollback to fully usable stock Omarchy (configs restored from backup, service
