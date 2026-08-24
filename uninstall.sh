@@ -137,6 +137,8 @@ if [[ -f "$HOME/.config/systemd/user/caelestia-shell.service" ]]; then
 fi
 
 # Hand idle/sleep locking back to stock Omarchy's monitor (install.sh disabled it)
+# Unmask first — some users mask the unit by hand; enable fails silently on masked units.
+systemctl --user unmask omarchy-sleep-lock.service 2>/dev/null
 if ! systemctl --user is-enabled --quiet omarchy-sleep-lock.service 2>/dev/null; then
   if systemctl --user enable omarchy-sleep-lock.service 2>/dev/null; then
     ok "  Re-enabled omarchy-sleep-lock.service"
