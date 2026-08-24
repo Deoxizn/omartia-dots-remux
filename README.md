@@ -34,7 +34,13 @@ Replaces omarchy-shell (quattro bar, menus, lock) with **Caelestia Shell** — k
 
 [Preview video](previewvideo.mp4)
 
-## READ THIS FIRST
+<a id="read-this-first"></a>
+
+```
+▄▖     ▌ ▄▖▌ ▘   ▄▖▘    ▗
+▙▘█▌▀▌▛▌ ▐ ▛▌▌▛▘ ▙▖▌▛▘▛▘▜▘
+▌▌▙▖█▌▙▌ ▐ ▌▌▌▄▌ ▌ ▌▌ ▄▌▐▖
+```
 
 **This is not a theme or a plugin — it is a shell replacement.** It removes
 `omarchy-shell` from your system and rebuilds everything that depended on it.
@@ -87,7 +93,13 @@ Honest list of the remaining gaps:
   `omarchy-shell <...>` needs porting to `qs -c caelestia ipc call ...`,
   `playerctl`, or the stellarchy suite.
 
-## Install
+<a id="install"></a>
+
+```
+▄▖    ▗   ▜ ▜   ▗ ▘
+▐ ▛▌▛▘▜▘▀▌▐ ▐ ▀▌▜▘▌▛▌▛▌
+▟▖▌▌▄▌▐▖█▌▐▖▐▖█▌▐▖▌▙▌▌▌
+```
 
 ```bash
 git clone https://github.com/deoxizn/omartia-dots-remux.git
@@ -133,9 +145,15 @@ cat ~/stellarchy-preflight.log                     # see what's wrong
 systemctl --user start caelestia-shell.service     # bring the shell back now
 ```
 
-### Upgrading an existing install
+<a id="upgrading-an-existing-install"></a>
 
-Already running the remux? Don't reinstall — just upgrade:
+```
+▖▖         ▌▘
+▌▌▛▌▛▌▛▘▀▌▛▌▌▛▌▛▌
+▙▌▙▌▙▌▌ █▌▙▌▌▌▌▙▌
+  ▌ ▄▌         ▄▌
+```
+
 ```bash
 ./upgrade.sh
 ```
@@ -172,7 +190,14 @@ Kernel variants (`--kernel <name>`), all prebuilt from chaotic-aur:
 | `lts` | `linux-cachyos-lts` | Long-term support kernel — fewest surprises |
 | `rt-bore` | `linux-cachyos-rt-bore` | Real-time patches + BORE |
 
-## Stellarchy branding
+<a id="stellarchy-branding"></a>
+
+```
+▄        ▌▘
+▙▘▛▘▀▌▛▌▛▌▌▛▌▛▌
+▙▘▌ █▌▌▌▙▌▌▌▌▙▌
+             ▄▌
+```
 
 The remux ships its own identity on top of Omarchy. What lands where:
 
@@ -209,7 +234,14 @@ survives snapshot churn. The stock Arch kernel is never removed — revert any
 time via the Limine menu + one `default_entry:` edit. Full opt-out: remove the
 `[chaotic-aur]` block from `/etc/pacman.conf`.
 
-## Keybindings
+<a id="keybindings"></a>
+
+```
+▖▖    ▌ ▘   ▌
+▙▘█▌▌▌▛▌▌▛▌▛▌▛▘
+▌▌▙▖▙▌▙▌▌▌▌▙▌▄▌
+    ▄▌
+```
 
 | Binding | Action |
 |---|---|
