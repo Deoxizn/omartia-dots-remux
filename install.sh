@@ -80,7 +80,17 @@ sync_main_lua() {
   local wrap_begin="${3:-}" wrap_end="${4:-}"
   local src="$REPO_DIR/config/hypr/$name"
   local dst="$HOME/.config/hypr/$name"
+  local base_dir="$HOME/.config/hypr/.stellarchy-base"
   [[ -f $src ]] || return 0
+
+  # Seed upgrade.sh's merge history whenever we install/replace the file, so
+  # later upgrades can 3-way merge instead of hitting "no sync history".
+  seed_base() {
+    if ! $DRY_RUN; then
+      mkdir -p "$base_dir"
+      cp -f "$src" "$base_dir/$name"
+    fi
+  }
 
   if [[ -n $wrap_begin ]]; then
     local tmp
@@ -92,6 +102,7 @@ sync_main_lua() {
   if [[ ! -f $dst ]]; then
     if ! $DRY_RUN; then
       cp "$src" "$dst"
+      seed_base
     fi
     ok "  hypr/$name (new)"
   elif grep -qE "$own_re" "$dst" 2>/dev/null; then
@@ -103,6 +114,7 @@ sync_main_lua() {
   else
     cp "$dst" "$dst.pre-install.bak"
     cp "$src" "$dst"
+    seed_base
     ok "  hypr/$name replaced with repo version (previous file kept as hypr/$name.pre-install.bak)"
   fi
   [[ -z ${tmp:-} ]] || rm -f "$tmp"
