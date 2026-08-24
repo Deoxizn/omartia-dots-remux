@@ -159,6 +159,31 @@ if [[ ! -f "$HOME/.config/caelestia/shell.json" ]]; then
 fi
 
 # ──────────────────────────────────────────────
+# Pull latest — FIRST, so patches and every sync below act on the newest
+# checkout rather than whatever was on disk when the script started.
+# ──────────────────────────────────────────────
+
+if $NO_PULL; then
+  info "Skipping git pull (--no-pull)"
+elif git -C "$REPO_DIR" rev-parse --is-inside-work-tree &>/dev/null; then
+  branch="$(git -C "$REPO_DIR" symbolic-ref --short HEAD)"
+  if [[ $(git -C "$REPO_DIR" status --porcelain --untracked-files=no | wc -l) -gt 0 ]]; then
+    warn "Local uncommitted changes — skipping pull (resolve or stash first)"
+  else
+    info "Pulling latest ($branch)..."
+    if git -C "$REPO_DIR" pull --ff-only origin "$branch"; then
+      ok "  repo up to date"
+    else
+      err "  pull failed — syncing from current checkout instead"
+    fi
+  fi
+else
+  warn "Not a git clone — skipping pull"
+fi
+
+echo ""
+
+# ──────────────────────────────────────────────
 # Caelestia shell patches — re-applied on every upgrade so remux patches
 # (e.g. patches/0002 os-release overlay) survive upstream shell updates.
 # Kept as uncommitted working-tree changes; already-applied patches are a no-op.
@@ -181,30 +206,6 @@ if [[ -d "$CAELESTIA_DIR/.git" ]]; then
   done
   echo ""
 fi
-
-# ──────────────────────────────────────────────
-# Pull latest
-# ──────────────────────────────────────────────
-
-if $NO_PULL; then
-  info "Skipping git pull (--no-pull)"
-elif git -C "$REPO_DIR" rev-parse --is-inside-work-tree &>/dev/null; then
-  branch="$(git -C "$REPO_DIR" symbolic-ref --short HEAD)"
-  if [[ $(git -C "$REPO_DIR" status --porcelain --untracked-files=no | wc -l) -gt 0 ]]; then
-    warn "Local uncommitted changes — skipping pull (resolve or stash first)"
-  else
-    info "Pulling latest ($branch)..."
-    if git -C "$REPO_DIR" pull --ff-only origin "$branch"; then
-      ok "  repo up to date"
-    else
-      err "  pull failed — syncing from current checkout instead"
-    fi
-  fi
-else
-  warn "Not a git clone — skipping pull"
-fi
-
-echo ""
 
 # ──────────────────────────────────────────────
 # Menu suite scripts → ~/.local/bin
