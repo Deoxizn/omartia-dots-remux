@@ -66,8 +66,7 @@ terminal, or bind your favorites in `~/.config/hypr/bindings.lua`.
 | Workspace layout | `omarchy-hyprland-workspace-layout-toggle` |
 | Window gaps | `omarchy-hyprland-window-gaps-toggle` |
 | 1-window ratio | `omarchy-hyprland-window-single-square-aspect-toggle` |
-
-Dell XPS haptic touchpad levels: `dell-xps-touchpad-haptics set low|mid|high`.
+| Dell XPS haptic levels | `dell-xps-touchpad-haptics set low\|mid\|high` |
 
 ## Style
 
@@ -111,7 +110,16 @@ Gaming:
 | Lutris | `omarchy-install-gaming-lutris` |
 | Heroic (Epic Games) | `omarchy-install-gaming-heroic` |
 
-Browsers: `omarchy-install-browser chrome|edge|brave|brave-origin|firefox|zen`
+Browsers:
+
+| | |
+|---|---|
+| Chrome | `omarchy-install-browser chrome` |
+| Edge | `omarchy-install-browser edge` |
+| Brave | `omarchy-install-browser brave` |
+| Brave Origin | `omarchy-install-browser brave-origin` |
+| Firefox | `omarchy-install-browser firefox` |
+| Zen | `omarchy-install-browser zen` |
 
 Services:
 
@@ -139,7 +147,14 @@ Editors:
 | Sublime Text | `omarchy-install-and-launch 'Sublime Text' sublime-text-4 sublime_text` |
 | Vim | `omarchy-install-app Vim vim` |
 
-Terminals: `omarchy-install-terminal alacritty|foot|ghostty|kitty`
+Terminals:
+
+| | |
+|---|---|
+| Alacritty | `omarchy-install-terminal alacritty` |
+| Foot | `omarchy-install-terminal foot` |
+| Ghostty | `omarchy-install-terminal ghostty` |
+| Kitty | `omarchy-install-terminal kitty` |
 
 AI:
 
@@ -152,26 +167,121 @@ AI:
 | Ollama | `omarchy-install-app Ollama ollama` (`ollama-cuda` / `ollama-rocm` per GPU) |
 | T3 Code | `omarchy-install-and-launch 'T3 Code' t3code-bin t3code` |
 
-Development environments: `omarchy-install-dev-env <env>` for
-`ruby`, `go`, `php`, `laravel`, `symfony`, `python`, `elixir`, `phoenix`,
-`zig`, `rust`, `java`, `dotnet`, `ocaml`, `clojure`, `scala`, `node`, `bun`,
-`deno` — plus `omarchy-install-docker-dbs` for containerized databases.
+Development environments:
 
-Extras: `omarchy-tui-install` (TUI apps), `omarchy-windows-vm install`
-(Windows VM), `omarchy-install-preinstalls` (bring back removed defaults).
+| | |
+|---|---|
+| Ruby on Rails | `omarchy-install-dev-env ruby` |
+| Go | `omarchy-install-dev-env go` |
+| PHP | `omarchy-install-dev-env php` |
+| Laravel | `omarchy-install-dev-env laravel` |
+| Symfony | `omarchy-install-dev-env symfony` |
+| Python | `omarchy-install-dev-env python` |
+| Elixir | `omarchy-install-dev-env elixir` |
+| Phoenix | `omarchy-install-dev-env phoenix` |
+| Zig | `omarchy-install-dev-env zig` |
+| Rust | `omarchy-install-dev-env rust` |
+| Java | `omarchy-install-dev-env java` |
+| .NET | `omarchy-install-dev-env dotnet` |
+| OCaml | `omarchy-install-dev-env ocaml` |
+| Clojure | `omarchy-install-dev-env clojure` |
+| Scala | `omarchy-install-dev-env scala` |
+| Node.js | `omarchy-install-dev-env node` |
+| Bun | `omarchy-install-dev-env bun` |
+| Deno | `omarchy-install-dev-env deno` |
+| Docker databases | `omarchy-install-docker-dbs` |
+
+Extras:
+
+| | |
+|---|---|
+| TUI apps | `omarchy-tui-install` |
+| Windows VM | `omarchy-windows-vm install` |
+| Removed defaults back | `omarchy-install-preinstalls` |
 
 ## Remove
 
-Everything above has a mirror where it makes sense:
-`omarchy-remove-browser <browser>`, `omarchy-remove-gaming-<name>`,
-`omarchy-remove-service-dropbox|tailscale`, `omarchy-remove-ai-<name>`,
-`omarchy-remove-dev-env <env>`, `omarchy-voxtype-remove`,
-`omarchy-tui-remove`, `omarchy-windows-vm remove`,
-`omarchy-remove-preinstalls`.
+Browsers:
 
-Security removals (their setup half *is* in the menu):
-`omarchy-remove-security-fingerprint`, `omarchy-remove-security-fido2`,
-`omarchy-remove-security-sshd`.
+| | |
+|---|---|
+| Chrome | `omarchy-remove-browser chrome` |
+| Edge | `omarchy-remove-browser edge` |
+| Brave | `omarchy-remove-browser brave` |
+| Brave Origin | `omarchy-remove-browser brave-origin` |
+| Firefox | `omarchy-remove-browser firefox` |
+| Zen | `omarchy-remove-browser zen` |
+
+Gaming:
+
+| | |
+|---|---|
+| Steam | `omarchy-remove-gaming-steam` |
+| RetroArch | `omarchy-remove-gaming-retroarch` |
+| Minecraft | `omarchy-remove-gaming-minecraft` |
+| NVIDIA GeForce NOW | `omarchy-remove-gaming-geforce-now` |
+| Xbox Cloud Gaming | `omarchy-remove-gaming-xbox-cloud` |
+| Xbox controllers | `omarchy-remove-gaming-xbox-controllers` |
+| Battle.net | `omarchy-remove-gaming-battlenet` |
+| Lutris | `omarchy-remove-gaming-lutris` |
+| Heroic (Epic Games) | `omarchy-remove-gaming-heroic` |
+
+Services:
+
+| | |
+|---|---|
+| Dropbox | `omarchy-remove-service-dropbox` |
+| Tailscale | `omarchy-remove-service-tailscale` |
+
+AI:
+
+| | |
+|---|---|
+| ChatGPT Desktop | `omarchy-remove-ai-chatgpt` |
+| Dictation (Voxtype) | `omarchy-voxtype-remove` |
+| Grok Bot | `omarchy-remove-ai-grok-bot` |
+| LM Studio | `omarchy-remove-ai-lm-studio` |
+| Ollama | `omarchy-remove-ai-ollama` |
+| T3 Code | `omarchy-remove-ai-t3-code` |
+
+Development environments:
+
+| | |
+|---|---|
+| Ruby on Rails | `omarchy-remove-dev-env ruby` |
+| Go | `omarchy-remove-dev-env go` |
+| PHP | `omarchy-remove-dev-env php` |
+| Laravel | `omarchy-remove-dev-env laravel` |
+| Symfony | `omarchy-remove-dev-env symfony` |
+| Python | `omarchy-remove-dev-env python` |
+| Elixir | `omarchy-remove-dev-env elixir` |
+| Phoenix | `omarchy-remove-dev-env phoenix` |
+| Zig | `omarchy-remove-dev-env zig` |
+| Rust | `omarchy-remove-dev-env rust` |
+| Java | `omarchy-remove-dev-env java` |
+| .NET | `omarchy-remove-dev-env dotnet` |
+| OCaml | `omarchy-remove-dev-env ocaml` |
+| Clojure | `omarchy-remove-dev-env clojure` |
+| Scala | `omarchy-remove-dev-env scala` |
+| Node.js | `omarchy-remove-dev-env node` |
+| Bun | `omarchy-remove-dev-env bun` |
+| Deno | `omarchy-remove-dev-env deno` |
+
+Security (their setup half *is* in the menu):
+
+| | |
+|---|---|
+| Fingerprint | `omarchy-remove-security-fingerprint` |
+| Fido2 | `omarchy-remove-security-fido2` |
+| SSHD | `omarchy-remove-security-sshd` |
+
+Extras:
+
+| | |
+|---|---|
+| TUI apps | `omarchy-tui-remove` |
+| Windows VM | `omarchy-windows-vm remove` |
+| Removed defaults again | `omarchy-remove-preinstalls` |
 
 ## Update
 
