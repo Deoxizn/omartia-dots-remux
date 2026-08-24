@@ -140,19 +140,18 @@ Already running the remux? Don't reinstall — just upgrade:
 ./upgrade.sh
 ```
 This pulls the latest repo and re-syncs everything in place: menu scripts,
-theme bridge hook, update/splash guards, branding (stock-or-stale files only —
-your own customizations are never overwritten), SDDM-safe logout, managed
-keybinds, and the CachyOS `default_entry:` if you opted in. Lua config changes
-3-way-merge into your live files; conflicts leave your file untouched with a
-`.conflict` copy. A live lua file that carries **none** of the remux's content
+theme bridge hook, update/splash guards, branding (stock-or-stale files only),
+SDDM-safe logout, managed keybinds, and the CachyOS `default_entry:` if you
+opted in. Your configs stay yours: remux-owned files are never overwritten —
+lua changes 3-way-merge in, conflicts leave your file untouched with a
+`.conflict` copy, and `monitors.lua` / `input.lua` are device-specific and
+never touched. A live lua file that carries **none** of the remux's content
 (stock Omarchy default or a stale partial install) is backed up
 (`*.pre-upgrade.bak`) and replaced with the repo version, so the documented
-behavior actually exists on every machine. `monitors.lua` / `input.lua` are
-device-specific and never touched. Add `--dry-run` to preview, or `--adopt-lua`
-to adopt repo versions of lua files that have no merge history (yours is backed
-up first).
-
-**Reinstalling?** Remux-owned hypr configs are never overwritten — edit them directly or restore from backup at `~/.config/omartia-dots-remux-backup/`. Stock/unowned main lua files (`hyprland.lua`, `autostart.lua`, `looknfeel.lua`, `bindings.lua`) get backed up in place (`*.pre-install.bak` / `*.pre-upgrade.bak`) and replaced with the repo versions; `monitors.lua` and `input.lua` are always left alone.
+behavior actually exists on every machine. Edit your configs directly, or
+restore older copies from `~/.config/omartia-dots-remux-backup/`. Add
+`--dry-run` to preview, or `--adopt-lua` to adopt repo versions of lua files
+that have no merge history (yours is backed up first).
 
 **Upgrade flags for opt-in extras:**
 ```bash
