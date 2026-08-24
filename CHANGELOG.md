@@ -12,6 +12,8 @@ Each entry links to its commit, newest first within each day.
 
 ## 2026-08-24
 
+- Idle: `autostart.lua` launches hypridle and install/upgrade disable stock Omarchy's `omarchy-sleep-lock.service` (it called omarchy-shell IPC that no longer exists and held a sleep-delay inhibitor); preflight guards both, uninstall restores stock locking ([`367cc26`](https://github.com/deoxizn/omartia-dots-remux/commit/367cc26))
+- Caelestia: rename `notifications` -> `notifs` in seeded shell.json — invalid schema key was silently ignored, so expire settings never applied; also seed idle timeouts with the audio-inhibit split (lock/dpms during playback, suspend waits for silence) ([`2a52c87`](https://github.com/deoxizn/omartia-dots-remux/commit/2a52c87))
 - Docs: add [HiddenCommands.md](HiddenCommands.md) — every stock Omarchy menu command the remux menu leaves out, runnable by hand ([`77a6d26`](https://github.com/deoxizn/omartia-dots-remux/commit/77a6d26))
 - Upgrade: `git pull` now runs before anything else, so patches and every sync step act on the latest checkout instead of what was on disk when the script started ([`b3ef5e2`](https://github.com/deoxizn/omartia-dots-remux/commit/b3ef5e2))
 - Install/upgrade: adopt unowned hypr lua files wholesale; add CHANGELOG ([`83321f5`](https://github.com/deoxizn/omartia-dots-remux/commit/83321f5))
