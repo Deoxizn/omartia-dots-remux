@@ -19,10 +19,19 @@ Omarchy × Caelestia · `omartia-dots-remux`
 
 </div>
 
-Replaces omarchy-shell (quattro bar, menus, lock) with **Caelestia Shell** — keeps omarchy's theme switching working via a color bridge. Read [READ THIS FIRST](#read-this-first) before installing: this is a shell replacement, not a theme.
+Replaces omarchy-shell (quattro bar, menus, lock) with **Caelestia Shell** — keeps omarchy's theme switching working via a color bridge.
 
 <p align="center">
-  <a href="CHANGELOG.md">CHANGELOG</a>
+  <a href="CHANGELOG.md">CHANGELOG</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#read-this-first">Read First</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#install">Install</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#upgrading-an-existing-install">Upgrading</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#stellarchy-branding">Branding</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#keybindings">Keybinds</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#menu-suite">Menu Suite</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#uninstall">Uninstall</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#requirements">Requirements</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="#credits">Credits</a>
 </p>
 
 <p align="center">
