@@ -21,6 +21,8 @@ Omarchy × Caelestia · `omartia-dots-remux`
 
 Replaces omarchy-shell (quattro bar, menus, lock) with **Caelestia Shell** — keeps omarchy's theme switching working via a color bridge. Read [READ THIS FIRST](#read-this-first) before installing: this is a shell replacement, not a theme.
 
+Curious how this came together? Every change made to these dots and the system around them is logged by date in the [CHANGELOG](CHANGELOG.md).
+
 <p align="center">
   <img src="desktop.png" alt="Desktop" width="1280">
 </p>
@@ -82,9 +84,6 @@ Honest list of the remaining gaps:
 - **`omarchy-shell` IPC callers die**: any personal script calling
   `omarchy-shell <...>` needs porting to `qs -c caelestia ipc call ...`,
   `playerctl`, or the stellarchy suite.
-
-Every change made to these dots and the system around them is logged by date
-in the [CHANGELOG](CHANGELOG.md).
 
 ## Quick install
 
