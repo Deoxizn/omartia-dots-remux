@@ -1,0 +1,117 @@
+diff --git a/modules/bar/Bar.qml b/modules/bar/Bar.qml
+index f12f7137..98abf56b 100644
+--- a/modules/bar/Bar.qml
++++ b/modules/bar/Bar.qml
+@@ -163,6 +163,14 @@ ColumnLayout {
+                     }
+                 }
+             }
++            DelegateChoice {
++                roleValue: "updates"
++                delegate: EntryWrapper {
++                    Updates {
++                        objectName: "taskbarUpdates"
++                    }
++                }
++            }
+             DelegateChoice {
+                 roleValue: "statusIcons"
+                 delegate: EntryWrapper {
+diff --git a/modules/bar/components/Updates.qml b/modules/bar/components/Updates.qml
+new file mode 100644
+index 00000000..7da92eea
+--- /dev/null
++++ b/modules/bar/components/Updates.qml
+@@ -0,0 +1,92 @@
++import QtQuick
++import Quickshell
++import Quickshell.Io
++import Caelestia.Config
++import qs.components
++import qs.services
++
++Item {
++    id: root
++
++    property int count: 0
++    property bool baselined: false
++
++    // always present: dim when clean, bright + corner count when updates exist
++    visible: true
++    readonly property bool hasUpdates: false  // PREVIEW: dim state forced
++    implicitWidth: icon.width + Tokens.padding.small + (hasUpdates ? countLabel.width * 0.45 : 0)
++    implicitHeight: icon.height + (hasUpdates ? countLabel.height * 0.35 : 0)
++
++    function refresh() {
++        if (!checkProc.running)
++            checkProc.running = true;
++    }
++
++    StateLayer {
++        anchors.fill: parent
++        radius: Tokens.rounding.full
++        onClicked: {
++            Quickshell.execDetached(["omarchy-launch-floating-terminal-with-presentation", "yay", "-Syu"]);
++            delayedRefresh.restart();
++        }
++    }
++
++    MaterialIcon {
++        id: icon
++
++        anchors.centerIn: parent
++        anchors.verticalCenterOffset: countLabel.height * 0.18
++
++        text: "system_update_alt"
++        color: root.hasUpdates ? Colours.palette.m3tertiary : Colours.palette.m3outline
++        opacity: root.hasUpdates ? 1 : 0.5
++        fontStyle: Tokens.font.icon.builders.small.weight(Font.Bold).build()
++    }
++
++    // update count layered over the glyph's top-right corner
++    StyledText {
++        id: countLabel
++
++        visible: root.hasUpdates
++        anchors.left: icon.right
++        anchors.leftMargin: -width * 0.55
++        anchors.top: icon.top
++        anchors.topMargin: -height * 0.25
++
++        text: root.count
++        color: Colours.palette.m3tertiary
++        font: Tokens.font.body.builders.small.scale(0.72).build()
++    }
++
++    Timer {
++        interval: 21600000
++        running: true
++        repeat: true
++        triggeredOnStart: true
++        onTriggered: root.refresh()
++    }
++
++    Timer {
++        id: delayedRefresh
++
++        interval: 120000
++        onTriggered: root.refresh()
++    }
++
++    Process {
++        id: checkProc
++
++        command: ["bash", "-c", "echo $(( $(checkupdates 2>/dev/null | wc -l) + $(yay -Qua 2>/dev/null | wc -l) ))"]
++        stdout: StdioCollector {
++            onStreamFinished: {
++                const n = parseInt(text.trim()) || 0;
++                if (root.baselined && n > root.count)
++                    Quickshell.execDetached(["notify-send", "-u", "normal", `${n} updates available`, "Repo + AUR"]);
++                else if (root.baselined && n === 0 && root.count > 0)
++                    Quickshell.execDetached(["notify-send", "-u", "normal", "System up to date"]);
++                root.baselined = true;
++                root.count = n;
++            }
++        }
++    }
++}

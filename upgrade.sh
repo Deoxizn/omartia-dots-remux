@@ -1003,6 +1003,64 @@ EOF
   changed=$((changed+1))
 fi
 
+# ──────────────────────────────────────────────
+# Bar "updates" entry — patch 0003 adds the widget but it only renders when
+# listed in bar.entries. Seed the full default list (+ updates) when the user
+# has no explicit entries; insert before "clock" if they do.
+# ──────────────────────────────────────────────
+
+entries_state() {
+  python3 - "$1" <<'EOF'
+import json, sys
+c = json.load(open(sys.argv[1]))
+e = c.get("bar", {}).get("entries")
+if e is None:
+    print("absent")
+elif any(x.get("id") == "updates" for x in e):
+    print("present")
+else:
+    print("missing")
+EOF
+}
+
+state=$( [[ -f $CAELESTIA_SHELL_JSON ]] && entries_state "$CAELESTIA_SHELL_JSON" || echo absent-file )
+info "Bar updates entry:"
+
+case $state in
+  absent-file)
+    warn "  no caelestia/shell.json found — skipping"
+    ;;
+  present)
+    ok "  updates entry already present"
+    ;;
+  *)
+    if $DRY_RUN; then
+      info "  [dry-run] would add 'updates' to bar.entries"
+    else
+      cp "$CAELESTIA_SHELL_JSON" "$CAELESTIA_SHELL_JSON.pre-upgrade.bak"
+      python3 - "$CAELESTIA_SHELL_JSON" <<'EOF'
+import json, sys
+p = sys.argv[1]
+c = json.load(open(p))
+bar = c.setdefault("bar", {})
+e = bar.get("entries")
+if e is None:
+    e = [{"enabled": True, "id": i} for i in (
+        "logo", "workspaces", "spacer", "activeWindow", "spacer",
+        "tray", "updates", "clock", "statusIcons", "power")]
+else:
+    e.insert(
+        next((i for i, x in enumerate(e) if x.get("id") == "clock"), len(e)),
+        {"enabled": True, "id": "updates"})
+bar["entries"] = e
+json.dump(c, open(p, "w"), indent=4)
+EOF
+      ok "  updates entry added to bar (backup: caelestia/shell.json.pre-upgrade.bak)"
+      changed=$((changed+1))
+    fi
+    ;;
+esac
+
 echo ""
 
 # ──────────────────────────────────────────────
