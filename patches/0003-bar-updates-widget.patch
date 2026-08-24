@@ -19,7 +19,7 @@ index f12f7137..98abf56b 100644
                  delegate: EntryWrapper {
 diff --git a/modules/bar/components/Updates.qml b/modules/bar/components/Updates.qml
 new file mode 100644
-index 00000000..7da92eea
+index 00000000..94d9d3c7
 --- /dev/null
 +++ b/modules/bar/components/Updates.qml
 @@ -0,0 +1,92 @@
@@ -38,7 +38,7 @@ index 00000000..7da92eea
 +
 +    // always present: dim when clean, bright + corner count when updates exist
 +    visible: true
-+    readonly property bool hasUpdates: false  // PREVIEW: dim state forced
++    readonly property bool hasUpdates: count > 0
 +    implicitWidth: icon.width + Tokens.padding.small + (hasUpdates ? countLabel.width * 0.45 : 0)
 +    implicitHeight: icon.height + (hasUpdates ? countLabel.height * 0.35 : 0)
 +
