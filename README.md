@@ -34,6 +34,8 @@ Replaces omarchy-shell (quattro bar, menus, lock) with **Caelestia Shell** — k
 
 [Preview video](previewvideo.mp4)
 
+<br><br>
+
 <a id="read-this-first"></a>
 
 ```
@@ -93,6 +95,8 @@ Honest list of the remaining gaps:
   `omarchy-shell <...>` needs porting to `qs -c caelestia ipc call ...`,
   `playerctl`, or the stellarchy suite.
 
+<br><br>
+
 <a id="install"></a>
 
 ```
@@ -145,6 +149,8 @@ cat ~/stellarchy-preflight.log                     # see what's wrong
 systemctl --user start caelestia-shell.service     # bring the shell back now
 ```
 
+<br><br>
+
 <a id="upgrading-an-existing-install"></a>
 
 ```
@@ -190,6 +196,8 @@ Kernel variants (`--kernel <name>`), all prebuilt from chaotic-aur:
 | `lts` | `linux-cachyos-lts` | Long-term support kernel — fewest surprises |
 | `rt-bore` | `linux-cachyos-rt-bore` | Real-time patches + BORE |
 
+<br><br>
+
 <a id="stellarchy-branding"></a>
 
 ```
@@ -234,6 +242,8 @@ survives snapshot churn. The stock Arch kernel is never removed — revert any
 time via the Limine menu + one `default_entry:` edit. Full opt-out: remove the
 `[chaotic-aur]` block from `/etc/pacman.conf`.
 
+<br><br>
+
 <a id="keybindings"></a>
 
 ```
@@ -261,7 +271,15 @@ Everything else inherits from stock Omarchy — run `stellarchy-keybinds` for th
 full searchable list. Stock's panel chords (`SUPER+Ctrl+A/B/W/Alt+D`) are
 unbound; the dashboard on `SUPER+Alt+D` covers what they did.
 
-## Menu suite
+<br><br>
+
+<a id="menu-suite"></a>
+
+```
+▖  ▖       ▄▖  ▘▗
+▛▖▞▌█▌▛▌▌▌ ▚ ▌▌▌▜▘█▌
+▌▝ ▌▙▖▌▌▙▌ ▄▌▙▌▌▐▖▙▖
+```
 
 The omarchy-shell menus are recreated as standalone fuzzel scripts in
 [`scripts/`](scripts/) (installed to `~/.local/bin/`). All of them are themed
@@ -289,7 +307,15 @@ level.
 | `caelestia-system-lock` | Lock via Caelestia + kb-layout reset + 1Password lock + delayed display-off (used by keybind, power menu and hypridle) |
 | `stellarchy-fuzzel` | Shared fuzzel wrapper — reads colors from `~/.local/state/caelestia/scheme.json` |
 
-## Uninstall
+<br><br>
+
+<a id="uninstall"></a>
+
+```
+▖▖  ▘    ▗   ▜ ▜
+▌▌▛▌▌▛▌▛▘▜▘▀▌▐ ▐
+▙▌▌▌▌▌▌▄▌▐▖█▌▐▖▐▖
+```
 
 ```bash
 ./uninstall.sh
