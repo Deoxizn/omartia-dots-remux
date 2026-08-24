@@ -29,6 +29,7 @@ Replaces omarchy-shell (quattro bar, menus, lock) with **Caelestia Shell** — k
   <a href="#stellarchy-branding">Branding</a>&nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="#keybindings">Keybinds</a>&nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="#menu-suite">Menu Suite</a>&nbsp;&nbsp;|&nbsp;&nbsp;
+  <a href="HiddenCommands.md">Hidden Menu</a>&nbsp;&nbsp;|&nbsp;&nbsp;
   <a href="#uninstall">Uninstall</a>
 </p>
 
