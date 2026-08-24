@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# stellarchy:summary=Network setup: DNS provider picker and Wi-Fi sharing QR code.
+
+# Rows ending in ">" open a submenu; bare rows act immediately.
+entries=('DNS >')
+[[ $(omarchy-network-status 2>/dev/null) == wifi* ]] && entries+=('Wi-Fi QR Code')
+
+choice=$(
+  printf '%s\n' "${entries[@]}" |
+    stellarchy-fuzzel --dmenu --prompt='Network: ' --width=26 --lines=${#entries[@]}
+) || exec stellarchy-menu   # Esc = back to root menu
+choice=${choice%' >'}
+
+case "$choice" in
+  DNS) ;;
+  'Wi-Fi QR Code') exec omarchy-launch-or-focus-tui --app-id=TUI.float stellarchy-wifi-qr ;;
+  *) exit 0 ;;
+esac
+
+current=$(omarchy-dns 2>/dev/null)
+
+pick=$(
+  printf '%s\n' DHCP Cloudflare Google Custom |
+    awk -v cur="$current" '$0 == cur { print "✓ " $0; next } { print }' |
+    stellarchy-fuzzel --dmenu --prompt='DNS: ' --width=22 --lines=4
+) || exec stellarchy-network   # Esc = back to Network menu
+
+provider=${pick#✓ }
+[[ -n $provider ]] || exit 0
+
+case "$provider" in
+  Custom) exec stellarchy-terminal omarchy-dns Custom ;;   # needs interactive input + sudo
+  *)      exec omarchy-dns "$provider" ;;
+esac

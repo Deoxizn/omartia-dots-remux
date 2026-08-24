@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# stellarchy:summary=Restart hardware stacks: audio, Wi-Fi, Bluetooth, trackpad.
+
+choice=$(
+  printf '%s\n' \
+    'Audio' \
+    'Wi-Fi' \
+    'Bluetooth' \
+    'Trackpad' |
+    stellarchy-fuzzel --dmenu --prompt='Restart: ' --width=26 --lines=4
+) || exec stellarchy-update   # Esc = back to Update menu
+
+case "$choice" in
+  Audio)     exec stellarchy-terminal omarchy-restart-audio ;;
+  Wi-Fi)     exec stellarchy-terminal omarchy-restart-wifi ;;
+  Bluetooth) exec stellarchy-terminal omarchy-restart-bluetooth ;;
+  Trackpad)  exec stellarchy-terminal omarchy-restart-trackpad ;;
+esac

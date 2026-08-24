@@ -35,48 +35,30 @@ Replaces omarchy-shell (quattro bar, menus, lock) with **Caelestia Shell** — k
 **This is not a theme or a plugin — it is a shell replacement.** It removes
 `omarchy-shell` from your system and rebuilds everything that depended on it.
 That means some things you may use daily in stock Omarchy **stop existing**
-until something replaces them: several default keybindings routed into
-`omarchy-shell` become silent no-ops, the omarchy-shell menus disappear, and
-the lock/idle path changes. This repo rebinds or replaces every dead path it
-can (see the matrix below), but you should expect Omarchy to *not* behave
-stock out of the box. Read this file before installing; if you want stock
-behavior with a different bar, this remux is not that.
+until something replaces them: keybindings routed into `omarchy-shell` become
+silent no-ops, its menus and lock screen disappear, and the idle path changes.
+This repo rebinds or replaces every dead path it can, but expect Omarchy to
+*not* behave stock out of the box — if you want stock behavior with a
+different bar, this remux is not that.
 
-### No plugin support — that's quattro-specific
-
-New users often don't realize that in stock Omarchy, **"the Shell" is a single
-program** (`omarchy-shell`) that draws and controls *everything* visual: the
-bar, menus, launcher, lock screen, notifications and OSD. Plugin support was
-introduced in quattro and lives inside that program only — bar widgets,
-panels, overlays, menus and services from `~/.config/omarchy/plugins/` are
-loaded dynamically into `omarchy-shell` at runtime. They are not an Omarchy or
-Hyprland feature.
-
-Because this remux removes `omarchy-shell`, quattro plugins have nothing to
-load into and will silently disappear after installing. Caelestia Shell has
-its own fixed module set and **no plugin loader**, so there is currently no
-equivalent way to extend it. If you depend on an omarchy-shell plugin, stay on
-stock Omarchy or look for a Caelestia-native alternative.
+Quattro plugins are part of that: plugin support lived inside `omarchy-shell`
+itself, so bar widgets, panels, overlays, menus and services from
+`~/.config/omarchy/plugins/` have nothing to load into after install.
+Caelestia has a fixed module set and no plugin loader — if you depend on an
+omarchy-shell plugin, stay on stock Omarchy.
 
 ### What happens to stock Omarchy parts
+
+Highlights only; the full 15-row compatibility matrix lives at
+[stellarchy.dirty.pizza](https://stellarchy.dirty.pizza):
 
 | Stock Omarchy | In stellarchy | Replacement / notes |
 |---|---|---|
 | omarchy-shell (bar, notifications, OSD) | **Removed** | Caelestia Shell provides all three |
-| omarchy-shell lock screen | **Removed** | Caelestia session lock via `caelestia-system-lock` (also turns displays off ~20s after locking) |
-| omarchy-shell menus (root/power/keybinds/themes/packages/update/config/defaults) | **Removed** | Fuzzel suite `stellarchy-*`, themed from the live Caelestia scheme |
-| `omarchy-menu toggle apps/root` | **Rebound** | SUPER+Space → Caelestia launcher, SUPER+Alt+Space → Stellarchy root menu |
-| Media keys (`XF86Audio*`) | **Were dead**, now rebound | `stellarchy-media` — controls whichever MPRIS player is currently playing (Spotify, browser, mpv, anything); no hardcoded app |
-| Clipboard panel (`SUPER+CTRL+V`) | **Was dead**, now rebound | `caelestia clipboard` |
-| Emoji picker (`SUPER+CTRL+E`) | **Was dead**, now rebound | `caelestia emoji` |
-| Dismiss notifications (`SUPER+,`) | **Partially replaced** | Clears all notifications via Caelestia IPC; per-notification dismiss has no equivalent |
-| Invoke last / notification history | **Gone** | No Caelestia IPC equivalent exists |
-| Audio/BT/network/calendar panels (`SUPER+CTRL+A/B/W/ALT+D`) | **Unbound** | Retired — the Caelestia dashboard (`SUPER+Alt+D`) covers audio/BT/network/calendar |
-| Power panel (`SUPER+CTRL+P`) | **Rebound** | Opens the Caelestia session menu |
-| Bar panel chords (`SUPER+CTRL+F1-F9`) | **Unbound** | Caelestia's bar has no panel-at-index IPC |
-| Idle lock / suspend wiring | **Replaced** | Managed `hypridle.conf`: locks through `caelestia-system-lock`, DPMS-off after lock, suspend-then-hibernate at 10 min |
+| omarchy-shell menus + lock screen | **Removed** | Fuzzel suite `stellarchy-*`; Caelestia session lock via `caelestia-system-lock` |
+| Media keys / clipboard / emoji panels | **Rebound** | `stellarchy-media`, `caelestia clipboard`, `caelestia emoji` |
 | Theme switching (`omarchy-theme-set`) | **Works as before** | A hook bridges each theme's colors.toml into Caelestia's M3 scheme live |
-| Window management, workspaces, app binds | **Work as before** | Untouched Omarchy defaults |
+| Window management, workspaces, app binds | **Untouched** | Omarchy defaults |
 
 Anything not listed here that shells out to `omarchy-shell` elsewhere in your
 own scripts will also be dead — grep for it.
@@ -100,22 +82,14 @@ Use `./install.sh -y` to skip confirmation prompts.
 ```bash
 ./upgrade.sh
 ```
-This pulls the latest repo, refreshes the menu scripts / theme bridge hook /
-update guard / splash guard in place, 3-way-merges lua config changes into
-your live files (personal edits preserved; conflicts leave your file untouched
-with a `.conflict` copy for manual resolution), keeps keybinds identical to
-the repo via a managed block at the end of `bindings.lua` (legacy auto-injected blocks
-are stripped automatically — duplicates made toggle binds fire twice and look
-dead), re-applies Stellarchy branding (idle screensaver art, about art,
-fastfetch OS line, SDDM greeter — stock or stale copies are refreshed; your
-own customizations are never overwritten), enforces the SDDM-safe
-`omarchy-system-logout`, keeps the CachyOS kernel's `default_entry:` aimed at
-the right entry if you opted in, and refreshes the Stellarchy boot splash when
-adopted (a libalpm hook also re-applies it to kernels installed between
-upgrades). `monitors.lua` / `input.lua` are never touched (device-specific);
-everything else is reported as drift. Add `--dry-run` to preview, or
-`--adopt-lua` to adopt repo versions of lua files that have no merge history
-(yours is backed up first).
+This pulls the latest repo and re-syncs everything in place: menu scripts,
+theme bridge hook, update/splash guards, branding (stock-or-stale files only —
+your own customizations are never overwritten), SDDM-safe logout, managed
+keybinds, and the CachyOS `default_entry:` if you opted in. Lua config changes
+3-way-merge into your live files; conflicts leave your file untouched with a
+`.conflict` copy. `monitors.lua` / `input.lua` are device-specific and never
+touched. Add `--dry-run` to preview, or `--adopt-lua` to adopt repo versions
+of lua files that have no merge history (yours is backed up first).
 
 **Upgrade flags for opt-in extras:**
 ```bash
@@ -146,96 +120,65 @@ The remux ships its own identity on top of Omarchy. What lands where:
 | About logo (`about.txt`) | Installed | Same stock-detection rule |
 | fastfetch OS line | If you have no own config, one is seeded from `/etc/fastfetch` with a `Stellarchy` OS line; custom configs are untouched | Same |
 | Boot splash | `stellarchy` plymouth theme set as default (Tokyo Night palette) | Opt-in via `./upgrade.sh --plymouth`; afterwards kept refreshed automatically and re-applied to any kernel installed later (splash guard libalpm hook) |
-| Script headers / menu About entry | Included | Synced with the menu suite |
+| Script headers | Included | Synced with the menu suite |
 
 Revert the splash anytime: `sudo plymouth-set-default-theme omarchy && sudo limine-mkinitcpio`.
 
-The `stellarchy` theme dir vendors Omarchy's `omarchy.script` instead of referencing it across theme dirs: mkinitcpio's plymouth hook only packs the active theme's own directory into the initramfs, so a cross-dir `ScriptFile=` ships an initramfs with no splash script at all — plymouth renders nothing, and both the splash *and the LUKS passphrase prompt* are invisible (a black screen that looks like a dead boot). Install/upgrade refresh the vendored script from upstream on every run and refuse to switch themes or rebuild the initramfs if the theme isn't self-contained.
+The `stellarchy` splash theme vendors Omarchy's `omarchy.script` because
+mkinitcpio's plymouth hook only packs the active theme's own directory — a
+cross-dir `ScriptFile=` would ship an initramfs with no splash and an
+invisible LUKS prompt (black screen). Install/upgrade refresh and verify the
+vendored script on every run.
 
 ### CachyOS kernel (opt-in, post-install)
 
-CachyOS kernels tune CPU scheduling — BORE for desktop/game interactivity, a
-good fit for gaming rigs, pointless for rarely-used machines. They come
-prebuilt from [chaotic-aur](https://aur.chaotic.cx), so no compiling.
-Deliberately **not** part of the initial install — opt in afterwards:
+CachyOS kernels tune CPU scheduling — BORE for lowest latency under load (the
+gaming pick), EEVDF default, plus LTS and real-time variants. Prebuilt from
+[chaotic-aur](https://aur.chaotic.cx), so nothing compiles:
 
 ```bash
 ./upgrade.sh --kernel <variant>   # default | bore | eevdf | lts | rt-bore
 ```
 
-What it does: adds chaotic-aur to pacman (backing up `pacman.conf` first),
-installs the chosen kernel + headers (DKMS modules like NVIDIA rebuild
-automatically), and aims the `default_entry:` header in `/boot/limine.conf`
-at that kernel's entry. The header uses Limine's entry-path form
-(`+Omarchy/linux-cachyos`), so it keeps pointing at the same kernel through
-kernel add/remove and snapshot churn — a numeric index would silently shift
-onto whatever entry takes a removed one's place (e.g. the Snapshots submenu).
-The header itself survives `limine-update`; only Omarchy's manual refresh
-script resets it. The stock Arch kernel is never removed — if anything ever
-misbehaves, pick it in the Limine menu and revert with one `default_entry:`
-edit + `sudo limine-update`.
+Adds `[chaotic-aur]` to `pacman.conf` (backed up first) and installs the
+chosen kernel + headers (DKMS modules like NVIDIA rebuild automatically).
+Limine's path-based `default_entry:` header follows the kernel by name, so it
+survives snapshot churn. The stock Arch kernel is never removed — revert any
+time via the Limine menu + one `default_entry:` edit. Full opt-out: remove the
+`[chaotic-aur]` block from `/etc/pacman.conf`.
 
-**Scope:** chaotic-aur is a plain signed binary repo, not a build system
-change — nothing installs itself, nothing compiles differently, and your
-yay/paru workflow is untouched. Only explicitly-requested packages come from
-it (afterwards the kernel updates through normal `omarchy-update`). Your AUR
-helper will simply *also* offer prebuilt chaotic builds where they exist,
-asking which to use per install. The whole CachyOS kernel family
-(`linux-cachyos`, `-lts`, RT variants...) is available the same way once the
-repo exists. Full opt-out: remove the `[chaotic-aur]` block from
-`/etc/pacman.conf`.
+## What install.sh does
 
-The installer will:
-1. Install build dependencies (cmake, ninja, qt6, etc.)
-2. Build and install Caelestia Shell from source
-3. Backup your existing configs
-4. Copy the new configs (skips hypr files that already exist). `looknfeel.lua` ships a managed scale-aware corner-rounding block; on first install you're asked for an explicit Hyprland monitor scale + GTK scale (defaults detected from your panel) instead of Hyprland's DPI-guessed `"auto"`, which tends to oversize UI on laptop screens — `-y` takes the detected defaults
-5. Patch `hyprland.lua` to disable omarchy's default autostart (via Lua `package.loaded`, injected after Omarchy's bootstrap — survives pacman updates and config reloads)
-6. Patch `autostart.lua` to launch Caelestia Shell and take over the non-shell parts of Omarchy's autostart (monitor watch, automount, post-boot hooks)
-7. Set up the systemd service (auto-restart on crash)
-8. Set up the theme bridge hook
-9. Install `caelestia-system-lock` and the managed `hypridle.conf` so idle lock matches the manual lock path (existing hypridle.conf is never overwritten; upgrades land as `.new`)
-10. Apply Caelestia shell patches from [`patches/`](patches/) — currently a self-heal for Quickshell's Hyprland event tracking, which can go stale across suspend/DPMS/multi-monitor transitions and force-close drawers (launcher/dashboard) the moment they open. Patches are applied idempotently after clone/update and survive upstream pulls
-11. Install the omarchy-update guard — `omarchy-update` ends with `omarchy-restart-shell`, which hard-relaunches omarchy-shell over Caelestia. The guard makes it exit early while Caelestia is running, and a libalpm hook re-applies it after every omarchy package upgrade
-12. Install the stellarchy fuzzel menu suite and `stellarchy-media` to `~/.local/bin/` (root menu includes an **About** entry)
-13. Seed `~/.config/fastfetch/config.jsonc` from the system default with a `Stellarchy` OS line — only if you have no own fastfetch config; custom configs are untouched
-14. Deploy Stellarchy screensaver + About art (`~/.config/omarchy/branding/`) — replaces files still identical to Omarchy's stock art, never genuine customization
-15. Set up the `stellarchy` plymouth splash (vendored Omarchy boot script) and rebuild the initramfs so it's live on next boot
-
-The stock Arch kernel ships untouched — opt into a CachyOS kernel any time after install with [`./upgrade.sh --kernel <variant>`](#cachyos-kernel-opt-in-post-install).
-17. Sync your current theme
-18. Run the session-start preflight (see [Install safety net](#install-safety-net-preflight))
-19. Auto-logout after 5 seconds — **only if every preflight check passed** (press Ctrl+C to cancel). Uses `omarchy-system-logout` (`uwsm stop`), so the session ends cleanly and you land back at the login screen
+- Build and install Caelestia Shell from source (all deps handled)
+- Back up existing configs, then copy the new ones — existing hypr configs are never overwritten
+- Ask for monitor + GTK scale on first install (drives a scale-aware corner-rounding block in `looknfeel.lua`; `-y` takes detected defaults)
+- Disable Omarchy's shell autostart (survives pacman updates and config reloads) and launch Caelestia instead via `autostart.lua` + an auto-restarting systemd service
+- Set up the theme bridge hook, `caelestia-system-lock` and the managed `hypridle.conf`
+- Apply Caelestia patches idempotently ([`patches/`](patches/)) and install the omarchy-update guard (a libalpm hook re-applies it after every omarchy upgrade)
+- Install the fuzzel menu suite + `stellarchy-media` (see [Menu suite](#menu-suite)), seed the fastfetch OS line, deploy branding art
+- Set up the Stellarchy boot splash and rebuild the initramfs so it's live on next boot
+- Sync your current theme
+- Run the session-start preflight, then auto-logout after 5s if every check passed (Ctrl+C cancels) — logout uses `omarchy-system-logout` (`uwsm stop`) so the session ends cleanly
 
 ## Install safety net (preflight)
 
-Before the installer offers to log you out, it verifies the exact chain your
-**next login** depends on:
+Before offering to log you out, the installer verifies the chain your next
+login depends on: autostart stub placement, upstream API hooks, valid Lua
+configs, and `caelestia-shell.service` health (enabled, real binary,
+systemd-analyze clean).
 
-- `hyprland.lua` autostart stub is correctly placed (after Omarchy's bootstrap, before its defaults load)
-- Omarchy still loads `hypr.autostart` and still ships the APIs the launch handler uses (`o.launch`, `hyprland.start`) — catches upstream layout drift on fresh installs
-- `autostart.lua` registers the Caelestia launch handler and parses as valid Lua
-- `caelestia-shell.service` exists, is enabled, points at a real binary, and passes `systemd-analyze --user verify`
+**All checks pass** → normal logout prompt. **Any check fails** → automatic
+rollback to fully usable stock Omarchy (configs restored from backup, service
+disabled) instead of a dead session. Everything, including what was rolled
+back, lands in `~/stellarchy-preflight.log` — send it for help or hand it to
+your AI agent, then fix and re-run.
 
-**All checks pass** → normal logout prompt, Caelestia takes over.
-
-**Any check fails** → automatic rollback instead of a dead session:
-
-1. `hyprland.lua`, `autostart.lua`, `bindings.lua` restored from the backup taken at install start (injected blocks stripped surgically if no backup exists)
-2. `caelestia-shell.service` disabled so stock omarchy-shell owns startup again
-
-Your PC stays fully usable as stock Omarchy — logging out or rebooting is safe.
-The terminal prints exactly which checks failed; everything, including what was
-rolled back, lands in `~/stellarchy-preflight.log`. Send that file for help or hand
-it to your AI agent, then fix and re-run `./install.sh` — or `./uninstall.sh`
-to remove everything.
-
-**Caelestia didn't start after install** (e.g. an install from before this
-existed)? Press `Ctrl+Alt+F4` for a TTY, log in, then:
+Caelestia didn't start after an older install? Press `Ctrl+Alt+F4` for a TTY,
+log in, then:
 
 ```bash
 cat ~/stellarchy-preflight.log                     # see what's wrong
-systemctl --user start caelestia-shell.service  # bring the shell back now
+systemctl --user start caelestia-shell.service     # bring the shell back now
 ```
 
 ## After install
@@ -251,25 +194,17 @@ systemctl --user start caelestia-shell.service  # bring the shell back now
 
 | Binding | Action |
 |---|---|
-| `SUPER+Space` | Caelestia launcher (apps, wallpaper, schemes, system) |
+| `SUPER+Space` | Caelestia launcher (apps, wallpaper, schemes) |
 | `SUPER+Alt+Space` | Stellarchy root menu |
 | `SUPER+N` | Caelestia sidebar / notifications shade |
 | `SUPER+Alt+D` | Caelestia dashboard (media, weather, stats, network, BT) |
 | `SUPER+Escape` | Power menu (confirm guard on reboot/shutdown) |
 | `SUPER+Ctrl+L` | Lock via Caelestia (`caelestia-system-lock`) |
+| `SUPER+Ctrl+P` | Session menu |
 | `Media keys` | Play/pause, next, previous — any MPRIS player via `stellarchy-media` |
 | `SUPER+Ctrl+V` / `SUPER+Ctrl+E` | Clipboard history / emoji picker |
 | `SUPER+,` | Clear notifications |
-| `SUPER+Ctrl+P` | Session menu |
-| `SUPER+Return` | Terminal |
-| `SUPER+Shift+Return` | Browser |
-| `SUPER+Shift+F` | File manager |
-| `SUPER+Shift+N` | Editor |
 | `SUPER+K` | Keybinding list (fuzzel) |
-| `SUPER+Q` | Close window |
-| `SUPER+1-0` | Switch workspace |
-| `SUPER+Arrow` | Move/resize windows |
-| `PRINT` | Screenshot |
 
 Everything else inherits from stock Omarchy — run `stellarchy-keybinds` for the
 full searchable list. Stock's panel chords (`SUPER+Ctrl+A/B/W/Alt+D`) are
@@ -285,16 +220,21 @@ level.
 
 | Script | Purpose |
 |---|---|
-| `stellarchy-menu` | Root menu: Keybindings, Themes, Packages, Update, Config, Defaults, Restart, Session |
+| `stellarchy-menu` | Root menu (alphabetized): Packages, Restart, Setup, System, Themes, Trigger, Update |
+| `stellarchy-trigger` / `stellarchy-hardware` / `stellarchy-speedtest` | Hardware toggles gated on detected hardware (laptop display, hybrid GPU, touchpad...) + network/disk speed tests |
+| `stellarchy-setup` / `stellarchy-network` / `stellarchy-security` | DNS picker + Wi-Fi QR code, and security setup (fingerprint/FIDO2/sshd/sudo) |
+| `stellarchy-system` | Config editor and default app pickers |
 | `stellarchy-power` | Lock, logout, suspend, hibernate, reboot, shutdown (destructive actions require Confirm) |
 | `stellarchy-keybinds` | Searchable keybinding list that dispatches binds (`--menu` for Esc-back) |
 | `stellarchy-themes` / `stellarchy-themes-list` | Theme switcher with preview thumbnails + git theme install |
-| `stellarchy-pkgs` | Package TUI launcher: install, remove, AUR |
-| `stellarchy-update` | System/theme/firmware updates + package channel switcher |
+| `stellarchy-pkgs` / `stellarchy-install` / `stellarchy-remove` | Packages → Install (package/AUR/web app) and Remove (package/web app/theme) submenus |
+| `stellarchy-update` | Stellarchy system update, channel switcher, extra themes, Hyprsunset + hardware restarts, firmware |
 | `stellarchy-config` | Edit `~/.config/hypr/*.{lua,conf}` in your default editor |
 | `stellarchy-defaults` | Default browser/editor/terminal/agent pickers (includes installed beta/nightly browsers) |
 | `stellarchy-restart` | Reload Hyprland, restart terminal/Caelestia shell, refresh theme |
 | `stellarchy-media` | Universal MPRIS media control — targets whichever player is currently playing |
+| `stellarchy-wifi-qr` | Renders the current Wi-Fi as a scannable QR in a floating terminal (replaces the removed shell widget) |
+| `stellarchy-terminal` | Runs a command in a floating TUI.float terminal with logo/done polish (uniform app-id for all one-shot TUIs) |
 | `caelestia-system-lock` | Lock via Caelestia + kb-layout reset + 1Password lock + delayed display-off (used by keybind, power menu and hypridle) |
 | `stellarchy-fuzzel` | Shared fuzzel wrapper — reads colors from `~/.local/state/caelestia/scheme.json` |
 

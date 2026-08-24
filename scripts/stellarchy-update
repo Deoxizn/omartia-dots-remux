@@ -1,23 +1,27 @@
 #!/bin/bash
 
-# stellarchy:summary=Update menu: system, themes, firmware, or switch update channel.
+# stellarchy:summary=Update menu: system, channel, themes, restarts, firmware.
 
 current=$(omarchy channel current 2>/dev/null)
 
+# Rows ending in ">" drill into another picker; bare rows act immediately.
+entries=("Stellarchy" "Channel${current:+ ($current)} >")
+omarchy-theme-extras >/dev/null 2>&1 && entries+=('Extra themes')
+entries+=('Hyprsunset' 'Hardware >' 'Firmware')
+
 choice=$(
-  printf '%s\n' \
-    'Update system' \
-    'Update themes' \
-    'Update firmware' \
-    "Update channel${current:+ ($current)}" |
-    stellarchy-fuzzel --dmenu --prompt='Update: ' --width=30 --lines=4
+  printf '%s\n' "${entries[@]}" |
+    stellarchy-fuzzel --dmenu --prompt='Update: ' --width=30 --lines=${#entries[@]}
 ) || exec stellarchy-menu   # Esc = back to root menu
+choice=${choice%' >'}
 
 case "$choice" in
-  "Update system")   exec omarchy-launch-or-focus-tui omarchy-update ;;
-  "Update themes")   exec omarchy-launch-or-focus-tui omarchy-theme-update ;;
-  "Update firmware") exec omarchy-launch-or-focus-tui omarchy-update-firmware ;;
-  "Update channel"*) ;;
+  Stellarchy)     exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-update ;;
+  "Extra themes") exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-theme-update ;;
+  Hyprsunset)     exec omarchy-restart-hyprsunset ;;
+  Hardware)       exec stellarchy-update-hardware ;;
+  Firmware)       exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-update-firmware ;;
+  Channel*) ;;
   *) exit 0 ;;
 esac
 
@@ -29,4 +33,4 @@ chan_choice=$(
 ) || exec stellarchy-update   # Esc = back to Update menu
 
 channel=${chan_choice#✓ }
-[[ -n $channel ]] && exec omarchy-launch-or-focus-tui omarchy-channel-set "$channel"
+[[ -n $channel ]] && exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-channel-set "$channel"

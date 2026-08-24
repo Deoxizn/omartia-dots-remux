@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# stellarchy: Run a command in a floating TUI.float terminal with the Omarchy
+# logo / done polish (same presentation omarchy uses, but under the uniform
+# TUI.float app-id so every spawned terminal floats identically).
+# Usage: stellarchy-terminal <command> [args...]
+
+exec omarchy-launch-tui --app-id=TUI.float bash -c "omarchy-show-logo; $*; if (( \$? != 130 )); then omarchy-show-done; fi"

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# stellarchy:summary=Install submenu: packages, AUR builds, or a web app.
+
+choice=$(
+  printf '%s\n' \
+    'Package' \
+    'AUR' \
+    'Web App' |
+    stellarchy-fuzzel --dmenu --prompt='Install: ' --width=26 --lines=3
+) || exec stellarchy-pkgs   # Esc = back to Packages menu
+
+case "$choice" in
+  Package)   exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-pkg-install ;;
+  AUR)       exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-pkg-aur-install ;;
+  "Web App") exec stellarchy-terminal omarchy-webapp-install ;;
+esac

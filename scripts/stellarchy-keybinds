@@ -582,7 +582,7 @@ dispatch_binding() {
 
 back_target=""
 if [[ $1 == "--menu" ]]; then
-  # Launched from the stellarchy root menu: Esc goes back instead of closing.
+  # Launched from a stellarchy menu: Esc goes back instead of closing.
   back_target="stellarchy-menu"
   shift
 fi

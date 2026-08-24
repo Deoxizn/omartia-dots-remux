@@ -1,17 +1,17 @@
 #!/bin/bash
 
-# stellarchy:summary=Package management menu: install, remove, or AUR-install via the Omarchy TUIs.
+# stellarchy:summary=Packages submenu: install or remove packages, AUR builds, web apps, themes.
 
+# Rows ending in ">" open a submenu.
 choice=$(
   printf '%s\n' \
-    'Install packages' \
-    'Remove packages' \
-    'Install from AUR' |
-    stellarchy-fuzzel --dmenu --prompt='Packages: ' --width=28 --lines=3
+    'Install >' \
+    'Remove >' |
+    stellarchy-fuzzel --dmenu --prompt='Packages: ' --width=26 --lines=2
 ) || exec stellarchy-menu   # Esc = back to root menu
+choice=${choice%' >'}
 
 case "$choice" in
-  "Install packages")  exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-pkg-install ;;
-  "Remove packages")   exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-pkg-remove ;;
-  "Install from AUR")  exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-pkg-aur-install ;;
+  Install) exec stellarchy-install ;;
+  Remove)  exec stellarchy-remove ;;
 esac

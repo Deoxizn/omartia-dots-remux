@@ -1,0 +1,28 @@
+#!/bin/bash
+
+# stellarchy:summary=Security setup: fingerprint login, FIDO2 keys, SSH daemon, passwordless sudo.
+
+menu=""
+declare -A cmd_for=()
+
+# add <label> <condition-cmd> <action...> — empty condition means always shown.
+add() {
+  local label=$1 cond=$2
+  shift 2
+  [[ -n $cond ]] && ! "$cond" >/dev/null 2>&1 && return 0
+  cmd_for[$label]="$*"
+  menu+="$label"$'\n'
+}
+
+add 'Fingerprint'       omarchy-hw-fingerprint stellarchy-terminal omarchy-setup-security-fingerprint
+add 'Fido2'             ''                     stellarchy-terminal omarchy-setup-security-fido2
+add 'SSHD'              ''                     stellarchy-terminal omarchy-setup-security-sshd
+add 'Passwordless Sudo' ''                     stellarchy-terminal omarchy-sudo-passwordless
+
+choice=$(
+  printf '%s' "$menu" |
+    stellarchy-fuzzel --dmenu --prompt='Security: ' --width=30 --lines=${#cmd_for[@]}
+) || exec stellarchy-menu   # Esc = back to root menu
+
+cmd=${cmd_for[$choice]:-}
+[[ -n $cmd ]] && eval exec "$cmd"

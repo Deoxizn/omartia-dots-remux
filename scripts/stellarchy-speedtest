@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# stellarchy:summary=Speed tests: network down/up and disk, run in a floating TUI.float terminal.
+
+choice=$(
+  printf '%s\n' \
+    'Network download' \
+    'Network upload' \
+    'Disk' |
+    stellarchy-fuzzel --dmenu --prompt='Speed test: ' --width=26 --lines=3
+) || exec stellarchy-trigger   # Esc = back to Trigger menu
+
+case "$choice" in
+  "Network download") exec stellarchy-terminal omarchy-network-speedtest down ;;
+  "Network upload")   exec stellarchy-terminal omarchy-network-speedtest up ;;
+  Disk)               exec stellarchy-terminal omarchy-disk-speedtest ;;
+esac

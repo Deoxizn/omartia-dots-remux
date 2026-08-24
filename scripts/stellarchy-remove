@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# stellarchy:summary=Remove submenu: packages, installed web apps, or extra themes.
+
+web_apps=()
+while IFS= read -r -d '' f; do
+  grep -qE '^Exec=.*(omarchy-launch-webapp|omarchy-webapp-handler)' "$f" &&
+    web_apps+=("$(basename "${f%.desktop}")")
+done < <(find "$HOME/.local/share/applications" -maxdepth 1 -name '*.desktop' -print0 2>/dev/null)
+
+themes=()
+while IFS= read -r t; do
+  themes+=("$t")
+done < <(find "$HOME/.config/omarchy/themes" -mindepth 1 -maxdepth 1 -type d ! -xtype l -printf '%f\n' 2>/dev/null | sort)
+
+menu=('Package')
+((${#web_apps[@]})) && menu+=('Web App')
+((${#themes[@]})) && menu+=('Theme')
+
+choice=$(
+  printf '%s\n' "${menu[@]}" |
+    stellarchy-fuzzel --dmenu --prompt='Remove: ' --width=26 --lines=${#menu[@]}
+) || exec stellarchy-pkgs   # Esc = back to Packages menu
+
+case "$choice" in
+  Package) exec omarchy-launch-or-focus-tui --app-id=TUI.float omarchy-pkg-remove ;;
+  "Web App")
+    pick=$(
+      printf '%s\n' "${web_apps[@]}" | sort |
+        stellarchy-fuzzel --dmenu --prompt='Remove web app: ' --width=30 --lines=9
+    ) || exec stellarchy-remove   # Esc = back to Remove menu
+    [[ -n $pick ]] && exec omarchy-webapp-remove "$pick"
+    ;;
+  Theme)
+    pick=$(
+      printf '%s\n' "${themes[@]}" |
+        stellarchy-fuzzel --dmenu --prompt='Remove theme: ' --width=30 --lines=9
+    ) || exec stellarchy-remove   # Esc = back to Remove menu
+    [[ -n $pick ]] && exec omarchy-theme-remove "$pick"
+    ;;
+esac

@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# stellarchy:summary=Setup submenu: network and security.
+
+# Rows ending in ">" open a submenu.
+choice=$(
+  printf '%s\n' \
+    'Network >' \
+    'Security >' |
+    stellarchy-fuzzel --dmenu --prompt='Setup: ' --width=26 --lines=2
+) || exec stellarchy-menu   # Esc = back to root menu
+choice=${choice%' >'}
+
+case "$choice" in
+  Network)  exec stellarchy-network ;;
+  Security) exec stellarchy-security ;;
+esac

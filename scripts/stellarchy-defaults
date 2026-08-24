@@ -9,7 +9,7 @@ choice=$(
     'Terminal' \
     'Agent' |
     stellarchy-fuzzel --dmenu --prompt='Defaults: ' --width=24 --lines=4
-) || exec stellarchy-menu   # Esc = back to root menu
+) || exec stellarchy-system   # Esc = back to System menu
 
 case "$choice" in
   Browser)  type="browser" ;;

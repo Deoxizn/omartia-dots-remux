@@ -1,27 +1,27 @@
 #!/bin/bash
 
-# stellarchy:summary=Stellarchy root menu: keybindings, themes, packages, and session.
+# stellarchy:summary=Stellarchy root menu: packages, restart, setup, system, themes, trigger, update.
 
+# Rows ending in ">" open a submenu; bare rows act immediately.
 choice=$(
   printf '%s\n' \
-    'Keybindings' \
-    'Themes' \
-    'Packages' \
-    'Update' \
-    'Config' \
-    'Defaults' \
-    'Restart' \
-    'Session' |
-    stellarchy-fuzzel --dmenu --prompt='✦ ..Stellarchy.. ✦ ' --width=26 --lines=8
+    'Packages >' \
+    'Restart >' \
+    'Setup >' \
+    'System >' \
+    'Themes >' \
+    'Trigger >' \
+    'Update >' |
+    stellarchy-fuzzel --dmenu --prompt='✦ ..Stellarchy.. ✦ ' --width=28 --lines=7
 )
+choice=${choice%' >'}
 
 case "$choice" in
-  Keybindings) exec stellarchy-keybinds --menu ;;
-  Themes)      exec stellarchy-themes ;;
-  Packages)    exec stellarchy-pkgs ;;
-  Update)      exec stellarchy-update ;;
-  Config)      exec stellarchy-config ;;
-  Defaults)    exec stellarchy-defaults ;;
-  Restart)     exec stellarchy-restart ;;
-  Session)     exec hyprctl dispatch global caelestia:session ;;
+  Packages) exec stellarchy-pkgs ;;
+  Restart)  exec stellarchy-restart ;;
+  Setup)    exec stellarchy-setup ;;
+  System)   exec stellarchy-system ;;
+  Themes)   exec stellarchy-themes ;;
+  Trigger)  exec stellarchy-trigger ;;
+  Update)   exec stellarchy-update ;;
 esac

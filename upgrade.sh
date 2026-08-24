@@ -224,6 +224,17 @@ done
 for dst in "$HOME/.local/bin/"stellarchy-*; do
   [[ -f "$REPO_DIR/scripts/$(basename "$dst")" ]] || warn "  $(basename "$dst") no longer in repo — left in place, remove manually if unwanted"
 done
+# Scripts dropped by the menu rework (superseded; safe to delete)
+stale_scripts=("$HOME/.local/bin/stellarchy-update-process")
+for dst in "${stale_scripts[@]}"; do
+  [[ -f $dst ]] || continue
+  if $DRY_RUN; then
+    info "  [dry-run] would remove stale $(basename "$dst")"
+  else
+    rm -f "$dst"
+    ok "  removed stale $(basename "$dst")"
+  fi
+done
 shopt -u nullglob
 
 # Pre-rename binaries (scripts were omartia-* before the stellarchy rebrand)
