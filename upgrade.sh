@@ -329,6 +329,14 @@ echo ""
 # ──────────────────────────────────────────────
 
 SKIP_LUA=(monitors.lua input.lua bindings.lua)
+# ERE marking a live file as carrying remux content. Files matching NONE of
+# it are stock Omarchy defaults or foreign rewrites — merging into those is
+# meaningless, so they are adopted wholesale (with backup) below.
+declare -A OWNED_RE=(
+  [hyprland.lua]='omartia-dots-remux|package\.loaded\["default\.hypr\.autostart"\]'
+  [autostart.lua]='omartia-dots-remux|caelestia-shell'
+  [looknfeel.lua]='omartia-dots-remux'
+)
 BASE_DIR="$HOME/.config/hypr/.stellarchy-base"
 info "Hypr Lua configs (merge from repo):"
 
@@ -356,6 +364,19 @@ for src in "$REPO_DIR"/config/hypr/*.lua; do
   elif cmp -s "$src" "$dst"; then
     cp -f "$src" "$base"   # keep merge base fresh
     ok "  $name up to date"
+  elif [[ -n ${OWNED_RE[$name]:-} ]] && ! grep -qE "${OWNED_RE[$name]}" "$dst"; then
+    # Live file has none of the remux's content (fresh Omarchy default or a
+    # foreign rewrite): adopting wholesale is the only meaningful sync here,
+    # and it guarantees the documented dots behavior actually exists.
+    if $DRY_RUN; then
+      info "  [dry-run] would replace unowned $name with repo version (backup: hypr/$name.pre-upgrade.bak)"
+    else
+      cp "$dst" "$dst.pre-upgrade.bak"
+      install -m644 "$src" "$dst"
+      cp -f "$src" "$base"
+      ok "  replaced unowned $name with repo version (backup: hypr/$name.pre-upgrade.bak)"
+    fi
+    changed=$((changed+1))
   elif [[ ! -f $base ]]; then
     # No sync history: cannot tell your edits from stale repo state — don't touch.
     warn "  $name differs and has no sync history — left untouched"
@@ -477,9 +498,11 @@ echo ""
 
 # ──────────────────────────────────────────────
 # Keybinds (bindings.lua) — managed block overlay
-# Your personal lines stay untouched above the managed block; the full repo
-# keybind set is appended inside it. Hyprland applies binds top-down with
-# last-wins, so repo keybinds always take effect on every machine.
+# Files already carrying the managed block get it refreshed in place; a file
+# WITHOUT any remux content (stock default or a stale partial install) is
+# backed up and replaced wholesale, so the documented keybinding set actually
+# exists. Hyprland applies binds top-down with last-wins, so repo keybinds
+# always take effect on every machine.
 # ──────────────────────────────────────────────
 
 BINDINGS_FILE="$HOME/.config/hypr/bindings.lua"
@@ -550,13 +573,21 @@ else
     fi
     rm -f "$old_section"
   else
+    # No managed block: the file predates the remux's keybinds entirely —
+    # stock Omarchy default, or an older installer that only appended a
+    # partial auto-injected block (leaving most documented binds missing and
+    # the stock omarchy-shell ones dead). Back the whole file up and adopt
+    # the repo version wholesale instead of appending beside dead binds.
     if $DRY_RUN; then
-      info "  [dry-run] would append managed keybind block ($(wc -l < "$REPO_BINDINGS") lines) to hypr/bindings.lua"
+      info "  [dry-run] would replace bindings.lua with the managed repo keybind set (backup: hypr/bindings.lua.pre-upgrade.bak)"
+      changed=$((changed+1))
     else
-      { echo ""; cat "$section_file"; } >> "$BINDINGS_FILE"
-      ok "  managed keybind block appended — run 'hyprctl reload' to apply"
+      cp "$BINDINGS_FILE" "$BINDINGS_FILE.pre-upgrade.bak"
+      install -m644 "$section_file" "$BINDINGS_FILE"
+      ok "  replaced bindings.lua with the repo keybind set (backup: hypr/bindings.lua.pre-upgrade.bak)"
+      warn "    personal binds from your old file are only in the backup — re-add them above the managed block"
+      changed=$((changed+1))
     fi
-    changed=$((changed+1))
   fi
   rm -f "$section_file"
 fi

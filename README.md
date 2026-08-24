@@ -21,6 +21,8 @@ Omarchy × Caelestia · `omartia-dots-remux`
 
 Replaces omarchy-shell (quattro bar, menus, lock) with **Caelestia Shell** — keeps omarchy's theme switching working via a color bridge. Read [READ THIS FIRST](#read-this-first) before installing: this is a shell replacement, not a theme.
 
+Curious how this came together? Every dots/system change is logged by date in the [CHANGELOG](CHANGELOG.md).
+
 <p align="center">
   <img src="desktop.png" alt="Desktop" width="1280">
 </p>
@@ -87,9 +89,13 @@ theme bridge hook, update/splash guards, branding (stock-or-stale files only —
 your own customizations are never overwritten), SDDM-safe logout, managed
 keybinds, and the CachyOS `default_entry:` if you opted in. Lua config changes
 3-way-merge into your live files; conflicts leave your file untouched with a
-`.conflict` copy. `monitors.lua` / `input.lua` are device-specific and never
-touched. Add `--dry-run` to preview, or `--adopt-lua` to adopt repo versions
-of lua files that have no merge history (yours is backed up first).
+`.conflict` copy. A live lua file that carries **none** of the remux's content
+(stock Omarchy default or a stale partial install) is backed up
+(`*.pre-upgrade.bak`) and replaced with the repo version, so the documented
+behavior actually exists on every machine. `monitors.lua` / `input.lua` are
+device-specific and never touched. Add `--dry-run` to preview, or `--adopt-lua`
+to adopt repo versions of lua files that have no merge history (yours is backed
+up first).
 
 **Upgrade flags for opt-in extras:**
 ```bash
@@ -150,7 +156,7 @@ time via the Limine menu + one `default_entry:` edit. Full opt-out: remove the
 ## What install.sh does
 
 - Build and install Caelestia Shell from source (all deps handled)
-- Back up existing configs, then copy the new ones — existing hypr configs are never overwritten
+- Back up existing configs, then diff-check the main Hyprland lua files (`hyprland.lua`, `autostart.lua`, `looknfeel.lua`, `bindings.lua`): remux-owned ones are left alone, stock/unowned ones are backed up (`*.pre-install.bak`) and replaced with the repo versions — a fresh Omarchy ships all of them, so without this the documented keybinds and autostart would silently never land. `monitors.lua` / `input.lua` are device-specific and only ever created if missing
 - Ask for monitor + GTK scale on first install (drives a scale-aware corner-rounding block in `looknfeel.lua`; `-y` takes detected defaults)
 - Disable Omarchy's shell autostart (survives pacman updates and config reloads) and launch Caelestia instead via `autostart.lua` + an auto-restarting systemd service
 - Set up the theme bridge hook, `caelestia-system-lock` and the managed `hypridle.conf`
@@ -188,7 +194,7 @@ systemctl --user start caelestia-shell.service     # bring the shell back now
 3. Log out and back in
 4. Test: `SUPER+Space` (launcher), `SUPER+Ctrl+L` (lock), `omarchy-theme-set <theme>`
 
-**Reinstalling?** Existing hypr configs (`hyprland.lua`, `autostart.lua`, `looknfeel.lua`, `monitors.lua`, `input.lua`, `bindings.lua`) are never overwritten — edit them directly or restore from backup at `~/.config/omartia-dots-remux-backup/`.
+**Reinstalling?** Remux-owned hypr configs are never overwritten — edit them directly or restore from backup at `~/.config/omartia-dots-remux-backup/`. Stock/unowned main lua files (`hyprland.lua`, `autostart.lua`, `looknfeel.lua`, `bindings.lua`) get backed up in place (`*.pre-install.bak`) and replaced with the repo versions; `monitors.lua` and `input.lua` are always left alone.
 
 ## Keybindings
 

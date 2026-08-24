@@ -64,6 +64,50 @@ run_sudo() {
   sudo "$@"
 }
 
+# Diff-check a main remux-owned hypr lua file against the live config.
+#   missing             -> install the repo version
+#   carries no remux    -> back up the live file (*.pre-install.bak) and replace
+#                          it with the repo version wholesale
+#   already remux-owned -> leave untouched (upgrade.sh merges updates into those)
+# Without this, a fresh Omarchy target keeps its stock hypr/*.lua (they all
+# exist out of the box) and silently misses everything the dots document.
+# $1 file name, $2 optional ERE marking remux ownership (default: any
+#   "omartia-dots-remux" mention), $3/$4 optional managed-block markers —
+#   when set, the repo file is installed wrapped so upgrade.sh's managed-block
+#   sync recognizes it instead of appending a duplicate.
+sync_main_lua() {
+  local name="$1" own_re="${2:-omartia-dots-remux}"
+  local wrap_begin="${3:-}" wrap_end="${4:-}"
+  local src="$REPO_DIR/config/hypr/$name"
+  local dst="$HOME/.config/hypr/$name"
+  [[ -f $src ]] || return 0
+
+  if [[ -n $wrap_begin ]]; then
+    local tmp
+    tmp="$(mktemp)"
+    { printf '%s\n' "$wrap_begin"; cat "$src"; printf '%s\n' "$wrap_end"; } > "$tmp"
+    src="$tmp"
+  fi
+
+  if [[ ! -f $dst ]]; then
+    if ! $DRY_RUN; then
+      cp "$src" "$dst"
+    fi
+    ok "  hypr/$name (new)"
+  elif grep -qE "$own_re" "$dst" 2>/dev/null; then
+    warn "  hypr/$name already remux-owned — left untouched"
+  elif cmp -s "$src" "$dst"; then
+    ok "  hypr/$name up to date"
+  elif $DRY_RUN; then
+    info "[dry-run] would replace hypr/$name with the repo version (backup: hypr/$name.pre-install.bak)"
+  else
+    cp "$dst" "$dst.pre-install.bak"
+    cp "$src" "$dst"
+    ok "  hypr/$name replaced with repo version (previous file kept as hypr/$name.pre-install.bak)"
+  fi
+  [[ -z ${tmp:-} ]] || rm -f "$tmp"
+}
+
 rebuild_initrd() {
   if ! mountpoint -q /boot; then
     warn "  /boot is not mounted — refusing to leave boot images half-built."
@@ -455,8 +499,8 @@ else
   warn "  hypr/monitors.lua exists — skipped"
 fi
 
-# Hypr configs — only copy if not present (first install), never silently overwrite
-for f in hyprland.lua autostart.lua looknfeel.lua input.lua hypridle.conf; do
+# Device-specific / non-lua hypr configs — copy only if not present, never overwrite
+for f in input.lua hypridle.conf; do
   if [[ ! -f "$HOME/.config/hypr/$f" ]]; then
     if ! $DRY_RUN; then
       cp "$REPO_DIR/config/hypr/$f" "$HOME/.config/hypr/$f"
@@ -466,6 +510,21 @@ for f in hyprland.lua autostart.lua looknfeel.lua input.lua hypridle.conf; do
     warn "  hypr/$f exists — skipped"
   fi
 done
+
+# Main remux lua files — diff-checked against the live config. Stock Omarchy
+# ships every one of these, so on a fresh PC the old "copy if missing" rule
+# skipped them all and only a partial patch block landed. Unowned files are
+# now backed up (*.pre-install.bak) and replaced with the repo versions.
+# markers for upgrade.sh's managed keybind block must match upgrade.sh exactly.
+MANAGED_BEGIN="-- BEGIN omartia-dots-remux managed keybinds (auto-synced by upgrade.sh — personal edits belong outside this block)"
+MANAGED_END="-- END omartia-dots-remux managed keybinds"
+sync_main_lua hyprland.lua 'omartia-dots-remux|package\.loaded\["default\.hypr\.autostart"\]'
+sync_main_lua autostart.lua 'omartia-dots-remux|caelestia-shell'
+sync_main_lua looknfeel.lua
+# Ownership probe is the managed-block marker itself: older installers appended
+# a small auto-injected block that mentions omartia-dots-remux but lacks most of
+# the documented binds — those must be replaced, not skipped.
+sync_main_lua bindings.lua 'BEGIN omartia-dots-remux managed keybinds' "$MANAGED_BEGIN" "$MANAGED_END"
 
 # Patch bindings.lua — inject Caelestia launcher/lock bindings into existing config
 BINDINGS_FILE="$HOME/.config/hypr/bindings.lua"
