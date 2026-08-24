@@ -9,6 +9,8 @@ terminal, or bind your favorites in `~/.config/hypr/bindings.lua`.
 > (bar toggles, plugins, emoji panel, battery percentage, About screen) are left
 > out entirely since they drive parts of Omarchy this remux replaces.
 
+<br><br>
+
 ## Learn
 
 | | |
@@ -19,6 +21,8 @@ terminal, or bind your favorites in `~/.config/hypr/bindings.lua`.
 | LazyVim keymaps | `omarchy-launch-webapp 'https://www.lazyvim.org/keymaps'` |
 | Bash cheatsheet | `omarchy-launch-webapp 'https://devhints.io/bash'` |
 | Community Discord | `omarchy-launch-discord-community` |
+
+<br><br>
 
 ## Capture
 
@@ -35,6 +39,8 @@ terminal, or bind your favorites in `~/.config/hypr/bindings.lua`.
 | Color picker | `pkill hyprpicker \|\| hyprpicker -a` |
 | Transcode media | `omarchy-transcode` |
 
+<br><br>
+
 ## Reminders
 
 | | |
@@ -45,6 +51,8 @@ terminal, or bind your favorites in `~/.config/hypr/bindings.lua`.
 
 (`omarchy-reminder show` needs the quattro shell panel, so it's a no-op here.)
 
+<br><br>
+
 ## Share
 
 | | |
@@ -53,6 +61,8 @@ terminal, or bind your favorites in `~/.config/hypr/bindings.lua`.
 | Share a file | `omarchy-menu-share file` |
 | Share a folder | `omarchy-menu-share folder` |
 | Receive (LocalSend) | `uwsm-app -- localsend` |
+
+<br><br>
 
 ## Toggles
 
@@ -68,6 +78,8 @@ terminal, or bind your favorites in `~/.config/hypr/bindings.lua`.
 | 1-window ratio | `omarchy-hyprland-window-single-square-aspect-toggle` |
 | Dell XPS haptic levels | `dell-xps-touchpad-haptics set low\|mid\|high` |
 
+<br><br>
+
 ## Style
 
 | | |
@@ -82,6 +94,8 @@ terminal, or bind your favorites in `~/.config/hypr/bindings.lua`.
 | Font: Bitstream Vera | `omarchy-install-font 'Bitstream Vera Code' ttf-bitstream-vera-mono-nerd 'BitstromWera Nerd Font'` |
 | Font: Iosevka | `omarchy-install-font Iosevka ttf-iosevka-nerd 'Iosevka Nerd Font Mono'` |
 
+<br><br>
+
 ## Setup
 
 | | |
@@ -93,9 +107,11 @@ terminal, or bind your favorites in `~/.config/hypr/bindings.lua`.
 Factory reset rolls the system back to stock snapshots — **it will undo the
 remux**. Know what you're doing.
 
+<br><br>
+
 ## Install
 
-Gaming:
+**Gaming**
 
 | | |
 |---|---|
@@ -110,7 +126,9 @@ Gaming:
 | Lutris | `omarchy-install-gaming-lutris` |
 | Heroic (Epic Games) | `omarchy-install-gaming-heroic` |
 
-Browsers:
+<br><br>
+
+**Browsers**
 
 | | |
 |---|---|
@@ -121,7 +139,9 @@ Browsers:
 | Firefox | `omarchy-install-browser firefox` |
 | Zen | `omarchy-install-browser zen` |
 
-Services:
+<br><br>
+
+**Services**
 
 | | |
 |---|---|
@@ -135,7 +155,9 @@ Services:
 | ONCE | `omarchy-install-service-once` |
 | Chromium Google account | `omarchy-install-chromium-google-account` |
 
-Editors:
+<br><br>
+
+**Editors**
 
 | | |
 |---|---|
@@ -147,7 +169,9 @@ Editors:
 | Sublime Text | `omarchy-install-and-launch 'Sublime Text' sublime-text-4 sublime_text` |
 | Vim | `omarchy-install-app Vim vim` |
 
-Terminals:
+<br><br>
+
+**Terminals**
 
 | | |
 |---|---|
@@ -156,7 +180,9 @@ Terminals:
 | Ghostty | `omarchy-install-terminal ghostty` |
 | Kitty | `omarchy-install-terminal kitty` |
 
-AI:
+<br><br>
+
+**AI**
 
 | | |
 |---|---|
@@ -167,7 +193,9 @@ AI:
 | Ollama | `omarchy-install-app Ollama ollama` (`ollama-cuda` / `ollama-rocm` per GPU) |
 | T3 Code | `omarchy-install-and-launch 'T3 Code' t3code-bin t3code` |
 
-Development environments:
+<br><br>
+
+**Development environments**
 
 | | |
 |---|---|
@@ -191,7 +219,9 @@ Development environments:
 | Deno | `omarchy-install-dev-env deno` |
 | Docker databases | `omarchy-install-docker-dbs` |
 
-Extras:
+<br><br>
+
+**Extras**
 
 | | |
 |---|---|
@@ -199,9 +229,11 @@ Extras:
 | Windows VM | `omarchy-windows-vm install` |
 | Removed defaults back | `omarchy-install-preinstalls` |
 
+<br><br>
+
 ## Remove
 
-Browsers:
+**Browsers**
 
 | | |
 |---|---|
@@ -212,7 +244,9 @@ Browsers:
 | Firefox | `omarchy-remove-browser firefox` |
 | Zen | `omarchy-remove-browser zen` |
 
-Gaming:
+<br><br>
+
+**Gaming**
 
 | | |
 |---|---|
@@ -226,14 +260,18 @@ Gaming:
 | Lutris | `omarchy-remove-gaming-lutris` |
 | Heroic (Epic Games) | `omarchy-remove-gaming-heroic` |
 
-Services:
+<br><br>
+
+**Services**
 
 | | |
 |---|---|
 | Dropbox | `omarchy-remove-service-dropbox` |
 | Tailscale | `omarchy-remove-service-tailscale` |
 
-AI:
+<br><br>
+
+**AI**
 
 | | |
 |---|---|
@@ -244,7 +282,9 @@ AI:
 | Ollama | `omarchy-remove-ai-ollama` |
 | T3 Code | `omarchy-remove-ai-t3-code` |
 
-Development environments:
+<br><br>
+
+**Development environments**
 
 | | |
 |---|---|
@@ -267,7 +307,9 @@ Development environments:
 | Bun | `omarchy-remove-dev-env bun` |
 | Deno | `omarchy-remove-dev-env deno` |
 
-Security (their setup half *is* in the menu):
+<br><br>
+
+**Security** (their setup half *is* in the menu)
 
 | | |
 |---|---|
@@ -275,13 +317,17 @@ Security (their setup half *is* in the menu):
 | Fido2 | `omarchy-remove-security-fido2` |
 | SSHD | `omarchy-remove-security-sshd` |
 
-Extras:
+<br><br>
+
+**Extras**
 
 | | |
 |---|---|
 | TUI apps | `omarchy-tui-remove` |
 | Windows VM | `omarchy-windows-vm remove` |
 | Removed defaults again | `omarchy-remove-preinstalls` |
+
+<br><br>
 
 ## Update
 
