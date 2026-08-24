@@ -2,24 +2,9 @@
 
 <img src="stellarchy.png" alt="Stellarchy" width="450">
 
-```
-███████╗████████╗███████╗██╗     ██╗      █████╗ ██████╗  ██████╗██╗  ██╗██╗   ██╗
-██╔════╝╚══██╔══╝██╔════╝██║     ██║     ██╔══██╗██╔══██╗██╔════╝██║  ██║╚██╗ ██╔╝
-███████╗   ██║   █████╗  ██║     ██║     ███████║██████╔╝██║     ███████║ ╚████╔╝
-╚════██║   ██║   ██╔══╝  ██║     ██║     ██╔══██║██╔══██╗██║     ██╔══██║  ╚██╔╝
-███████║   ██║   ███████╗███████╗███████╗██║  ██║██║  ██║╚██████╗██║  ██║   ██║
-╚══════╝   ╚═╝   ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝
-```
-
-### ✦ Stellarchy ✦
-
-Omarchy × Caelestia · `omartia-dots-remux`
-
 [stellarchy.dirty.pizza](https://stellarchy.dirty.pizza)
 
 </div>
-
-Replaces omarchy-shell (quattro bar, menus, lock) with **Caelestia Shell** — keeps omarchy's theme switching working via a color bridge.
 
 <p align="center">
   <a href="CHANGELOG.md">CHANGELOG</a>&nbsp;&nbsp;|&nbsp;&nbsp;
