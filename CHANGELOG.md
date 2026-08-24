@@ -12,6 +12,7 @@ Each entry links to its commit, newest first within each day.
 
 ## 2026-08-24
 
+- Upgrade: `git pull` now runs before anything else, so patches and every sync step act on the latest checkout instead of what was on disk when the script started ([`b3ef5e2`](https://github.com/deoxizn/omartia-dots-remux/commit/b3ef5e2))
 - Install/upgrade: adopt unowned hypr lua files wholesale; add CHANGELOG ([`83321f5`](https://github.com/deoxizn/omartia-dots-remux/commit/83321f5))
 
 ## 2026-08-23
