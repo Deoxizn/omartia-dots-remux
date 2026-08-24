@@ -31,6 +31,29 @@
     "dashboard": {
         "enabled": true
     },
+    "general": {
+        "idle": {
+            "inhibitWhenAudio": false,
+            "timeouts": [
+                {
+                    "idleAction": "lock",
+                    "timeout": 180
+                },
+                {
+                    "idleAction": "dpms off",
+                    "returnAction": "dpms on",
+                    "timeout": 300
+                },
+                {
+                    "idleAction": [
+                        "suspendThenHibernate"
+                    ],
+                    "inhibitWhenAudio": true,
+                    "timeout": 600
+                }
+            ]
+        }
+    },
     "launcher": {
         "enabled": true,
         "hiddenApps": [
@@ -88,7 +111,7 @@
     "lock": {
         "enabled": true
     },
-    "notifications": {
+    "notifs": {
         "defaultExpireTimeout": 5000,
         "expire": true
     },
