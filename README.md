@@ -21,8 +21,6 @@ Omarchy × Caelestia · `omartia-dots-remux`
 
 Replaces omarchy-shell (quattro bar, menus, lock) with **Caelestia Shell** — keeps omarchy's theme switching working via a color bridge. Read [READ THIS FIRST](#read-this-first) before installing: this is a shell replacement, not a theme.
 
-Curious how this came together? Every dots/system change is logged by date in the [CHANGELOG](CHANGELOG.md).
-
 <p align="center">
   <img src="desktop.png" alt="Desktop" width="1280">
 </p>
@@ -64,6 +62,29 @@ Highlights only; the full 15-row compatibility matrix lives at
 
 Anything not listed here that shells out to `omarchy-shell` elsewhere in your
 own scripts will also be dead — grep for it.
+
+### What doesn't work like stock Omarchy
+
+Honest list of the remaining gaps:
+
+- **Per-notification actions are reduced**: no dismiss-single, no invoke-last,
+  no notification history keybindings. Caelestia exposes only clear-all/DND.
+- **No bar panel chords**: stock's `SUPER+CTRL+F1-F9` panel toggles have no
+  Caelestia equivalent and are unbound.
+- **Caelestia is a different shell**: bar layout, popouts, launcher UX,
+  dashboard content and lock screen all behave like Caelestia, not quattro.
+  Per-monitor config exists natively (`~/.config/caelestia/monitors/<SCREEN>/shell.json`).
+- **Quickshell bugs ship with the shell**: the shell tracks Hyprland state via
+  events that can be missed across suspend/multi-monitor transitions; this
+  repo patches around the known drawer-killing staleness in
+  [`patches/`](patches/). If Caelestia misbehaves after an upstream update,
+  check whether a patch stopped applying (`install.sh` warns when so).
+- **`omarchy-shell` IPC callers die**: any personal script calling
+  `omarchy-shell <...>` needs porting to `qs -c caelestia ipc call ...`,
+  `playerctl`, or the stellarchy suite.
+
+Every change made to these dots and the system around them is logged by date
+in the [CHANGELOG](CHANGELOG.md).
 
 ## Quick install
 
@@ -166,7 +187,11 @@ time via the Limine menu + one `default_entry:` edit. Full opt-out: remove the
 - Sync your current theme
 - Run the session-start preflight, then auto-logout after 5s if every check passed (Ctrl+C cancels) — logout uses `omarchy-system-logout` (`uwsm stop`) so the session ends cleanly
 
-## Install safety net (preflight)
+After logging back in: check `~/.config/hypr/monitors.lua` and `input.lua` match your displays/keyboard (they're only ever created if missing), then test `SUPER+Space` (launcher), `SUPER+Ctrl+L` (lock) and `omarchy-theme-set <theme>`.
+
+**Reinstalling?** Remux-owned hypr configs are never overwritten — edit them directly or restore from backup at `~/.config/omartia-dots-remux-backup/`. Stock/unowned main lua files (`hyprland.lua`, `autostart.lua`, `looknfeel.lua`, `bindings.lua`) get backed up in place (`*.pre-install.bak`) and replaced with the repo versions; `monitors.lua` and `input.lua` are always left alone.
+
+### Session-start preflight (safety net)
 
 Before offering to log you out, the installer verifies the chain your next
 login depends on: autostart stub placement, upstream API hooks, valid Lua
@@ -186,15 +211,6 @@ log in, then:
 cat ~/stellarchy-preflight.log                     # see what's wrong
 systemctl --user start caelestia-shell.service     # bring the shell back now
 ```
-
-## After install
-
-1. Edit `~/.config/hypr/monitors.lua` for your displays
-2. Edit `~/.config/hypr/input.lua` for your keyboard
-3. Log out and back in
-4. Test: `SUPER+Space` (launcher), `SUPER+Ctrl+L` (lock), `omarchy-theme-set <theme>`
-
-**Reinstalling?** Remux-owned hypr configs are never overwritten — edit them directly or restore from backup at `~/.config/omartia-dots-remux-backup/`. Stock/unowned main lua files (`hyprland.lua`, `autostart.lua`, `looknfeel.lua`, `bindings.lua`) get backed up in place (`*.pre-install.bak`) and replaced with the repo versions; `monitors.lua` and `input.lua` are always left alone.
 
 ## Keybindings
 
@@ -244,31 +260,6 @@ level.
 | `caelestia-system-lock` | Lock via Caelestia + kb-layout reset + 1Password lock + delayed display-off (used by keybind, power menu and hypridle) |
 | `stellarchy-fuzzel` | Shared fuzzel wrapper — reads colors from `~/.local/state/caelestia/scheme.json` |
 
-## Known limitations
-
-Honest list of what does **not** work like stock Omarchy:
-
-- **Per-notification actions are reduced**: no dismiss-single, no invoke-last,
-  no notification history keybindings. Caelestia exposes only clear-all/DND.
-- **No bar panel chords**: stock's `SUPER+CTRL+F1-F9` panel toggles have no
-  Caelestia equivalent and are unbound.
-- **Caelestia is a different shell**: bar layout, popouts, launcher UX,
-  dashboard content and lock screen all behave like Caelestia, not quattro.
-  Per-monitor config exists natively (`~/.config/caelestia/monitors/<SCREEN>/shell.json`).
-- **Quickshell bugs ship with the shell**: the shell tracks Hyprland state via
-  events that can be missed across suspend/multi-monitor transitions; this
-  repo patches around the known drawer-killing staleness in
-  [`patches/`](patches/). If Caelestia misbehaves after an upstream update,
-  check whether a patch stopped applying (`install.sh` warns when so).
-- **Quattro plugins don't work**: plugin support (bar widgets, panels,
-  overlays, menus, services) shipped with quattro's `omarchy-shell` and is
-  specific to that shell — Omarchy/Hyprland themselves don't provide it. With
-  `omarchy-shell` removed there is nothing to load
-  `~/.config/omarchy/plugins/` into; Caelestia has no plugin system.
-- **`omarchy-shell` IPC callers die**: any personal script calling
-  `omarchy-shell <...>` needs porting to `qs -c caelestia ipc call ...`,
-  `playerctl`, or the stellarchy suite.
-
 ## Uninstall
 
 ```bash
@@ -276,19 +267,6 @@ Honest list of what does **not** work like stock Omarchy:
 ```
 
 Restores all backed-up configs, stops and removes the Caelestia Shell systemd service, and removes Caelestia Shell configs (including the update guard — which also self-neutralizes once Caelestia is no longer running). Log out/in to restore omarchy-shell.
-
-## How the theme bridge works
-
-```
-omarchy-theme-set <name>
-  → generates ~/.local/state/omarchy/current/theme/colors.toml
-  → hook fires: caelestia-sync.sh
-  → reads colors.toml, maps to M3 tokens
-  → writes ~/.local/state/caelestia/scheme.json
-  → Caelestia Shell auto-reloads (FileView watcher)
-```
-
-Any omarchy theme works automatically. No per-theme configuration needed.
 
 ## Requirements
 
