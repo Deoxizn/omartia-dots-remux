@@ -6,7 +6,7 @@
 
 ## 2026-08-24
 
-- Auto-update: the post-update hook prints a one-line `[stellarchy] dots …` status directly in the omarchy-update output (up to date / syncing / offline) and keeps dated history in `repo-sync.log` ([`60df429`](https://github.com/deoxizn/omartia-dots-remux/commit/60df429))
+- Auto-update: the post-update hook prints a one-line "Stellarchy up to date / syncing" status directly in the omarchy-update output (up to date / syncing / offline) and keeps dated history in `repo-sync.log` ([`60df429`](https://github.com/deoxizn/omartia-dots-remux/commit/60df429))
 - Menus: kernel and splash nest under **System** (Esc returns there), not the root menu ([`33be795`](https://github.com/deoxizn/omartia-dots-remux/commit/33be795))
 - Menus: kernel and splash move into the Stellarchy menu (`Kernel` / `Splash` submenus backed by new `stellarchy-kernel` / `stellarchy-splash` scripts); `upgrade.sh` is removed — routine syncing is `sync.sh`, called automatically by the auto-sync hook ([`5c5cb5c`](https://github.com/deoxizn/omartia-dots-remux/commit/5c5cb5c))
 - Auto-update: omarchy-update now pulls this repo and re-runs `sync.sh` whenever new commits exist (post-update hook, installed by fresh installs and bootstrapped by the next manual upgrade) — no more manual upgrading ([`4990212`](https://github.com/deoxizn/omartia-dots-remux/commit/4990212))
