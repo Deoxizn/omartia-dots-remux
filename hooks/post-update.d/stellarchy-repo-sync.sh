@@ -9,9 +9,14 @@ mkdir -p "$(dirname "$LOG")"
 exec 9>/tmp/stellarchy-repo-sync.lock || exit 0
 flock -n 9 || exit 0 # a manual ./sync.sh or a concurrent hook run owns the sync
 
+exec 3>&1 # console passthrough — the block below redirects stdout to the log
+
+say() { echo "[stellarchy] $*" >&3; }
+
 {
-    cd "$REPO_DIR" 2>/dev/null || { echo "[$(date '+%F %T')] repo missing at $REPO_DIR"; exit 0; }
+    cd "$REPO_DIR" 2>/dev/null || { say "dots: repo missing at $REPO_DIR"; echo "[$(date '+%F %T')] repo missing at $REPO_DIR"; exit 0; }
     if ! git fetch --quiet origin 2>/dev/null; then
+        say "dots: offline, sync skipped"
         echo "[$(date '+%F %T')] offline — skipped"
         exit 0
     fi
@@ -19,24 +24,30 @@ flock -n 9 || exit 0 # a manual ./sync.sh or a concurrent hook run owns the sync
     local_rev=$(git rev-parse --short HEAD 2>/dev/null)
     remote_rev=$(git rev-parse --short "origin/$BRANCH" 2>/dev/null)
     if [[ -z $local_rev || -z $remote_rev ]]; then
+        say "dots: could not determine revisions"
         echo "[$(date '+%F %T')] could not determine revisions"
         exit 0
     fi
     if [[ $local_rev == "$remote_rev" ]]; then
+        say "dots up to date ($local_rev)"
         echo "[$(date '+%F %T')] up to date ($local_rev)"
         exit 0
     fi
 
+    say "syncing dots $local_rev -> $remote_rev..."
     echo "[$(date '+%F %T')] syncing $local_rev -> $remote_rev"
     if ! git pull --ff-only --quiet; then
+        say "pull FAILED (diverged?)"
         echo "[$(date '+%F %T')] pull failed (diverged?)"
         notify-send -u critical "Stellarchy sync failed" "Repo diverged — run sync.sh manually in $REPO_DIR"
         exit 0
     fi
 
     if ./sync.sh; then
+        say "dots synced to $remote_rev"
         notify-send -u normal "Stellarchy updated" "Dots synced to latest; some changes apply on next login."
     else
+        say "dotfile sync FAILED"
         notify-send -u critical "Stellarchy update failed" "Check ~/.local/state/stellarchy/repo-sync.log"
     fi
 } >>"$LOG" 2>&1
