@@ -10,12 +10,22 @@ exec 9>/tmp/stellarchy-repo-sync.lock || exit 0
 flock -n 9 || exit 0 # a manual ./sync.sh or a concurrent hook run owns the sync
 
 {
-    cd "$REPO_DIR" 2>/dev/null || exit 0
-    git fetch --quiet origin 2>/dev/null || exit 0 # offline; retry next update
+    cd "$REPO_DIR" 2>/dev/null || { echo "[$(date '+%F %T')] repo missing at $REPO_DIR"; exit 0; }
+    if ! git fetch --quiet origin 2>/dev/null; then
+        echo "[$(date '+%F %T')] offline — skipped"
+        exit 0
+    fi
 
     local_rev=$(git rev-parse --short HEAD 2>/dev/null)
     remote_rev=$(git rev-parse --short "origin/$BRANCH" 2>/dev/null)
-    [[ -n $local_rev && $local_rev != "$remote_rev" ]] || exit 0
+    if [[ -z $local_rev || -z $remote_rev ]]; then
+        echo "[$(date '+%F %T')] could not determine revisions"
+        exit 0
+    fi
+    if [[ $local_rev == "$remote_rev" ]]; then
+        echo "[$(date '+%F %T')] up to date ($local_rev)"
+        exit 0
+    fi
 
     echo "[$(date '+%F %T')] syncing $local_rev -> $remote_rev"
     if ! git pull --ff-only --quiet; then
