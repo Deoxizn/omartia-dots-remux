@@ -592,6 +592,8 @@ LEGACY_FF_LINE='"text": "version=$(omarchy-version) && echo \"Stellarchy (Omarch
 FF_OS_STOCK_RAW='"text": "version=$(omarchy-version) && echo \"Omarchy $version\""'
 FF_OS_LEGACY_RAW='"text": "version=$(omarchy-version) && echo \"Stellarchy (Omarchy $version)\""'
 NEW_FF_OS_RAW='"text": "rev=$(stellarchy-version 2>/dev/null); ver=$(omarchy-version); echo \"Stellarchy${rev:+ $rev} (Omarchy $ver)\""'
+# Transitional: previous dots version included kernel in the OS line.
+FF_OS_KERNEL_RAW='"text": "rev=$(stellarchy-version 2>/dev/null); ver=$(omarchy-version); kernel=$(uname -r); echo \"Stellarchy${rev:+ $rev} (Omarchy $ver) | $kernel\""'
 FF_DIMS_BLOCK=$',\n    "width": 70,\n    "height": 30'
 FF_PNG_SOURCE='"source": "~/.config/fastfetch/stellarchy.png"'
 FF_ABOUT_SOURCE='"source": "~/.config/omarchy/branding/about.txt"'
@@ -601,6 +603,7 @@ ff_debrand() { # $1 = config; stdout = underlying template (byte-exact)
   s=${s%x} # restore trailing newlines eaten by command substitution
   s=${s//"$NEW_FF_OS_RAW"/"$FF_OS_STOCK_RAW"}
   s=${s//"$FF_OS_LEGACY_RAW"/"$FF_OS_STOCK_RAW"}
+  s=${s//"$FF_OS_KERNEL_RAW"/"$FF_OS_STOCK_RAW"}
   s=${s//'"type": "sixel"'/'"type": "file"'}
   s=${s//'"type": "auto"'/'"type": "file"'}
   s=${s//"$FF_PNG_SOURCE$FF_DIMS_BLOCK"/"$FF_ABOUT_SOURCE"}
