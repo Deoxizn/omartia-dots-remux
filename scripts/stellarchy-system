@@ -1,17 +1,21 @@
 #!/bin/bash
 
-# stellarchy:summary=System submenu: config editor and default apps.
+# stellarchy:summary=System submenu: config editor, default apps, kernel and boot splash.
 
 # Rows ending in ">" open a submenu.
 choice=$(
   printf '%s\n' \
     'Config >' \
-    'Defaults >' |
-    stellarchy-fuzzel --dmenu --prompt='System: ' --width=26 --lines=2
+    'Defaults >' \
+    'Kernel >' \
+    'Splash >' |
+    stellarchy-fuzzel --dmenu --prompt='System: ' --width=26 --lines=4
 ) || exec stellarchy-menu   # Esc = back to root menu
 choice=${choice%' >'}
 
 case "$choice" in
   Config)   exec stellarchy-config ;;
   Defaults) exec stellarchy-defaults ;;
+  Kernel)   exec stellarchy-kernel ;;
+  Splash)   exec stellarchy-splash ;;
 esac

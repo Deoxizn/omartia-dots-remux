@@ -131,6 +131,6 @@ add 'Status'                  'status'
 choice=$(
   printf '%s' "$menu" |
     stellarchy-fuzzel --dmenu --prompt='Splash: ' --width=30 --lines=${#cmd_for[@]}
-) || exec stellarchy-menu   # Esc = back to root menu
+) || exec stellarchy-system   # Esc = back to System menu
 
 exec stellarchy-terminal stellarchy-splash run "${cmd_for[$choice]}"
