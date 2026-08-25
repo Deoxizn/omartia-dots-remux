@@ -845,6 +845,22 @@ fi
 ok "Theme bridge hook installed"
 
 # ──────────────────────────────────────────────
+# Install auto-sync hook (omarchy-update post-update path)
+# Keeps the remux checkout current: every omarchy-update pulls the repo and
+# re-runs upgrade.sh when there are new commits.
+# ──────────────────────────────────────────────
+
+info "Installing omarchy-update auto-sync hook..."
+
+if ! $DRY_RUN; then
+  mkdir -p "$HOME/.config/omarchy/hooks/post-update.d"
+  sed "s|@REPO_DIR@|$REPO_DIR|" "$REPO_DIR/hooks/post-update.d/stellarchy-repo-sync.sh" \
+    > "$HOME/.config/omarchy/hooks/post-update.d/stellarchy-repo-sync.sh"
+  chmod +x "$HOME/.config/omarchy/hooks/post-update.d/stellarchy-repo-sync.sh"
+fi
+ok "Auto-sync hook installed"
+
+# ──────────────────────────────────────────────
 # Install update guard (omarchy-restart-shell)
 # ──────────────────────────────────────────────
 

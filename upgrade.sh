@@ -264,6 +264,22 @@ copy_if_changed "$REPO_DIR/hooks/theme-set.d/caelestia-sync.sh" \
 echo ""
 
 # ──────────────────────────────────────────────
+# Auto-sync hook — future omarchy-update runs pull this repo and re-run
+# upgrade.sh when there are new commits (path baked in per install).
+# ──────────────────────────────────────────────
+
+info "Auto-sync hook:"
+if $DRY_RUN; then
+  info "  [dry-run] would install post-update.d/stellarchy-repo-sync.sh"
+else
+  mkdir -p "$HOME/.config/omarchy/hooks/post-update.d"
+  sed "s|@REPO_DIR@|$REPO_DIR|" "$REPO_DIR/hooks/post-update.d/stellarchy-repo-sync.sh" \
+    > "$HOME/.config/omarchy/hooks/post-update.d/stellarchy-repo-sync.sh"
+  chmod +x "$HOME/.config/omarchy/hooks/post-update.d/stellarchy-repo-sync.sh"
+  ok "  installed (repo auto-updates on omarchy-update)"
+fi
+
+# ──────────────────────────────────────────────
 # Update guard
 # ──────────────────────────────────────────────
 
