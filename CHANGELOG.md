@@ -6,6 +6,7 @@
 
 ## 2026-08-25
 
+- Remove personal `monitors/HDMI-A-1/shell.json` overlay from repo — install.sh copied it to all users, silently disabling the bar on machines where HDMI-A-1 is the primary or only monitor ([`db8eb1a`](https://github.com/deoxizn/omartia-dots-remux/commit/db8eb1a))
 - Repo default location moves to `~/.local/opt/stellarchy` — hidden, XDG-friendly, safe from accidental `~/` cleanup; state file at `~/.local/state/stellarchy/repo-dir` is now the single source of truth for repo path
 - Post-update hook auto-migrates repo from legacy locations (`~/Work/omartia-dots-remux`, `~/omartia-dots-remux`) to `~/.local/opt/stellarchy` on first run — no manual intervention, existing installs self-heal during `omarchy-update`
 - `install.sh`: `--dev` flag skips migration logic for dev machines; without it, detects stale legacy locations (`~/Work/omartia-dots-remux`, `~/omartia-dots-remux`) and offers to auto-move to `~/.local/opt/stellarchy`
