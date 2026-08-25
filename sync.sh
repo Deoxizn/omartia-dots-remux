@@ -637,8 +637,8 @@ else
     printf 'LOGO=%s\n' "$LOGO_PATH"
   } > "$OVERLAY"
   ok "  seeded $OVERLAY"
+  changed=$((changed+1))
 fi
-changed=$((changed+1))
 
 echo ""
 
