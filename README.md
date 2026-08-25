@@ -116,7 +116,7 @@ Use `./install.sh -y` to skip confirmation prompts, or `--dry-run` to preview ev
 - Own the idle/sleep stack: `autostart.lua` launches `hypridle`, and stock Omarchy's `omarchy-sleep-lock.service` is disabled (it calls omarchy-shell IPC that no longer exists here and holds a sleep-delay inhibitor). Caelestia's built-in idle timeouts (`shell.json`) act as backstop; uninstall hands locking back to the stock monitor
 - Apply Caelestia patches idempotently ([`patches/`](patches/)) and install the omarchy-update guard (a libalpm hook re-applies it after every omarchy upgrade)
 - Add a bar update indicator (dim when clean, count badge when repo/AUR updates are pending — click opens the updater); upgrades seed its `bar.entries` slot into existing `shell.json` configs
-- Install an auto-sync hook into omarchy-update's post-update path: every system update pulls this repo and re-runs `upgrade.sh` when new commits exist (logged to `~/.local/state/stellarchy/repo-sync.log`, desktop-notified on failure) — after the first manual upgrade, the remux keeps itself current
+- Install an auto-sync hook into omarchy-update's post-update path: every system update pulls this repo and re-runs `sync.sh` when new commits exist (logged to `~/.local/state/stellarchy/repo-sync.log`, desktop-notified on failure) — after the first manual upgrade, the remux keeps itself current
 - Install the fuzzel menu suite + `stellarchy-media` (see [Menu suite](#menu-suite)), seed the fastfetch OS line, deploy branding art
 - Set up the Stellarchy boot splash and rebuild the initramfs so it's live on next boot
 - Sync your current theme
@@ -158,23 +158,26 @@ systemctl --user start caelestia-shell.service     # bring the shell back now
 ```
 
 ```bash
-./upgrade.sh
+./sync.sh          # routine: apply current checkout to the install (what the auto-sync hook runs)
+./upgrade.sh       # manual pass: pull + full sync + kernel/splash status
 ```
-This pulls the latest repo and re-syncs everything in place: menu scripts,
-theme bridge hook, update/splash guards, branding (stock-or-stale files only),
-SDDM-safe logout, managed keybinds, and the CachyOS `default_entry:` if you
-opted in. Your configs stay yours: remux-owned files are never overwritten —
-lua changes 3-way-merge in, conflicts leave your file untouched with a
-`.conflict` copy, and `monitors.lua` / `input.lua` are device-specific and
-never touched. A live lua file that carries **none** of the remux's content
-(stock Omarchy default or a stale partial install) is backed up
-(`*.pre-upgrade.bak`) and replaced with the repo version, so the documented
-behavior actually exists on every machine. Edit your configs directly, or
-restore older copies from `~/.config/omartia-dots-remux-backup/`. Add
-`--dry-run` to preview, or `--adopt-lua` to adopt repo versions of lua files
-that have no merge history (yours is backed up first).
+`sync.sh` is the unattended core — it applies the current checkout in place:
+menu scripts, theme bridge hook, update/splash guards, branding (stock-or-stale
+files only), SDDM-safe logout, managed keybinds. It never pulls; the auto-sync
+hook pulls and then calls it, so day-to-day you never run anything. Your
+configs stay yours: remux-owned files are never overwritten — lua changes
+3-way-merge in, conflicts leave your file untouched with a `.conflict` copy,
+and `monitors.lua` / `input.lua` are device-specific and never touched. A live
+lua file that carries **none** of the remux's content (stock Omarchy default or
+a stale partial install) is backed up (`*.pre-upgrade.bak`) and replaced with
+the repo version, so the documented behavior actually exists on every machine.
+Edit your configs directly, or restore older copies from
+`~/.config/omartia-dots-remux-backup/`. Add `--dry-run` to preview, or
+`--adopt-lua` to adopt repo versions of lua files that have no merge history
+(yours is backed up first).
 
-**Upgrade flags for opt-in extras:**
+**upgrade.sh is for deliberate migrations only:** it pulls, runs `sync.sh`,
+then handles the opt-in extras:
 ```bash
 ./upgrade.sh --kernel default   # switch to the CachyOS kernel (chaotic-aur, prebuilt)
 ./upgrade.sh --plymouth   # adopt the Stellarchy boot splash (rebuilds initramfs)

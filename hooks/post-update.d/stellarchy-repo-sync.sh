@@ -24,7 +24,7 @@ flock -n 9 || exit 0 # a manual ./upgrade.sh or a concurrent hook run owns the s
         exit 0
     fi
 
-    if ./upgrade.sh; then
+    if ./sync.sh; then
         notify-send -u normal "Stellarchy updated" "Dots synced to latest; some changes apply on next login."
     else
         notify-send -u critical "Stellarchy update failed" "Check ~/.local/state/stellarchy/repo-sync.log"
