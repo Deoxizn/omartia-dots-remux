@@ -1,11 +1,49 @@
 #!/bin/bash
 # stellarchy: post-update hook — keep the remux repo current after omarchy-update.
-# @REPO_DIR@ is replaced with the checkout's absolute path at install time.
-REPO_DIR="@REPO_DIR@"
-LOG="$HOME/.local/state/stellarchy/repo-sync.log"
+# Resolves repo location via state file, baked path, or XDG default.
+STATE_DIR="$HOME/.local/state/stellarchy"
+STATE_FILE="$STATE_DIR/repo-dir"
+BAKED_DIR="@REPO_DIR@"
+XDG_DEFAULT="$HOME/.local/opt/stellarchy"
+LOG="$STATE_DIR/repo-sync.log"
 BRANCH="master"
 
-mkdir -p "$(dirname "$LOG")"
+mkdir -p "$STATE_DIR"
+
+# Resolve repo directory: state file → baked path → XDG default
+resolve_repo() {
+  # 1. State file (authoritative if it exists and points to a valid dir)
+  if [[ -f $STATE_FILE ]]; then
+    local stored
+    stored=$(<"$STATE_FILE")
+    if [[ -d $stored ]]; then
+      echo "$stored"
+      return
+    fi
+  fi
+  # 2. Baked path from install (backward compat with old installs)
+  if [[ -d $BAKED_DIR ]]; then
+    echo "$BAKED_DIR"
+    return
+  fi
+  # 3. XDG default (fresh installs, repo moved here)
+  if [[ -d $XDG_DEFAULT ]]; then
+    echo "$XDG_DEFAULT"
+    return
+  fi
+}
+
+REPO_DIR=$(resolve_repo)
+if [[ -z $REPO_DIR ]]; then
+  echo "[$(date '+%F %T')] repo not found (state=$STATE_FILE baked=$BAKED_DIR xdg=$XDG_DEFAULT)"
+  exit 0
+fi
+
+# Persist resolved path so future runs skip the fallback chain
+if [[ ! -f $STATE_FILE ]] || [[ $(<"$STATE_FILE") != "$REPO_DIR" ]]; then
+  echo "$REPO_DIR" > "$STATE_FILE"
+fi
+
 exec 9>/tmp/stellarchy-repo-sync.lock || exit 0
 flock -n 9 || exit 0 # a manual ./sync.sh or a concurrent hook run owns the sync
 

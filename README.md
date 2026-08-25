@@ -99,8 +99,8 @@ Honest list of the remaining gaps:
 ```
 
 ```bash
-git clone https://github.com/deoxizn/omartia-dots-remux.git
-cd omartia-dots-remux
+git clone https://github.com/deoxizn/omartia-dots-remux.git ~/.local/opt/stellarchy
+cd ~/.local/opt/stellarchy
 ./install.sh
 ```
 

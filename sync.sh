@@ -16,6 +16,8 @@
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
+STATE_DIR="$HOME/.local/state/stellarchy"
+STATE_REPO_FILE="$STATE_DIR/repo-dir"
 DRY_RUN=false
 ADOPT_LUA=false
 
@@ -181,6 +183,12 @@ else
     > "$HOME/.config/omarchy/hooks/post-update.d/stellarchy-repo-sync.sh"
   chmod +x "$HOME/.config/omarchy/hooks/post-update.d/stellarchy-repo-sync.sh"
   ok "  installed (repo auto-updates on omarchy-update)"
+fi
+
+# Write state file so the hook resolves repo path without fallback chain
+if ! $DRY_RUN; then
+  mkdir -p "$STATE_DIR"
+  echo "$REPO_DIR" > "$STATE_REPO_FILE"
 fi
 
 # ──────────────────────────────────────────────

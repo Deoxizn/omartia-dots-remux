@@ -182,6 +182,32 @@ if [[ -d /usr/share/sddm/themes/stellarchy ]]; then
   fi
 fi
 
+# Remove state file (repo path)
+if [[ -f "$HOME/.local/state/stellarchy/repo-dir" ]]; then
+  rm "$HOME/.local/state/stellarchy/repo-dir"
+  ok "  Removed stellarchy state file"
+fi
+rmdir "$HOME/.local/state/stellarchy" 2>/dev/null || true
+
+# Remove repo directory if it exists at the default XDG location
+if [[ -d "$HOME/.local/opt/stellarchy" ]]; then
+  echo ""
+  read -rp "Remove repo at ~/.local/opt/stellarchy? [y/N] " REMOVE_REPO
+  if [[ "$REMOVE_REPO" =~ ^[Yy]$ ]]; then
+    rm -rf "$HOME/.local/opt/stellarchy"
+    ok "  Removed ~/.local/opt/stellarchy"
+  else
+    info "  Repo preserved at ~/.local/opt/stellarchy"
+  fi
+fi
+
+# Clean up stray ~/sddm-stellarchy directory (leftover from old installs)
+if [[ -d "$HOME/sddm-stellarchy" ]]; then
+  info "Removing stray ~/sddm-stellarchy directory..."
+  rm -rf "$HOME/sddm-stellarchy"
+  ok "  Removed ~/sddm-stellarchy"
+fi
+
 # Reinstall omarchy-dev if it was removed during install
 OMARCHY_DEV_FLAG="$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
 if [[ -f "$OMARCHY_DEV_FLAG" ]]; then

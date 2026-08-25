@@ -17,9 +17,14 @@ BACKUP_DIR="$HOME/.config/omartia-dots-remux-backup"
 BACKUP_TS="$(date +%Y%m%d%H%M%S)"
 BACKUP_PATH="$BACKUP_DIR/$BACKUP_TS"
 OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
+STATE_DIR="$HOME/.local/state/stellarchy"
+STATE_REPO_FILE="$STATE_DIR/repo-dir"
+XDG_REPO_DEFAULT="$HOME/.local/opt/stellarchy"
+LEGACY_REPO_PATH="$HOME/Work/omartia-dots-remux"
 YES=false
 SKIP_QS_CHECK=false
 DRY_RUN=false
+DEV_MODE=false
 
 # Parse args
 for arg in "$@"; do
@@ -27,6 +32,7 @@ for arg in "$@"; do
     -y|--yes) YES=true ;;
     --skip-quickshell-check) SKIP_QS_CHECK=true ;;
     --dry-run) DRY_RUN=true ;;
+    --dev) DEV_MODE=true ;;
   esac
 done
 
@@ -267,6 +273,29 @@ if ! $SKIP_QS_CHECK; then
       fi
     fi
   fi
+fi
+
+# ──────────────────────────────────────────────
+# Migration: detect stale ~/Work/ repo, offer to move
+# ──────────────────────────────────────────────
+
+if ! $DEV_MODE && [[ -d "$LEGACY_REPO_PATH" ]] && [[ ! -d "$XDG_REPO_DEFAULT" ]]; then
+  echo ""
+  warn "Detected old repo location: $LEGACY_REPO_PATH"
+  warn "Default location is now: $XDG_REPO_DEFAULT"
+  if confirm "Move repo to $XDG_REPO_DEFAULT?"; then
+    mkdir -p "$(dirname "$XDG_REPO_DEFAULT")"
+    if $DRY_RUN; then
+      info "[dry-run] would mv $LEGACY_REPO_PATH $XDG_REPO_DEFAULT"
+    else
+      mv "$LEGACY_REPO_PATH" "$XDG_REPO_DEFAULT"
+      REPO_DIR="$XDG_REPO_DEFAULT"
+      ok "Repo moved to $XDG_REPO_DEFAULT"
+    fi
+  else
+    info "Keeping repo at $LEGACY_REPO_PATH"
+  fi
+  echo ""
 fi
 
 # ──────────────────────────────────────────────
@@ -859,6 +888,16 @@ if ! $DRY_RUN; then
   chmod +x "$HOME/.config/omarchy/hooks/post-update.d/stellarchy-repo-sync.sh"
 fi
 ok "Auto-sync hook installed"
+
+# ──────────────────────────────────────────────
+# Write state file (repo path single source of truth)
+# ──────────────────────────────────────────────
+
+if ! $DRY_RUN; then
+  mkdir -p "$STATE_DIR"
+  echo "$REPO_DIR" > "$STATE_REPO_FILE"
+fi
+ok "State file written: $STATE_REPO_FILE"
 
 # ──────────────────────────────────────────────
 # Install update guard (omarchy-restart-shell)

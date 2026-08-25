@@ -4,6 +4,16 @@
      one bullet per change: - Description ([`short-hash`](commit-url)).
      Skip README rewordings, screenshots and demo videos. -->
 
+## 2026-08-25
+
+- Repo default location moves to `~/.local/opt/stellarchy` — hidden, XDG-friendly, safe from accidental `~/` cleanup; state file at `~/.local/state/stellarchy/repo-dir` is now the single source of truth for repo path
+- Post-update hook resolves repo via: state file → baked install path → XDG default (auto-writes state file on first successful resolution, so existing installs self-heal without manual intervention)
+- `install.sh`: `--dev` flag skips migration logic for dev machines; without it, detects stale `~/Work/omartia-dots-remux` and offers to auto-move to `~/.local/opt/stellarchy`
+- `sync.sh`: writes state file after deploying the hook so the hook resolves immediately on next run
+- `stellarchy-version`: resolves via state file → baked path → XDG default; removed hardcoded `~/Work/omartia-dots-remux` fallback
+- `uninstall.sh`: removes state file, confirms before deleting `~/.local/opt/stellarchy`, auto-cleans stray `~/sddm-stellarchy` directory
+- Docs: clone instructions updated to `~/.local/opt/stellarchy` (README + landing page)
+
 ## 2026-08-24
 
 - Idle: hypridle's screensaver listener now checks Caelestia's lock (`qs ipc call lock isLocked`) before launching — the stock `pidof hyprlock` guard can't see the remux lock, so locking manually then idling launched ttfx into the locked session, its fake input reset hypridle's idle clock, cancelled the lock/DPMS listener and lit the displays back up every ~150s; preflight guards the fix ([`5937380`](https://github.com/deoxizn/omartia-dots-remux/commit/5937380))
