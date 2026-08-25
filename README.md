@@ -116,8 +116,8 @@ Use `./install.sh -y` to skip confirmation prompts, or `--dry-run` to preview ev
 - Own the idle/sleep stack: `autostart.lua` launches `hypridle`, and stock Omarchy's `omarchy-sleep-lock.service` is disabled (it calls omarchy-shell IPC that no longer exists here and holds a sleep-delay inhibitor). Caelestia's built-in idle timeouts (`shell.json`) act as backstop; uninstall hands locking back to the stock monitor
 - Apply Caelestia patches idempotently ([`patches/`](patches/)) and install the omarchy-update guard (a libalpm hook re-applies it after every omarchy upgrade)
 - Add a bar update indicator (dim when clean, count badge when repo/AUR updates are pending — click opens the updater); upgrades seed its `bar.entries` slot into existing `shell.json` configs
-- Install an auto-sync hook into omarchy-update's post-update path: every system update pulls this repo and re-runs `sync.sh` when new commits exist (logged to `~/.local/state/stellarchy/repo-sync.log`, desktop-notified on failure) — after the first manual upgrade, the remux keeps itself current
-- Install the fuzzel menu suite + `stellarchy-media` (see [Menu suite](#menu-suite)), seed the fastfetch OS line, deploy branding art
+- Install an auto-sync hook into omarchy-update's post-update path: every system update pulls this repo and re-runs `sync.sh` when new commits exist (logged to `~/.local/state/stellarchy/repo-sync.log`, desktop-notified on failure) — older installs catch up once with `git pull && ./sync.sh`, then it stays current on its own
+- Install the fuzzel menu suite + `stellarchy-media` (see [Menu suite](#menu-suite)) — including System → Kernel (CachyOS opt-in + boot-entry repair) and System → Splash (adopt/refresh the boot splash), replacing the old `upgrade.sh` flags — seed the fastfetch OS line, deploy branding art
 - Set up the Stellarchy boot splash and rebuild the initramfs so it's live on next boot
 - Sync your current theme
 - Run the session-start preflight, then auto-logout after 5s if every check passed (Ctrl+C cancels) — logout uses `omarchy-system-logout` (`uwsm stop`) so the session ends cleanly
