@@ -1190,6 +1190,12 @@ PFPY
     pf_fail "omarchy-sleep-lock.service still enabled — run: systemctl --user disable --now omarchy-sleep-lock.service"
   fi
 
+  if grep -q 'lock isLocked' "$HOME/.config/hypr/hypridle.conf" 2>/dev/null; then
+    pf_pass "hypridle screensaver listener guards against locked sessions (no DPMS wake loop)"
+  else
+    pf_fail "hypridle.conf screensaver has no Caelestia lock guard — locking manually then idling wakes the displays"
+  fi
+
   LUAC_BIN="$(command -v luac5.4 || command -v luac5.3 || command -v luac || true)"
   if [[ -n "$LUAC_BIN" ]]; then
     if "$LUAC_BIN" -p "$AUTOSTART_FILE" >/dev/null 2>&1; then
