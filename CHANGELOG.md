@@ -6,6 +6,7 @@
 
 ## 2026-08-24
 
+- Versioning: commit-based Stellarchy revision (`r<count>.<sha>`) on the fastfetch OS line — new `stellarchy-version` resolves it from the checkout via the hook's baked path (degrades to plain `Stellarchy` when absent), seeded configs render it live and sync refreshes `VERSION_ID` in the identity overlay every run ([`3784aaa`](https://github.com/deoxizn/omartia-dots-remux/commit/3784aaa))
 - Auto-update: the post-update hook prints a one-line "Stellarchy up to date / syncing" status directly in the omarchy-update output (up to date / syncing / offline) and keeps dated history in `repo-sync.log` ([`60df429`](https://github.com/deoxizn/omartia-dots-remux/commit/60df429))
 - Menus: kernel and splash nest under **System** (Esc returns there), not the root menu ([`33be795`](https://github.com/deoxizn/omartia-dots-remux/commit/33be795))
 - Menus: kernel and splash move into the Stellarchy menu (`Kernel` / `Splash` submenus backed by new `stellarchy-kernel` / `stellarchy-splash` scripts); `upgrade.sh` is removed — routine syncing is `sync.sh`, called automatically by the auto-sync hook ([`5c5cb5c`](https://github.com/deoxizn/omartia-dots-remux/commit/5c5cb5c))
