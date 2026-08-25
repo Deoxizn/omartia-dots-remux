@@ -159,7 +159,6 @@ systemctl --user start caelestia-shell.service     # bring the shell back now
 
 ```bash
 ./sync.sh          # routine: apply current checkout to the install (what the auto-sync hook runs)
-./upgrade.sh       # manual pass: pull + full sync + kernel/splash status
 ```
 `sync.sh` is the unattended core — it applies the current checkout in place:
 menu scripts, theme bridge hook, update/splash guards, branding (stock-or-stale
@@ -176,17 +175,13 @@ Edit your configs directly, or restore older copies from
 `--adopt-lua` to adopt repo versions of lua files that have no merge history
 (yours is backed up first).
 
-**upgrade.sh is for deliberate migrations only:** it pulls, runs `sync.sh`,
-then handles the opt-in extras:
-```bash
-./upgrade.sh --kernel default   # switch to the CachyOS kernel (chaotic-aur, prebuilt)
-./upgrade.sh --plymouth   # adopt the Stellarchy boot splash (rebuilds initramfs)
+**Kernel and splash live in the menus** — `SUPER+Alt+Space` → Kernel / Splash:
+the Kernel menu opts into a CachyOS kernel (or runs boot-entry status & repair),
+the Splash menu adopts or refreshes the Stellarchy boot splash. Under the hood
+they're plain scripts too (`stellarchy-kernel`, `stellarchy-splash`) if you
+prefer a terminal.
 
-# Flags combine — one run does everything (plus the normal sync):
-./upgrade.sh --kernel bore --plymouth
-```
-
-Kernel variants (`--kernel <name>`), all prebuilt from chaotic-aur:
+Kernel variants (Kernel menu), all prebuilt from chaotic-aur:
 
 | Variant | Package | One-liner |
 |---|---|---|
@@ -209,12 +204,12 @@ Kernel variants (`--kernel <name>`), all prebuilt from chaotic-aur:
 
 The remux ships its own identity on top of Omarchy. What lands where:
 
-| Touchpoint | New installs | Existing installs (`./upgrade.sh`) |
+| Touchpoint | New installs | Existing installs (`sync.sh` / menus) |
 |---|---|---|
 | Idle screensaver art | Installed | Installed if missing or still stock Omarchy art; **your own customization is never overwritten** |
 | About logo (`about.txt`) | Installed | Same stock-detection rule |
 | fastfetch OS line | If you have no own config, one is seeded from `/etc/fastfetch` with a `Stellarchy` OS line; custom configs are untouched | Same |
-| Boot splash | `stellarchy` plymouth theme set as default (Tokyo Night palette) | Opt-in via `./upgrade.sh --plymouth`; afterwards kept refreshed automatically and re-applied to any kernel installed later (splash guard libalpm hook) |
+| Boot splash | `stellarchy` plymouth theme set as default (Tokyo Night palette) | Opt-in via the Splash menu; afterwards kept refreshed automatically and re-applied to any kernel installed later (splash guard libalpm hook) |
 | Script headers | Included | Synced with the menu suite |
 
 Revert the splash anytime: `sudo plymouth-set-default-theme omarchy && sudo limine-mkinitcpio`.
@@ -231,9 +226,8 @@ CachyOS kernels tune CPU scheduling — BORE for lowest latency under load (the
 gaming pick), EEVDF default, plus LTS and real-time variants. Prebuilt from
 [chaotic-aur](https://aur.chaotic.cx), so nothing compiles:
 
-```bash
-./upgrade.sh --kernel <variant>   # default | bore | eevdf | lts | rt-bore
-```
+Pick a variant in the Kernel menu (or `stellarchy-kernel run <variant>`):
+`default | bore | eevdf | lts | rt-bore`.
 
 Adds `[chaotic-aur]` to `pacman.conf` (backed up first) and installs the
 chosen kernel + headers (DKMS modules like NVIDIA rebuild automatically).

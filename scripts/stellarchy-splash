@@ -1,0 +1,136 @@
+#!/bin/bash
+
+# stellarchy:summary=Splash submenu: adopt or refresh the Stellarchy boot splash.
+
+RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'; CYAN='\033[0;36m'; NC='\033[0m'
+info() { echo -e "${CYAN}[stellarchy]${NC} $*"; }
+ok()   { echo -e "${GREEN}[stellarchy]${NC} $*"; }
+warn() { echo -e "${YELLOW}[stellarchy]${NC} $*"; }
+err()  { echo -e "${RED}[stellarchy]${NC} $*" >&2; }
+
+PLYMOUTH_SRC="$(cd "$(dirname "$0")" && pwd)/../branding/plymouth"
+PLYMOUTH_DST="/usr/share/plymouth/themes/stellarchy"
+OMARCHY_PLY="/usr/share/plymouth/themes/omarchy"
+
+rebuild_initrd() {
+  if ! mountpoint -q /boot; then
+    warn "/boot is not mounted — refusing to leave boot images half-built."
+    warn "Mount the ESP (e.g. mount /dev/nvme0n1p1 /boot) and rerun: sudo limine-mkinitcpio"
+    return 1
+  fi
+  info "rebuilding initramfs (limine-mkinitcpio)..."
+  if ! sudo limine-mkinitcpio; then
+    warn "limine-mkinitcpio FAILED — UKIs are stale. DO NOT reboot until a rebuild succeeds."
+    warn "Escape hatch: echo -e '[Daemon]\nTheme=omarchy' > /etc/plymouth/plymouthd.conf && sudo limine-mkinitcpio"
+    return 1
+  fi
+}
+
+# The mkinitcpio plymouth hook packs ONLY the active theme's directory.
+# A .plymouth whose ScriptFile points at another theme's dir ships an
+# initramfs with no boot script: plymouth renders nothing, so the splash
+# AND LUKS password prompt are invisible — black screen, boot looks dead.
+theme_selfcontained() {
+  local dir="$1" name="$2" sf
+  sf="$(sed -n 's/^ *ScriptFile *= *//p' "$dir/$name.plymouth" 2>/dev/null)"
+  if [[ -z $sf ]]; then
+    err "$name.plymouth has no ScriptFile line"
+    return 1
+  fi
+  case "$sf" in
+    "$dir"/*) ;;
+    *)
+      err "$name.plymouth ScriptFile ($sf) lives outside its own theme dir —"
+      err "vendor the script into $dir instead."
+      return 1 ;;
+  esac
+  [[ -f $sf ]] || { err "ScriptFile missing: $sf"; return 1; }
+}
+
+splash_active() { grep -q '^Theme=stellarchy' /etc/plymouth/plymouthd.conf 2>/dev/null; }
+
+# Copy theme assets, refresh omarchy's shared art, set default, rebuild initrd.
+sync_assets() {
+  local NEEDS_INITRD=false f src dst pair
+  local ADOPT=${ADOPT:-false}
+  sudo mkdir -p "$PLYMOUTH_DST"
+  for pair in "stellarchy-logo.png:logo.png" "stellarchy.plymouth:stellarchy.plymouth"; do
+    src="$PLYMOUTH_SRC/${pair%%:*}"
+    dst="$PLYMOUTH_DST/${pair##*:}"
+    if $ADOPT || [[ ! -f $dst ]] || ! cmp -s "$src" "$dst"; then
+      sudo cp "$src" "$dst"
+      NEEDS_INITRD=true
+    fi
+  done
+  for f in bullet.png entry.png lock.png progress_bar.png progress_box.png omarchy.script; do
+    if [[ -f $OMARCHY_PLY/$f ]] && ! cmp -s "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"; then
+      sudo cp "$OMARCHY_PLY/$f" "$PLYMOUTH_DST/$f"
+      NEEDS_INITRD=true
+    fi
+  done
+  if ! theme_selfcontained "$PLYMOUTH_DST" stellarchy; then
+    err "stellarchy theme is not self-contained — refusing to rebuild initramfs"
+    err "(a cross-dir ScriptFile ships a splash-less initramfs: black screen)."
+    exit 1
+  fi
+  if ! splash_active || $ADOPT; then
+    sudo plymouth-set-default-theme stellarchy
+    NEEDS_INITRD=true
+  fi
+  if [[ $NEEDS_INITRD == true ]]; then
+    rebuild_initrd || { err "splash update incomplete — fix the above before rebooting"; exit 1; }
+  fi
+}
+
+do_adopt() {
+  if [[ ! -d $OMARCHY_PLY ]]; then
+    err "Omarchy plymouth theme not found — cannot source shared art"
+    exit 1
+  fi
+  ADOPT=true sync_assets
+  ok "stellarchy splash adopted (takes effect next boot)"
+}
+
+do_refresh() {
+  if ! splash_active; then
+    warn "stellarchy splash is not active — use Adopt first"
+    exit 1
+  fi
+  ADOPT=false sync_assets
+  ok "stellarchy splash up to date"
+}
+
+do_status() {
+  if splash_active; then
+    ok "stellarchy splash active"
+  else
+    warn "stock Omarchy splash active — adopt via this menu"
+  fi
+}
+
+if [[ ${1:-} == run ]]; then
+  set -e
+  shift
+  case $1 in
+    adopt)   do_adopt ;;
+    refresh) do_refresh ;;
+    status)  do_status ;;
+    *) err "unknown action '$1'"; exit 1 ;;
+  esac
+  exit 0
+fi
+
+# ── Menu ──
+declare -A cmd_for=()
+add() { cmd_for[$1]=$2; menu+="$1"$'\n'; }
+menu=""
+add 'Adopt stellarchy splash' 'adopt'
+add 'Refresh splash assets'   'refresh'
+add 'Status'                  'status'
+
+choice=$(
+  printf '%s' "$menu" |
+    stellarchy-fuzzel --dmenu --prompt='Splash: ' --width=30 --lines=${#cmd_for[@]}
+) || exec stellarchy-menu   # Esc = back to root menu
+
+exec stellarchy-terminal stellarchy-splash run "${cmd_for[$choice]}"

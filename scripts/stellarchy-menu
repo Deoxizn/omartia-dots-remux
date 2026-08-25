@@ -1,25 +1,29 @@
 #!/bin/bash
 
-# stellarchy:summary=Stellarchy root menu: packages, restart, setup, system, themes, trigger, update.
+# stellarchy:summary=Stellarchy root menu: kernel, packages, restart, setup, splash, system, themes, trigger, update.
 
 # Rows ending in ">" open a submenu; bare rows act immediately.
 choice=$(
   printf '%s\n' \
+    'Kernel >' \
     'Packages >' \
     'Restart >' \
     'Setup >' \
+    'Splash >' \
     'System >' \
     'Themes >' \
     'Trigger >' \
     'Update >' |
-    stellarchy-fuzzel --dmenu --prompt='✦ ..Stellarchy.. ✦ ' --width=28 --lines=7
+    stellarchy-fuzzel --dmenu --prompt='✦ ..Stellarchy.. ✦ ' --width=28 --lines=9
 )
 choice=${choice%' >'}
 
 case "$choice" in
+  Kernel)   exec stellarchy-kernel ;;
   Packages) exec stellarchy-pkgs ;;
   Restart)  exec stellarchy-restart ;;
   Setup)    exec stellarchy-setup ;;
+  Splash)   exec stellarchy-splash ;;
   System)   exec stellarchy-system ;;
   Themes)   exec stellarchy-themes ;;
   Trigger)  exec stellarchy-trigger ;;

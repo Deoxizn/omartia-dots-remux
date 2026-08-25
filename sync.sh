@@ -10,8 +10,8 @@
 # Applies the current checkout's state to an existing remux install: menu
 # scripts, hooks, lua config merges (personal edits preserved), keybinds,
 # branding, shell.json migrations. Never pulls — the auto-sync hook pulls
-# then calls this; for manual use run ./upgrade.sh (pulls, syncs, plus
-# kernel/splash migrations). No kernel or plymouth handling here.
+# then calls this; manual passes: git pull then ./sync.sh; kernel/splash live in
+# the Kernel/Splash menus (or their stellarchy-kernel/splash scripts).
 
 set -euo pipefail
 
@@ -83,7 +83,7 @@ if [[ ! -f "$HOME/.config/caelestia/shell.json" ]]; then
 fi
 
 # ──────────────────────────────────────────────
-# Pulling is NOT this script's job — the auto-sync hook (and ./upgrade.sh)
+# Pulling is NOT this script's job — the auto-sync hook (and manual passes)
 # pull before calling it, so every step below acts on the newest checkout.
 # ──────────────────────────────────────────────
 
@@ -169,7 +169,7 @@ echo ""
 
 # ──────────────────────────────────────────────
 # Auto-sync hook — future omarchy-update runs pull this repo and re-run
-# upgrade.sh when there are new commits (path baked in per install).
+# sync.sh when there are new commits (path baked in per install).
 # ──────────────────────────────────────────────
 
 info "Auto-sync hook:"
@@ -302,7 +302,7 @@ for src in "$REPO_DIR"/config/hypr/*.lua; do
     # No sync history: cannot tell your edits from stale repo state — don't touch.
     warn "  $name differs and has no sync history — left untouched"
     warn "    review: diff \"$src\" \"$dst\""
-    warn "    or adopt repo version (backs up yours): ./upgrade.sh --adopt-lua"
+    warn "    or adopt repo version (backs up yours): ./sync.sh --adopt-lua"
   else
     tmp_current="$(mktemp)"
     cp "$dst" "$tmp_current"
@@ -402,7 +402,7 @@ else
     warn "  malformed managed rounding block (only one marker found) — left untouched"
   elif grep -q "apply_rounding" "$LOOKNFEEL_FILE"; then
     warn "  unmanaged rounding code found in looknfeel.lua — left untouched"
-    warn "    (wrap it in the managed markers yourself, or delete it and re-run upgrade.sh)"
+    warn "    (wrap it in the managed markers yourself, or delete it and re-run sync.sh)"
   else
     if $DRY_RUN; then
       info "  [dry-run] would append managed rounding block ($(wc -l < "$round_block") lines) to hypr/looknfeel.lua"

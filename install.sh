@@ -68,12 +68,12 @@ run_sudo() {
 #   missing             -> install the repo version
 #   carries no remux    -> back up the live file (*.pre-install.bak) and replace
 #                          it with the repo version wholesale
-#   already remux-owned -> leave untouched (upgrade.sh merges updates into those)
+#   already remux-owned -> leave untouched (sync.sh merges updates into those)
 # Without this, a fresh Omarchy target keeps its stock hypr/*.lua (they all
 # exist out of the box) and silently misses everything the dots document.
 # $1 file name, $2 optional ERE marking remux ownership (default: any
 #   "omartia-dots-remux" mention), $3/$4 optional managed-block markers —
-#   when set, the repo file is installed wrapped so upgrade.sh's managed-block
+#   when set, the repo file is installed wrapped so sync.sh's managed-block
 #   sync recognizes it instead of appending a duplicate.
 sync_main_lua() {
   local name="$1" own_re="${2:-omartia-dots-remux}"
@@ -83,7 +83,7 @@ sync_main_lua() {
   local base_dir="$HOME/.config/hypr/.stellarchy-base"
   [[ -f $src ]] || return 0
 
-  # Seed upgrade.sh's merge history whenever we install/replace the file, so
+  # Seed sync.sh's merge history whenever we install/replace the file, so
   # later upgrades can 3-way merge instead of hitting "no sync history".
   seed_base() {
     if ! $DRY_RUN; then
@@ -528,7 +528,7 @@ done
 # ships every one of these, so on a fresh PC the old "copy if missing" rule
 # skipped them all and only a partial patch block landed. Unowned files are
 # now backed up (*.pre-install.bak) and replaced with the repo versions.
-# markers for upgrade.sh's managed keybind block must match upgrade.sh exactly.
+# markers for sync.sh's managed keybind block must stay byte-identical to what older installs already have on disk (historical name: upgrade.sh).
 MANAGED_BEGIN="-- BEGIN omartia-dots-remux managed keybinds (auto-synced by upgrade.sh — personal edits belong outside this block)"
 MANAGED_END="-- END omartia-dots-remux managed keybinds"
 sync_main_lua hyprland.lua 'omartia-dots-remux|package\.loaded\["default\.hypr\.autostart"\]'
@@ -847,7 +847,7 @@ ok "Theme bridge hook installed"
 # ──────────────────────────────────────────────
 # Install auto-sync hook (omarchy-update post-update path)
 # Keeps the remux checkout current: every omarchy-update pulls the repo and
-# re-runs upgrade.sh when there are new commits.
+# re-runs sync.sh when there are new commits.
 # ──────────────────────────────────────────────
 
 info "Installing omarchy-update auto-sync hook..."

@@ -7,7 +7,7 @@ BRANCH="master"
 
 mkdir -p "$(dirname "$LOG")"
 exec 9>/tmp/stellarchy-repo-sync.lock || exit 0
-flock -n 9 || exit 0 # a manual ./upgrade.sh or a concurrent hook run owns the sync
+flock -n 9 || exit 0 # a manual ./sync.sh or a concurrent hook run owns the sync
 
 {
     cd "$REPO_DIR" 2>/dev/null || exit 0
@@ -20,7 +20,7 @@ flock -n 9 || exit 0 # a manual ./upgrade.sh or a concurrent hook run owns the s
     echo "[$(date '+%F %T')] syncing $local_rev -> $remote_rev"
     if ! git pull --ff-only --quiet; then
         echo "[$(date '+%F %T')] pull failed (diverged?)"
-        notify-send -u critical "Stellarchy sync failed" "Repo diverged — run upgrade.sh manually in $REPO_DIR"
+        notify-send -u critical "Stellarchy sync failed" "Repo diverged — run sync.sh manually in $REPO_DIR"
         exit 0
     fi
 
