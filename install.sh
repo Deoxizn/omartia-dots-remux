@@ -880,6 +880,7 @@ ok "Update guard installed (blocks omarchy-update from relaunching omarchy-shell
 # Users who never touched fastfetch have no ~/.config/fastfetch/config.jsonc,
 # so seed one from the system default with the OS line and logo branded. A
 # user-level copy always wins over /etc and survives omarchy-settings-dev updates.
+# The OS line resolves the dots revision at render time via stellarchy-version.
 info "Fastfetch branding..."
 
 FF_DIR="$HOME/.config/fastfetch"
@@ -893,22 +894,25 @@ else
     cp /etc/fastfetch/config.jsonc "$FF_DIR/config.jsonc"
     cp "$REPO_DIR/stellarchy.png" "$FF_DIR/stellarchy.png"
     sed -i \
-      -e 's/Omarchy \$version/Stellarchy (Omarchy \$version)/' \
+      -e 's|"text": "version=\$(omarchy-version) && echo \\"Omarchy \$version\\""|"text": "rev=\$(stellarchy-version 2>/dev/null); ver=\$(omarchy-version); kernel=\$(uname -r); echo \\"Stellarchy${rev:+ $rev} (Omarchy \$ver) \| \$kernel\\""|' \
       -e 's|"type": "file"|"type": "sixel"|' \
       -e 's|"source": "~/.config/omarchy/branding/about.txt"|"source": "~/.config/fastfetch/stellarchy.png",\n    "width": 70,\n    "height": 30|' \
       "$FF_DIR/config.jsonc"
   fi
-  ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy line + logo)"
+  ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy revision line + logo)"
 fi
 
 # ──────────────────────────────────────────────
 # Stellarchy identity overlay (~/.config/stellarchy/os-release) — read by the
 # Caelestia shell via patches/0002 so lockscreen/About show Stellarchy while
 # /etc/os-release stays untouched (fastfetch reports real Omarchy info).
+# VERSION_ID carries the dots revision; the auto-sync hook refreshes it on
+# every run.
 # ──────────────────────────────────────────────
 
 OVERLAY="$HOME/.config/stellarchy/os-release"
 LOGO_PATH="$HOME/.config/fastfetch/stellarchy.png"
+REV="$("$REPO_DIR/scripts/stellarchy-version" "$REPO_DIR" 2>/dev/null)"
 if [[ -f $OVERLAY ]]; then
   if ! grep -q '^LOGO=' "$OVERLAY"; then
     if ! $DRY_RUN; then
@@ -918,6 +922,10 @@ if [[ -f $OVERLAY ]]; then
   else
     ok "  identity overlay present — left untouched"
   fi
+  if [[ -n $REV ]] && ! grep -q '^VERSION_ID=' "$OVERLAY" && ! $DRY_RUN; then
+    printf 'VERSION_ID="%s"\n' "$REV" >> "$OVERLAY"
+    ok "  added VERSION_ID=$REV to $OVERLAY"
+  fi
 else
   if ! $DRY_RUN; then
     mkdir -p "$HOME/.config/stellarchy"
@@ -925,10 +933,11 @@ else
       printf '# Stellarchy identity overlay — read by the Caelestia shell via patches/0002.\n'
       printf 'NAME="Stellarchy"\n'
       printf 'PRETTY_NAME="Stellarchy"\n'
+      [[ -n $REV ]] && printf 'VERSION_ID="%s"\n' "$REV"
       printf 'LOGO=%s\n' "$LOGO_PATH"
     } > "$OVERLAY"
   fi
-  ok "  seeded $OVERLAY"
+  ok "  seeded $OVERLAY${REV:+ (VERSION_ID=$REV)}"
 fi
 
 # ──────────────────────────────────────────────

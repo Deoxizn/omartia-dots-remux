@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# stellarchy: print the dots revision as r<count>.<sha> for the fastfetch OS line.
+# Usage: stellarchy-version [repo_dir]
+#
+# Resolves the checkout from the installed post-update hook's baked REPO_DIR,
+# with a ~/Work fallback for dev machines. Prints nothing when no usable
+# checkout exists so callers can degrade to plain branding.
+
+repo="$1"
+if [[ -z $repo ]]; then
+  repo=$(sed -n 's/^REPO_DIR="\(.*\)"$/\1/p' "$HOME/.config/omarchy/hooks/post-update.d/stellarchy-repo-sync.sh" 2>/dev/null)
+  [[ -d $repo ]] || repo="$HOME/Work/omartia-dots-remux"
+fi
+
+cnt=$(git -C "$repo" rev-list --count HEAD 2>/dev/null)
+sha=$(git -C "$repo" rev-parse --short HEAD 2>/dev/null)
+[[ -n $cnt && -n $sha ]] && printf 'r%s.%s\n' "$cnt" "$sha"

@@ -192,7 +192,7 @@ The remux ships its own identity on top of Omarchy. What lands where:
 |---|---|---|
 | Idle screensaver art | Installed | Installed if missing or still stock Omarchy art; **your own customization is never overwritten** |
 | About logo (`about.txt`) | Installed | Same stock-detection rule |
-| fastfetch OS line | If you have no own config, one is seeded from `/etc/fastfetch` with a `Stellarchy` OS line; custom configs are untouched | Same |
+| fastfetch OS line | If you have no own config, one is seeded from `/etc/fastfetch` with a commit-stamped `Stellarchy r<count>.<sha>` OS line; custom configs are untouched | Same |
 | Boot splash | `stellarchy` plymouth theme set as default (Tokyo Night palette) | Opt-in via the Splash menu; afterwards kept refreshed automatically and re-applied to any kernel installed later (splash guard libalpm hook) |
 | Script headers | Included | Synced with the menu suite |
 
@@ -286,6 +286,7 @@ level.
 | `stellarchy-terminal` | Runs a command in a floating TUI.float terminal with logo/done polish (uniform app-id for all one-shot TUIs) |
 | `caelestia-system-lock` | Lock via Caelestia + kb-layout reset + 1Password lock + delayed display-off (used by keybind, power menu and hypridle) |
 | `stellarchy-fuzzel` | Shared fuzzel wrapper — reads colors from `~/.local/state/caelestia/scheme.json` |
+| `stellarchy-version` | Prints the dots revision (`r<count>.<sha>`) shown on the fastfetch OS line |
 
 <br><br>
 

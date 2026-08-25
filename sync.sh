@@ -579,6 +579,8 @@ echo ""
 # ──────────────────────────────────────────────
 # Fastfetch branding (Stellarchy OS line) — seed once if user never
 # customized fastfetch. Mirrors install.sh; never touches an existing config.
+# The OS line resolves the dots revision at render time via stellarchy-version,
+# so it stays current without further sync passes.
 # ──────────────────────────────────────────────
 
 FF_DIR="$HOME/.config/fastfetch"
@@ -589,17 +591,17 @@ elif [[ ! -f /etc/fastfetch/config.jsonc ]]; then
   warn "  /etc/fastfetch/config.jsonc not found — skipping"
 else
   if $DRY_RUN; then
-    info "  [dry-run] would seed ~/.config/fastfetch/config.jsonc (system default + Stellarchy line + logo)"
+    info "  [dry-run] would seed ~/.config/fastfetch/config.jsonc (system default + Stellarchy revision line + logo)"
   else
     mkdir -p "$FF_DIR"
     cp /etc/fastfetch/config.jsonc "$FF_DIR/config.jsonc"
     cp "$REPO_DIR/stellarchy.png" "$FF_DIR/stellarchy.png"
     sed -i \
-      -e 's/Omarchy \$version/Stellarchy (Omarchy \$version)/' \
+      -e 's|"text": "version=\$(omarchy-version) && echo \\"Omarchy \$version\\""|"text": "rev=\$(stellarchy-version 2>/dev/null); ver=\$(omarchy-version); kernel=\$(uname -r); echo \\"Stellarchy${rev:+ $rev} (Omarchy \$ver) \| \$kernel\\""|' \
       -e 's|"type": "file"|"type": "sixel"|' \
       -e 's|"source": "~/.config/omarchy/branding/about.txt"|"source": "~/.config/fastfetch/stellarchy.png",\n    "width": 70,\n    "height": 30|' \
       "$FF_DIR/config.jsonc"
-    ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy line + logo)"
+    ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy revision line + logo)"
   fi
   changed=$((changed+1))
 fi
@@ -610,11 +612,14 @@ echo ""
 # Stellarchy identity overlay (~/.config/stellarchy/os-release). Read by the
 # Caelestia shell via patches/0002 so lockscreen/About show Stellarchy without
 # touching /etc/os-release — fastfetch & omarchy tooling report real info.
+# VERSION_ID carries the dots revision (r<count>.<sha>) and is refreshed on
+# every run so it tracks the checkout like the fastfetch OS line does.
 # ──────────────────────────────────────────────
 
 info "Stellarchy identity overlay:"
 OVERLAY="$HOME/.config/stellarchy/os-release"
 LOGO_PATH="$HOME/.config/fastfetch/stellarchy.png"
+REV="$("$REPO_DIR/scripts/stellarchy-version" "$REPO_DIR" 2>/dev/null)"
 if [[ -f $OVERLAY ]]; then
   if ! grep -q '^LOGO=' "$OVERLAY"; then
     if $DRY_RUN; then
@@ -623,20 +628,37 @@ if [[ -f $OVERLAY ]]; then
       printf 'LOGO=%s\n' "$LOGO_PATH" >> "$OVERLAY"
       ok "  added missing LOGO entry to $OVERLAY"
     fi
+  fi
+  if [[ -z $REV ]]; then
+    warn "  could not determine repo revision — VERSION_ID left as-is"
   else
-    ok "  already present — left untouched"
+    cur_rev=$(sed -n 's/^VERSION_ID="\(.*\)"$/\1/p' "$OVERLAY")
+    if [[ $cur_rev == "$REV" ]]; then
+      ok "  VERSION_ID up to date ($REV)"
+    elif $DRY_RUN; then
+      info "  [dry-run] would set VERSION_ID=\"$REV\" in $OVERLAY"
+    else
+      if grep -q '^VERSION_ID=' "$OVERLAY"; then
+        sed -i "s/^VERSION_ID=.*/VERSION_ID=\"$REV\"/" "$OVERLAY"
+      else
+        printf 'VERSION_ID="%s"\n' "$REV" >> "$OVERLAY"
+      fi
+      changed=$((changed+1))
+      ok "  VERSION_ID -> $REV"
+    fi
   fi
 elif $DRY_RUN; then
-  info "  [dry-run] would seed $OVERLAY (NAME/PRETTY_NAME/LOGO → Stellarchy)"
+  info "  [dry-run] would seed $OVERLAY (NAME/PRETTY_NAME/VERSION_ID/LOGO → Stellarchy)"
 else
   mkdir -p "$HOME/.config/stellarchy"
   {
     printf '# Stellarchy identity overlay — read by the Caelestia shell via patches/0002.\n'
     printf 'NAME="Stellarchy"\n'
     printf 'PRETTY_NAME="Stellarchy"\n'
+    [[ -n $REV ]] && printf 'VERSION_ID="%s"\n' "$REV"
     printf 'LOGO=%s\n' "$LOGO_PATH"
   } > "$OVERLAY"
-  ok "  seeded $OVERLAY"
+  ok "  seeded $OVERLAY${REV:+ (VERSION_ID=$REV)}"
   changed=$((changed+1))
 fi
 
