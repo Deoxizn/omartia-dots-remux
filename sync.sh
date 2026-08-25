@@ -587,11 +587,11 @@ echo ""
 
 FF_DIR="$HOME/.config/fastfetch"
 FF_OS_STOCK='"text": "version=\$(omarchy-version) && echo \\"Omarchy \$version\\""'
-NEW_FF_OS='"text": "rev=\$(stellarchy-version 2>/dev/null); ver=\$(omarchy-version); kernel=\$(uname -r); echo \\"Stellarchy${rev:+ \$rev} (Omarchy \$ver) \| \$kernel\\""'
+NEW_FF_OS='"text": "rev=\$(stellarchy-version 2>/dev/null); ver=\$(omarchy-version); echo \\"Stellarchy${rev:+ \$rev} (Omarchy \$ver)\\""'
 LEGACY_FF_LINE='"text": "version=$(omarchy-version) && echo \"Stellarchy (Omarchy $version)\""'
 FF_OS_STOCK_RAW='"text": "version=$(omarchy-version) && echo \"Omarchy $version\""'
 FF_OS_LEGACY_RAW='"text": "version=$(omarchy-version) && echo \"Stellarchy (Omarchy $version)\""'
-NEW_FF_OS_RAW='"text": "rev=$(stellarchy-version 2>/dev/null); ver=$(omarchy-version); kernel=$(uname -r); echo \"Stellarchy${rev:+ $rev} (Omarchy $ver) | $kernel\""'
+NEW_FF_OS_RAW='"text": "rev=$(stellarchy-version 2>/dev/null); ver=$(omarchy-version); echo \"Stellarchy${rev:+ $rev} (Omarchy $ver)\""'
 FF_DIMS_BLOCK=$',\n    "width": 70,\n    "height": 30'
 FF_PNG_SOURCE='"source": "~/.config/fastfetch/stellarchy.png"'
 FF_ABOUT_SOURCE='"source": "~/.config/omarchy/branding/about.txt"'
