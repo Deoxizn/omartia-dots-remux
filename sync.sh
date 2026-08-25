@@ -536,11 +536,15 @@ if ! pacman -Q hypridle &>/dev/null; then
 fi
 
 if [[ -f $REPO_DIR/scripts/caelestia-system-lock ]]; then
-  if $DRY_RUN; then
+  if cmp -s "$REPO_DIR/scripts/caelestia-system-lock" "$HOME/.local/bin/caelestia-system-lock"; then
+    ok "  ~/.local/bin/caelestia-system-lock up to date"
+  elif $DRY_RUN; then
     info "  [dry-run] would update ~/.local/bin/caelestia-system-lock"
+    changed=$((changed+1))
   else
     install -m755 "$REPO_DIR/scripts/caelestia-system-lock" "$HOME/.local/bin/"
     ok "  ~/.local/bin/caelestia-system-lock updated"
+    changed=$((changed+1))
   fi
 fi
 
