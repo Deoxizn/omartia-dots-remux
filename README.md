@@ -158,28 +158,12 @@ systemctl --user start caelestia-shell.service     # bring the shell back now
 ```
 
 ```bash
-./sync.sh          # routine: apply current checkout to the install (what the auto-sync hook runs)
+./sync.sh          # apply current checkout to the install (the auto-sync hook runs this after pulling)
 ```
-`sync.sh` is the unattended core — it applies the current checkout in place:
-menu scripts, theme bridge hook, update/splash guards, branding (stock-or-stale
-files only), SDDM-safe logout, managed keybinds. It never pulls; the auto-sync
-hook pulls and then calls it, so day-to-day you never run anything. Your
-configs stay yours: remux-owned files are never overwritten — lua changes
-3-way-merge in, conflicts leave your file untouched with a `.conflict` copy,
-and `monitors.lua` / `input.lua` are device-specific and never touched. A live
-lua file that carries **none** of the remux's content (stock Omarchy default or
-a stale partial install) is backed up (`*.pre-upgrade.bak`) and replaced with
-the repo version, so the documented behavior actually exists on every machine.
-Edit your configs directly, or restore older copies from
-`~/.config/omartia-dots-remux-backup/`. Add `--dry-run` to preview, or
-`--adopt-lua` to adopt repo versions of lua files that have no merge history
-(yours is backed up first).
 
-**Kernel and splash live in the menus** — `SUPER+Alt+Space` → System → Kernel / Splash:
-the Kernel menu opts into a CachyOS kernel (or runs boot-entry status & repair),
-the Splash menu adopts or refreshes the Stellarchy boot splash. Under the hood
-they're plain scripts too (`stellarchy-kernel`, `stellarchy-splash`) if you
-prefer a terminal.
+Your configs stay yours — lua updates merge in, conflicts never touch your files, and every replaced file is backed up in `~/.config/omartia-dots-remux-backup/`. Preview with `--dry-run`; `--adopt-lua` adopts repo lua versions that have no merge history (yours is backed up first).
+
+Kernel and splash live in the menus: **System → Kernel** (CachyOS opt-in, boot-entry status & repair) and **System → Splash** (adopt/refresh the boot splash) under `SUPER+Alt+Space` — plain scripts (`stellarchy-kernel`, `stellarchy-splash`) if you prefer a terminal.
 
 Kernel variants (Kernel menu), all prebuilt from chaotic-aur:
 

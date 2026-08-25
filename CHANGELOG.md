@@ -12,6 +12,7 @@ Each entry links to its commit, newest first within each day.
 
 ## 2026-08-24
 
+- Menus: kernel and splash nest under **System** (Esc returns there), not the root menu ([`33be795`](https://github.com/deoxizn/omartia-dots-remux/commit/33be795))
 - Menus: kernel and splash move into the Stellarchy menu (`Kernel` / `Splash` submenus backed by new `stellarchy-kernel` / `stellarchy-splash` scripts); `upgrade.sh` is removed — routine syncing is `sync.sh`, called automatically by the auto-sync hook ([`5c5cb5c`](https://github.com/deoxizn/omartia-dots-remux/commit/5c5cb5c))
 - Auto-update: omarchy-update now pulls this repo and re-runs `sync.sh` whenever new commits exist (post-update hook, installed by fresh installs and bootstrapped by the next manual upgrade) — no more manual upgrading ([`4990212`](https://github.com/deoxizn/omartia-dots-remux/commit/4990212))
 - Bar: ship the updates indicator as caelestia patch 0003 — always visible, dim when clean, count badge layered on the glyph corner when repo/AUR updates are pending; `shell.json` seeds its entries slot for fresh installs and upgrades migrate existing configs ([`21c5ae3`](https://github.com/deoxizn/omartia-dots-remux/commit/21c5ae3))
