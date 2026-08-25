@@ -10,7 +10,16 @@ exec 9>/tmp/stellarchy-repo-sync.lock || exit 0
 flock -n 9 || exit 0 # a manual ./sync.sh or a concurrent hook run owns the sync
 
 exec 3>&1 # console passthrough — the block below redirects stdout to the log
-say() { echo "Stellarchy $1" >&3; }
+# One green section header (house style of omarchy-update's other blocks), then
+# status line(s) beneath it.
+header_done=
+say() {
+  if [[ -z $header_done ]]; then
+    echo -e "\e[32m\nStellarchy\e[0m" >&3
+    header_done=1
+  fi
+  echo "$1" >&3
+}
 
 {
     cd "$REPO_DIR" 2>/dev/null || { say "repo missing at $REPO_DIR"; echo "[$(date '+%F %T')] repo missing at $REPO_DIR"; exit 0; }
