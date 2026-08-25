@@ -175,7 +175,7 @@ Edit your configs directly, or restore older copies from
 `--adopt-lua` to adopt repo versions of lua files that have no merge history
 (yours is backed up first).
 
-**Kernel and splash live in the menus** — `SUPER+Alt+Space` → Kernel / Splash:
+**Kernel and splash live in the menus** — `SUPER+Alt+Space` → System → Kernel / Splash:
 the Kernel menu opts into a CachyOS kernel (or runs boot-entry status & repair),
 the Splash menu adopts or refreshes the Stellarchy boot splash. Under the hood
 they're plain scripts too (`stellarchy-kernel`, `stellarchy-splash`) if you
