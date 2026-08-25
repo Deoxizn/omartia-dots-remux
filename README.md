@@ -270,7 +270,9 @@ level.
 | `stellarchy-menu` | Root menu (alphabetized): Packages, Restart, Setup, System, Themes, Trigger, Update |
 | `stellarchy-trigger` / `stellarchy-hardware` / `stellarchy-speedtest` | Hardware toggles gated on detected hardware (laptop display, hybrid GPU, touchpad...) + network/disk speed tests |
 | `stellarchy-setup` / `stellarchy-network` / `stellarchy-security` | DNS picker + Wi-Fi QR code, and security setup (fingerprint/FIDO2/sshd/sudo) |
-| `stellarchy-system` | Config editor and default app pickers |
+| `stellarchy-system` | Config editor, default app pickers, and the Kernel / Splash submenus |
+| `stellarchy-kernel` | Opt into a prebuilt CachyOS kernel (default/bore/eevdf/lts/rt-bore) via chaotic-aur; Limine `default_entry:` follows by name — plus boot-entry status & repair |
+| `stellarchy-splash` | Adopt or refresh the Stellarchy boot splash (verifies the theme is self-contained before any initramfs rebuild) |
 | `stellarchy-power` | Lock, logout, suspend, hibernate, reboot, shutdown (destructive actions require Confirm) |
 | `stellarchy-keybinds` | Searchable keybinding list that dispatches binds (`--menu` for Esc-back) |
 | `stellarchy-themes` / `stellarchy-themes-list` | Theme switcher with preview thumbnails + git theme install |
