@@ -1,14 +1,8 @@
 # Changelog
 
-History of changes to the Stellarchy dots and system tooling — installer/upgrader,
-Hyprland configs, menu suite, theme bridge, guards and branding. Newest first.
-README rewording, screenshots and demo-video commits are skipped here; browse the
-[full commit history](https://github.com/deoxizn/omartia-dots-remux/commits) for those.
-
-Each entry links to its commit, newest first within each day.
-
-<!-- Generated from git history. For new entries: add a dated section at the top,
-     one bullet per change: - Description ([`short-hash`](commit-url)). -->
+<!-- Newest first. For new entries: add a dated section at the top,
+     one bullet per change: - Description ([`short-hash`](commit-url)).
+     Skip README rewordings, screenshots and demo videos. -->
 
 ## 2026-08-24
 
