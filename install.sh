@@ -20,7 +20,7 @@ OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
 STATE_DIR="$HOME/.local/state/stellarchy"
 STATE_REPO_FILE="$STATE_DIR/repo-dir"
 XDG_REPO_DEFAULT="$HOME/.local/opt/stellarchy"
-LEGACY_REPO_PATH="$HOME/Work/omartia-dots-remux"
+LEGACY_REPO_PATHS=("$HOME/Work/omartia-dots-remux" "$HOME/omartia-dots-remux")
 YES=false
 SKIP_QS_CHECK=false
 DRY_RUN=false
@@ -276,26 +276,31 @@ if ! $SKIP_QS_CHECK; then
 fi
 
 # ──────────────────────────────────────────────
-# Migration: detect stale ~/Work/ repo, offer to move
+# Migration: detect stale legacy repo, offer to move
 # ──────────────────────────────────────────────
 
-if ! $DEV_MODE && [[ -d "$LEGACY_REPO_PATH" ]] && [[ ! -d "$XDG_REPO_DEFAULT" ]]; then
-  echo ""
-  warn "Detected old repo location: $LEGACY_REPO_PATH"
-  warn "Default location is now: $XDG_REPO_DEFAULT"
-  if confirm "Move repo to $XDG_REPO_DEFAULT?"; then
-    mkdir -p "$(dirname "$XDG_REPO_DEFAULT")"
-    if $DRY_RUN; then
-      info "[dry-run] would mv $LEGACY_REPO_PATH $XDG_REPO_DEFAULT"
-    else
-      mv "$LEGACY_REPO_PATH" "$XDG_REPO_DEFAULT"
-      REPO_DIR="$XDG_REPO_DEFAULT"
-      ok "Repo moved to $XDG_REPO_DEFAULT"
+if ! $DEV_MODE && [[ ! -d "$XDG_REPO_DEFAULT" ]]; then
+  for legacy_path in "${LEGACY_REPO_PATHS[@]}"; do
+    if [[ -d "$legacy_path" ]]; then
+      echo ""
+      warn "Detected old repo location: $legacy_path"
+      warn "Default location is now: $XDG_REPO_DEFAULT"
+      if confirm "Move repo to $XDG_REPO_DEFAULT?"; then
+        mkdir -p "$(dirname "$XDG_REPO_DEFAULT")"
+        if $DRY_RUN; then
+          info "[dry-run] would mv $legacy_path $XDG_REPO_DEFAULT"
+        else
+          mv "$legacy_path" "$XDG_REPO_DEFAULT"
+          REPO_DIR="$XDG_REPO_DEFAULT"
+          ok "Repo moved to $XDG_REPO_DEFAULT"
+        fi
+      else
+        info "Keeping repo at $legacy_path"
+      fi
+      echo ""
+      break
     fi
-  else
-    info "Keeping repo at $LEGACY_REPO_PATH"
-  fi
-  echo ""
+  done
 fi
 
 # ──────────────────────────────────────────────

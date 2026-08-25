@@ -7,8 +7,8 @@
 ## 2026-08-25
 
 - Repo default location moves to `~/.local/opt/stellarchy` — hidden, XDG-friendly, safe from accidental `~/` cleanup; state file at `~/.local/state/stellarchy/repo-dir` is now the single source of truth for repo path
-- Post-update hook auto-migrates repo from `~/Work/omartia-dots-remux` to `~/.local/opt/stellarchy` on first run — no manual intervention, existing installs self-heal during `omarchy-update`
-- `install.sh`: `--dev` flag skips migration logic for dev machines; without it, detects stale `~/Work/omartia-dots-remux` and offers to auto-move to `~/.local/opt/stellarchy`
+- Post-update hook auto-migrates repo from legacy locations (`~/Work/omartia-dots-remux`, `~/omartia-dots-remux`) to `~/.local/opt/stellarchy` on first run — no manual intervention, existing installs self-heal during `omarchy-update`
+- `install.sh`: `--dev` flag skips migration logic for dev machines; without it, detects stale legacy locations (`~/Work/omartia-dots-remux`, `~/omartia-dots-remux`) and offers to auto-move to `~/.local/opt/stellarchy`
 - `sync.sh`: writes state file after deploying the hook so the hook resolves immediately on next run
 - `stellarchy-version`: resolves via state file → baked path → XDG default; removed hardcoded `~/Work/omartia-dots-remux` fallback
 - `uninstall.sh`: removes state file, confirms before deleting `~/.local/opt/stellarchy`, auto-cleans stray `~/sddm-stellarchy` directory

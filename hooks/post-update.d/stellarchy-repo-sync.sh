@@ -1,17 +1,25 @@
 #!/bin/bash
 # stellarchy: post-update hook — keep the remux repo current after omarchy-update.
 # Resolves repo location via state file, auto-migration, baked path, or XDG default.
+# Includes a self-healing wrapper: if the old hook (pre-migration) finds the
+# repo missing at the baked path, it tries the XDG default and re-runs sync
+# so the new hook gets deployed on the same cycle.
 STATE_DIR="$HOME/.local/state/stellarchy"
 STATE_FILE="$STATE_DIR/repo-dir"
 BAKED_DIR="@REPO_DIR@"
 XDG_DEFAULT="$HOME/.local/opt/stellarchy"
-LEGACY_PATH="$HOME/Work/omartia-dots-remux"
 LOG="$STATE_DIR/repo-sync.log"
 BRANCH="master"
 
+# Legacy clone locations to check for auto-migration (newest first)
+LEGACY_PATHS=(
+  "$HOME/Work/omartia-dots-remux"
+  "$HOME/omartia-dots-remux"
+)
+
 mkdir -p "$STATE_DIR"
 
-# Resolve repo directory with auto-migration from ~/Work/ if needed
+# Resolve repo directory with auto-migration from legacy paths if needed
 resolve_repo() {
   # 1. State file (authoritative if it exists and points to a valid dir)
   if [[ -f $STATE_FILE ]]; then
@@ -27,13 +35,17 @@ resolve_repo() {
     echo "$XDG_DEFAULT"
     return
   fi
-  # 3. Auto-migrate: old ~/Work/ repo → ~/.local/opt/stellarchy
-  if [[ -d $LEGACY_PATH ]] && [[ ! -d $XDG_DEFAULT ]]; then
-    mkdir -p "$(dirname "$XDG_DEFAULT")"
-    if mv "$LEGACY_PATH" "$XDG_DEFAULT" 2>/dev/null; then
-      echo "$XDG_DEFAULT"
-      return
-    fi
+  # 3. Auto-migrate: legacy clone locations → ~/.local/opt/stellarchy
+  if [[ ! -d $XDG_DEFAULT ]]; then
+    for legacy in "${LEGACY_PATHS[@]}"; do
+      if [[ -d $legacy ]]; then
+        mkdir -p "$(dirname "$XDG_DEFAULT")"
+        if mv "$legacy" "$XDG_DEFAULT" 2>/dev/null; then
+          echo "$XDG_DEFAULT"
+          return
+        fi
+      fi
+    done
   fi
   # 4. Baked path from install (backward compat, last resort)
   if [[ -d $BAKED_DIR ]]; then
@@ -44,7 +56,7 @@ resolve_repo() {
 
 REPO_DIR=$(resolve_repo)
 if [[ -z $REPO_DIR ]]; then
-  echo "[$(date '+%F %T')] repo not found (state=$STATE_FILE baked=$BAKED_DIR xdg=$XDG_DEFAULT legacy=$LEGACY_PATH)"
+  echo "[$(date '+%F %T')] repo not found (state=$STATE_FILE baked=$BAKED_DIR xdg=$XDG_DEFAULT)"
   exit 0
 fi
 
