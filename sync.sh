@@ -577,33 +577,80 @@ fi
 echo ""
 
 # ──────────────────────────────────────────────
-# Fastfetch branding (Stellarchy OS line) — seed once if user never
-# customized fastfetch. Mirrors install.sh; never touches an existing config.
-# The OS line resolves the dots revision at render time via stellarchy-version,
-# so it stays current without further sync passes.
+# Fastfetch branding (Stellarchy OS line). Mirrors install.sh: custom means
+# "differs from the /etc default beyond our branding" — de-brand the config
+# and compare against the live /etc template. Identical => pristine, outdated
+# or ours, so the current branding is (re)applied — which also migrates the
+# logo protocol if the default terminal changed. Anything still different was
+# genuinely customized and is respected.
 # ──────────────────────────────────────────────
 
 FF_DIR="$HOME/.config/fastfetch"
+FF_OS_STOCK='"text": "version=\$(omarchy-version) && echo \\"Omarchy \$version\\""'
+NEW_FF_OS='"text": "rev=\$(stellarchy-version 2>/dev/null); ver=\$(omarchy-version); kernel=\$(uname -r); echo \\"Stellarchy${rev:+ \$rev} (Omarchy \$ver) \| \$kernel\\""'
+LEGACY_FF_LINE='"text": "version=$(omarchy-version) && echo \"Stellarchy (Omarchy $version)\""'
+FF_OS_STOCK_RAW='"text": "version=$(omarchy-version) && echo \"Omarchy $version\""'
+FF_OS_LEGACY_RAW='"text": "version=$(omarchy-version) && echo \"Stellarchy (Omarchy $version)\""'
+NEW_FF_OS_RAW='"text": "rev=$(stellarchy-version 2>/dev/null); ver=$(omarchy-version); kernel=$(uname -r); echo \"Stellarchy${rev:+ $rev} (Omarchy $ver) | $kernel\""'
+FF_DIMS_BLOCK=$',\n    "width": 70,\n    "height": 30'
+FF_PNG_SOURCE='"source": "~/.config/fastfetch/stellarchy.png"'
+FF_ABOUT_SOURCE='"source": "~/.config/omarchy/branding/about.txt"'
+ff_debrand() { # $1 = config; stdout = underlying template (byte-exact)
+  local s
+  s=$(cat "$1"; printf x)
+  s=${s%x} # restore trailing newlines eaten by command substitution
+  s=${s//"$NEW_FF_OS_RAW"/"$FF_OS_STOCK_RAW"}
+  s=${s//"$FF_OS_LEGACY_RAW"/"$FF_OS_STOCK_RAW"}
+  s=${s//'"type": "sixel"'/'"type": "file"'}
+  s=${s//'"type": "auto"'/'"type": "file"'}
+  s=${s//"$FF_PNG_SOURCE$FF_DIMS_BLOCK"/"$FF_ABOUT_SOURCE"}
+  s=${s//"$FF_PNG_SOURCE"/"$FF_ABOUT_SOURCE"}
+  printf '%s' "$s"
+}
+
+ff_logo_type() {
+  case $(xdg-terminal-exec --print-id 2>/dev/null) in
+  *[Ff]oot*) echo "sixel" ;;
+  *) echo "auto" ;;
+  esac
+}
+brand_fastfetch() {
+  local logo
+  logo=$(ff_logo_type)
+  mkdir -p "$FF_DIR"
+  cp /etc/fastfetch/config.jsonc "$FF_DIR/config.jsonc"
+  cp "$REPO_DIR/stellarchy.png" "$FF_DIR/stellarchy.png"
+  sed -i \
+    -e 's|'"$FF_OS_STOCK"'|'"$NEW_FF_OS"'|' \
+    -e 's|"type": "file"|"type": "'"${logo}"'"|' \
+    -e 's|"source": "~/.config/omarchy/branding/about.txt"|"source": "~/.config/fastfetch/stellarchy.png",\n    "width": 70,\n    "height": 30|' \
+    "$FF_DIR/config.jsonc"
+}
 info "Fastfetch branding:"
-if [[ -f $FF_DIR/config.jsonc ]]; then
-  ok "  custom fastfetch config present — left untouched"
-elif [[ ! -f /etc/fastfetch/config.jsonc ]]; then
-  warn "  /etc/fastfetch/config.jsonc not found — skipping"
-else
-  if $DRY_RUN; then
-    info "  [dry-run] would seed ~/.config/fastfetch/config.jsonc (system default + Stellarchy revision line + logo)"
-  else
-    mkdir -p "$FF_DIR"
-    cp /etc/fastfetch/config.jsonc "$FF_DIR/config.jsonc"
-    cp "$REPO_DIR/stellarchy.png" "$FF_DIR/stellarchy.png"
-    sed -i \
-      -e 's|"text": "version=\$(omarchy-version) && echo \\"Omarchy \$version\\""|"text": "rev=\$(stellarchy-version 2>/dev/null); ver=\$(omarchy-version); kernel=\$(uname -r); echo \\"Stellarchy${rev:+ $rev} (Omarchy \$ver) \| \$kernel\\""|' \
-      -e 's|"type": "file"|"type": "sixel"|' \
-      -e 's|"source": "~/.config/omarchy/branding/about.txt"|"source": "~/.config/fastfetch/stellarchy.png",\n    "width": 70,\n    "height": 30|' \
-      "$FF_DIR/config.jsonc"
-    ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy revision line + logo)"
+if [[ -f $FF_DIR/config.jsonc ]] && [[ -f /etc/fastfetch/config.jsonc ]] &&
+   cmp -s <(ff_debrand "$FF_DIR/config.jsonc") <(ff_debrand /etc/fastfetch/config.jsonc); then
+  # Pristine, outdated or ours — nothing user-made to lose, so (re)apply.
+  if ! $DRY_RUN; then
+    brand_fastfetch
   fi
-  changed=$((changed+1))
+  ok "  fastfetch branded (revision OS line + $(ff_logo_type) logo)"
+elif [[ -f $FF_DIR/config.jsonc ]]; then
+  if grep -q 'stellarchy-version' "$FF_DIR/config.jsonc"; then
+    warn "  Stellarchy-branded fastfetch config modified beyond defaults — left untouched"
+  elif grep -qF -- "$LEGACY_FF_LINE" "$FF_DIR/config.jsonc"; then
+    warn "  pre-versioning Stellarchy fastfetch config with local changes — left untouched (delete it to reseed)"
+  else
+    warn "  custom fastfetch config found — left untouched"
+  fi
+elif [[ -f /etc/fastfetch/config.jsonc ]]; then
+  if $DRY_RUN; then
+    info "  [dry-run] would seed ~/.config/fastfetch/config.jsonc (system default + Stellarchy revision line + $(ff_logo_type) logo)"
+  else
+    brand_fastfetch
+    ok "  seeded ~/.config/fastfetch/config.jsonc (system default + Stellarchy revision line + $(ff_logo_type) logo)"
+  fi
+else
+  warn "  /etc/fastfetch/config.jsonc not found — skipping"
 fi
 
 echo ""
