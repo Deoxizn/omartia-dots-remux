@@ -12,6 +12,7 @@ Each entry links to its commit, newest first within each day.
 
 ## 2026-08-24
 
+- Auto-update: omarchy-update now pulls this repo and re-runs `upgrade.sh` whenever new commits exist (post-update hook, installed by fresh installs and bootstrapped by the next manual upgrade) — no more manual upgrading ([`4990212`](https://github.com/deoxizn/omartia-dots-remux/commit/4990212))
 - Bar: ship the updates indicator as caelestia patch 0003 — always visible, dim when clean, count badge layered on the glyph corner when repo/AUR updates are pending; `shell.json` seeds its entries slot for fresh installs and upgrades migrate existing configs ([`21c5ae3`](https://github.com/deoxizn/omartia-dots-remux/commit/21c5ae3))
 - Uninstall: unmask `omarchy-sleep-lock.service` before re-enabling — hand-masked units silently skipped the restore ([`01b6dbb`](https://github.com/deoxizn/omartia-dots-remux/commit/01b6dbb))
 - Deps: ensure hypridle is installed (install dep list + upgrade check) — stock Omarchy doesn't ship it, so installs could have a managed hypridle.conf with no binary ([`710da8f`](https://github.com/deoxizn/omartia-dots-remux/commit/710da8f))
