@@ -181,5 +181,12 @@
     "sidebar": {
         "enabled": true,
         "showOnHover": true
+    },
+    "utilities": {
+        "toasts": {
+            "capsLockChanged": false,
+            "kbLayoutChanged": false,
+            "numLockChanged": false
+        }
     }
 }

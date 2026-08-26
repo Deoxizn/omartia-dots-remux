@@ -904,6 +904,47 @@ EOF
     ;;
 esac
 
+# ──────────────────────────────────────────────
+# Keyboard/lock toast overrides — disable noisy keyboard layout, numlock, and
+# capslock toasts that the C++ defaults leave enabled.
+# ──────────────────────────────────────────────
+
+toasts_ok() {
+  python3 - "$1" <<'EOF'
+import json, sys
+c = json.load(open(sys.argv[1]))
+t = c.get("utilities", {}).get("toasts", {})
+sys.exit(0 if t.get("capsLockChanged") is False and
+              t.get("kbLayoutChanged") is False and
+              t.get("numLockChanged") is False else 1)
+EOF
+}
+
+info "Keyboard toast overrides:"
+
+if [[ ! -f $CAELESTIA_SHELL_JSON ]]; then
+  warn "  no caelestia/shell.json found — skipping"
+elif toasts_ok "$CAELESTIA_SHELL_JSON"; then
+  ok "  keyboard toasts already disabled"
+elif $DRY_RUN; then
+  info "  [dry-run] would disable capsLockChanged/kbLayoutChanged/numLockChanged toasts"
+  changed=$((changed+1))
+else
+  cp "$CAELESTIA_SHELL_JSON" "$CAELESTIA_SHELL_JSON.pre-upgrade.bak"
+  python3 - "$CAELESTIA_SHELL_JSON" <<'EOF'
+import json, sys
+p = sys.argv[1]
+c = json.load(open(p))
+t = c.setdefault("utilities", {}).setdefault("toasts", {})
+t["capsLockChanged"] = False
+t["kbLayoutChanged"] = False
+t["numLockChanged"] = False
+json.dump(c, open(p, "w"), indent=4)
+EOF
+  ok "  keyboard toasts disabled (backup: caelestia/shell.json.pre-upgrade.bak)"
+  changed=$((changed+1))
+fi
+
 echo ""
 
 # ──────────────────────────────────────────────

@@ -4,6 +4,10 @@
      one bullet per change: - Description ([`short-hash`](commit-url)).
      Skip README rewordings, screenshots and demo videos. -->
 
+## 2026-08-26
+
+- Caelestia: disable keyboard layout, numlock, and capslock toast notifications — noisy OS-level toasts that fired on every layout switch and lock-key toggle are now suppressed via `utilities.toasts` overrides in shell.json; `sync.sh` patches existing installs ([`8601419`](https://github.com/deoxizn/omartia-dots-remux/commit/8601419))
+
 ## 2026-08-25
 
 - Nexus: add WiFi password dialog — tapping a secured network in the control center now opens a password entry sub-page, connects with the entered password, and saves the profile; eliminates the broken invisible popover flow ([`e52ec60`](https://github.com/deoxizn/omartia-dots-remux/commit/e52ec60))
