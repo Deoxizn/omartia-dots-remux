@@ -6,9 +6,9 @@
 
 ## 2026-08-25
 
-- Nexus: add WiFi password dialog — tapping a secured network in the control center now opens a password entry sub-page, connects with the entered password, and saves the profile; eliminates the broken invisible popover flow ([`TODO`](https://github.com/deoxizn/omartia-dots-remux/commit/TODO))
-- Nexus: add Connect button to inactive saved network detail page — tapping Connect opens the password dialog for networks that have a saved profile but aren't currently active ([`TODO`](https://github.com/deoxizn/omartia-dots-remux/commit/TODO))
-- Caelestia: tighten `detectPasswordRequired()` in Nmcli.qml — remove overly broad `"password"`, `"Secrets"`, `"802.11"` patterns that false-positived on intermediate nmcli command stderr; only match explicit password-required signals now ([`TODO`](https://github.com/deoxizn/omartia-dots-remux/commit/TODO))
+- Nexus: add WiFi password dialog — tapping a secured network in the control center now opens a password entry sub-page, connects with the entered password, and saves the profile; eliminates the broken invisible popover flow ([`e52ec60`](https://github.com/deoxizn/omartia-dots-remux/commit/e52ec60))
+- Nexus: add Connect button to inactive saved network detail page — tapping Connect opens the password dialog for networks that have a saved profile but aren't currently active ([`e52ec60`](https://github.com/deoxizn/omartia-dots-remux/commit/e52ec60))
+- Caelestia: tighten `detectPasswordRequired()` in Nmcli.qml — remove overly broad `"password"`, `"Secrets"`, `"802.11"` patterns that false-positived on intermediate nmcli command stderr; only match explicit password-required signals now ([`e52ec60`](https://github.com/deoxizn/omartia-dots-remux/commit/e52ec60))
 - Remove personal `monitors/HDMI-A-1/shell.json` overlay from repo — install.sh copied it to all users, silently disabling the bar on machines where HDMI-A-1 is the primary or only monitor ([`db8eb1a`](https://github.com/deoxizn/omartia-dots-remux/commit/db8eb1a))
 - Repo default location moves to `~/.local/opt/stellarchy` — hidden, XDG-friendly, safe from accidental `~/` cleanup; state file at `~/.local/state/stellarchy/repo-dir` is now the single source of truth for repo path
 - Post-update hook auto-migrates repo from legacy locations (`~/Work/omartia-dots-remux`, `~/omartia-dots-remux`) to `~/.local/opt/stellarchy` on first run — no manual intervention, existing installs self-heal during `omarchy-update`
