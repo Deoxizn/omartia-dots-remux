@@ -110,15 +110,28 @@ fi
 # Revert guard patch from omarchy-restart-shell
 F=/usr/share/omarchy/bin/omarchy-restart-shell
 if [[ -f "$F" ]] && grep -q 'stellarchy' "$F" 2>/dev/null; then
-  sudo python3 - "$F" <<'PYEOF'
+  GUARD_REVERT=$(mktemp /tmp/stellarchy-guard-revert.XXXXXX.py)
+  cat > "$GUARD_REVERT" << 'PYEOF'
 import sys
 p = sys.argv[1]
-s = open(p).read()
-lines = s.split("\n")
-new_lines = [l for l in lines if "stellarchy" not in l and "Caelestia handles the shell" not in l and "pgrep -f" not in l and "Caelestia active" not in l]
-open(p, "w").write("\n".join(new_lines))
+with open(p) as f:
+    lines = f.readlines()
+result = []
+for i, l in enumerate(lines):
+    stripped = l.strip()
+    if stripped == "exit 0" and i + 1 < len(lines) and lines[i+1].strip() == "fi":
+        continue
+    if stripped == "fi" and i > 0 and lines[i-1].strip() == "exit 0":
+        continue
+    if "stellarchy" in l or "Caelestia handles the shell" in l or "pgrep -f" in l or "Caelestia active" in l:
+        continue
+    result.append(l)
+with open(p, "w") as f:
+    f.writelines(result)
 print("guard reverted")
 PYEOF
+  sudo python3 "$GUARD_REVERT" "$F"
+  rm -f "$GUARD_REVERT"
   ok "  Reverted guard patch from omarchy-restart-shell"
 fi
 
