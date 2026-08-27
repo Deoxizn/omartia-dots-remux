@@ -101,6 +101,12 @@ if [[ -f "$HOME/.config/omarchy/hooks/theme-set.d/caelestia-sync.sh" ]]; then
   ok "  Removed theme bridge hook"
 fi
 
+# Remove repo sync hook
+if [[ -f "$HOME/.config/omarchy/hooks/post-update.d/stellarchy-repo-sync.sh" ]]; then
+  rm "$HOME/.config/omarchy/hooks/post-update.d/stellarchy-repo-sync.sh"
+  ok "  Removed repo sync hook"
+fi
+
 # Remove update guard (guard self-neutralizes once Caelestia is gone)
 if [[ -f /usr/local/bin/stellarchy-guard-restart-shell.sh ]]; then
   sudo rm -f /usr/local/bin/stellarchy-guard-restart-shell.sh /usr/share/libalpm/hooks/stellarchy-restart-shell-guard.hook
