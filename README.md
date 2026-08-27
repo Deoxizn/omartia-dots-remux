@@ -302,7 +302,7 @@ level.
 ./uninstall.sh
 ```
 
-Restores all backed-up configs, stops and removes the Caelestia Shell systemd service, and removes Caelestia Shell configs (including the update guard — which also self-neutralizes once Caelestia is no longer running). Log out/in to restore omarchy-shell.
+Restores all backed-up configs, stops and removes the Caelestia Shell systemd service, reverts the `omarchy-restart-shell` guard patch, removes the bar-off toggle (restoring the stock bar), restores the stock plymouth splash, removes the SDDM theme, and cleans up all Stellarchy scripts, hooks, and state. Log out/in to restore omarchy-shell.
 
 ## Requirements
 

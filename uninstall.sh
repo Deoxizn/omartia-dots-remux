@@ -107,6 +107,25 @@ if [[ -f /usr/local/bin/stellarchy-guard-restart-shell.sh ]]; then
   ok "  Removed update guard"
 fi
 
+# Revert guard patch from omarchy-restart-shell
+F=/usr/share/omarchy/bin/omarchy-restart-shell
+if [[ -f "$F" ]] && grep -q 'stellarchy' "$F" 2>/dev/null; then
+  sudo python3 - "$F" <<'PYEOF'
+import sys
+p = sys.argv[1]
+s = open(p).read()
+lines = s.split("\n")
+new_lines = [l for l in lines if "stellarchy" not in l and "Caelestia handles the shell" not in l and "pgrep -f" not in l and "Caelestia active" not in l]
+open(p, "w").write("\n".join(new_lines))
+print("guard reverted")
+PYEOF
+  ok "  Reverted guard patch from omarchy-restart-shell"
+fi
+
+# Restore bar toggle (Stellarchy/Niri may have hidden the bar)
+rm -f "$HOME/.local/state/omarchy/toggles/bar-off" 2>/dev/null
+ok "  Restored bar toggle (bar-off removed)"
+
 # Remove splash guard
 if [[ -f /usr/local/bin/stellarchy-plymouth-refresh.sh ]]; then
   sudo rm -f /usr/local/bin/stellarchy-plymouth-refresh.sh /usr/share/libalpm/hooks/95-stellarchy-plymouth-refresh.hook
