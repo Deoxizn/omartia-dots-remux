@@ -135,7 +135,7 @@ PYEOF
   ok "  Reverted guard patch from omarchy-restart-shell"
 fi
 
-# Restore bar toggle (Stellarchy/Niri may have hidden the bar)
+# Restore bar toggle (may have been hidden)
 rm -f "$HOME/.local/state/omarchy/toggles/bar-off" 2>/dev/null
 ok "  Restored bar toggle (bar-off removed)"
 
