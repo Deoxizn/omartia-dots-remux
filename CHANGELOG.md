@@ -6,6 +6,7 @@
 
 ## 2026-08-26
 
+- Remove redundant notifications from auto-sync hook (terminal already shows status)
 - Caelestia: disable keyboard layout, numlock, and capslock toast notifications — noisy OS-level toasts that fired on every layout switch and lock-key toggle are now suppressed via `utilities.toasts` overrides in shell.json; `sync.sh` patches existing installs ([`8601419`](https://github.com/deoxizn/omartia-dots-remux/commit/8601419))
 
 ## 2026-08-25

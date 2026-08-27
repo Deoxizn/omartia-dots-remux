@@ -106,16 +106,13 @@ say() {
     if ! git pull --ff-only --quiet; then
         say "sync FAILED — repo diverged?"
         echo "[$(date '+%F %T')] pull failed (diverged?)"
-        notify-send -u critical "Stellarchy sync failed" "Repo diverged — run sync.sh manually in $REPO_DIR"
         exit 0
     fi
 
     if ./sync.sh; then
         say "synced to $remote_rev"
-        notify-send -u normal "Stellarchy updated" "Dots synced to latest; some changes apply on next login."
     else
         say "sync FAILED"
-        notify-send -u critical "Stellarchy update failed" "Check ~/.local/state/stellarchy/repo-sync.log"
     fi
 } >>"$LOG" 2>&1
 exit 0
