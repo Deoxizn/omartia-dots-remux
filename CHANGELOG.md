@@ -6,11 +6,11 @@
 
 ## 2026-08-29
 
-- mpv: window now follows video's native resolution — floating without fixed 1000×720, mpv requests its own size per video (4K at 4K, etc.), matching noctarchy; ships `config/mpv/mpv.conf` with `autofit-larger=90%x90%` and commented tips, installed only if missing (sync updates when owned)
-- Hypr: add beginner-friendly inline comments to `monitors.lua`, `input.lua`, `bindings.lua`, `hyprland.lua` — banners, per-option docs, file-map and reload tips ported from noctarchy `4cf8f7a`/`5a43005`
-- Uninstall: thorough scrub — actively searches and removes remaining Stellarchy/Caelestia/omartia files, restores stock Plymouth/SDDM/fastfetch/branding, removes Caelestia checkout, merge base, identity overlay, caches, omartia-owned `mpv.conf`, stray hooks and leftover theme dirs
-- Uninstall: fix guard removal — detect `omartia-dots-remux` marker (not just `stellarchy`) and correctly revert `omarchy-restart-shell` patch that was left intact after uninstall
-- Uninstall: auto-restore Omarchy shell after cleanup (daemon-reload + `omarchy-restart-shell` / `hyprctl` fallback) so no logout is required to get the stock shell back
+- mpv: window now follows video's native resolution — floating without fixed 1000×720, mpv requests its own size per video (4K at 4K, etc.), matching noctarchy; ships `config/mpv/mpv.conf` with `autofit-larger=90%x90%` and commented tips, installed only if missing (sync updates when owned) ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
+- Hypr: add beginner-friendly inline comments to `monitors.lua`, `input.lua`, `bindings.lua`, `hyprland.lua` — banners, per-option docs, file-map and reload tips ported from noctarchy `4cf8f7a`/`5a43005` ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
+- Uninstall: thorough scrub — actively searches and removes remaining Stellarchy/Caelestia/omartia files, restores stock Plymouth/SDDM/fastfetch/branding, removes Caelestia checkout, merge base, identity overlay, caches, omartia-owned `mpv.conf`, stray hooks and leftover theme dirs ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
+- Uninstall: fix guard removal — detect `omartia-dots-remux` marker (not just `stellarchy`) and correctly revert `omarchy-restart-shell` patch that was left intact after uninstall ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
+- Uninstall: auto-restore Omarchy shell after cleanup (daemon-reload + `omarchy-restart-shell` / `hyprctl` fallback) so no logout is required to get the stock shell back ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
 
 ## 2026-08-26
 
