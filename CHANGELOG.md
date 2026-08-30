@@ -12,7 +12,7 @@
 - Uninstall: fix guard removal — detect `omartia-dots-remux` marker (not just `stellarchy`) and correctly revert `omarchy-restart-shell` patch that was left intact after uninstall ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
 - Uninstall: auto-restore Omarchy shell after cleanup (daemon-reload + `omarchy-restart-shell` / `hyprctl` fallback) so no logout is required to get the stock shell back ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
 - Uninstall: fix Hyprland restore — remove any `package.loaded["default.hypr.autostart"]` block even when the backup was polluted, seed stock `hyprland.lua` if bootstrap missing, and exclude `omartia-dots-remux-backup` from the system-wide scrub so the backup isn't deleted mid-restore ([`f76fa05`](https://github.com/deoxizn/omartia-dots-remux/commit/f76fa05))
-- Uninstall: make fastfetch/os-release/SDDM/Plymouth reverts and branding/file deletions unconditional so uninstall always reverts to stock Omarchy and deletes all Stellarchy dirs/files
+- Uninstall: make fastfetch/os-release/SDDM/Plymouth reverts and branding/file deletions unconditional so uninstall always reverts to stock Omarchy and deletes all Stellarchy dirs/files ([`0cc6d79`](https://github.com/deoxizn/omartia-dots-remux/commit/0cc6d79))
 
 ## 2026-08-26
 
