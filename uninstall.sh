@@ -73,13 +73,29 @@ if [[ -f "$HOME/.config/hypr/scripts/caelestia-system-lock" ]]; then
   ok "  Removed hypr/scripts/caelestia-system-lock (old layout)"
 fi
 
-# Remove Caelestia autostart override from hyprland.lua if backup didn't have it
+# Ensure Hyprland can launch Omarchy shell — remove any remux/Noctarchy stub that
+# blocks default autostart. This must happen AFTER restore, since the backup itself
+# may have been taken after the stub was installed (e.g. machine already had
+# Noctarchy's hyprland.lua when stellarchy was installed). Without this, Hyprland
+# starts with no shell, no wallpaper, and only the few binds in the user's override.
 HYPRLAND_FILE="$HOME/.config/hypr/hyprland.lua"
-if [[ -f "$HYPRLAND_FILE" ]] && ! grep -q 'require("default.hypr.autostart")' "$LATEST_BACKUP/hyprland.lua" 2>/dev/null; then
-  sed -i '/^-- Caelestia: prevent default omarchy autostart/d' "$HYPRLAND_FILE"
-  sed -i '/^package.loaded\["default.hypr.autostart"\]/d' "$HYPRLAND_FILE"
+if [[ -f "$HYPRLAND_FILE" ]] && grep -q 'package\.loaded\["default\.hypr\.autostart"\]' "$HYPRLAND_FILE" 2>/dev/null; then
+  sed -i '/^--.*prevent default omarchy autostart/d' "$HYPRLAND_FILE"
+  sed -i '/^--.*Must be set AFTER bootstrap/d' "$HYPRLAND_FILE"
+  sed -i '/^--.*on every load\/reload.*wiped/d' "$HYPRLAND_FILE"
+  sed -i '/^package\.loaded\["default\.hypr\.autostart"\]/d' "$HYPRLAND_FILE"
   sed -i '/^$/N;/^\n$/d' "$HYPRLAND_FILE"  # Remove resulting blank lines
-  ok "  Removed Caelestia autostart override from hyprland.lua"
+  ok "  Removed autostart block from hyprland.lua (Omarchy autostart restored)"
+fi
+# If hyprland.lua is still missing the bootstrap (corrupt restore), seed stock template
+if [[ ! -f "$HYPRLAND_FILE" ]] || ! grep -q 'dofile.*bootstrap\.lua' "$HYPRLAND_FILE" 2>/dev/null; then
+  warn "  hyprland.lua missing bootstrap — seeding from Omarchy template"
+  if [[ -f /usr/share/omarchy/config/hypr/hyprland.lua ]]; then
+    cp /usr/share/omarchy/config/hypr/hyprland.lua "$HYPRLAND_FILE"
+    ok "  Seeded hyprland.lua from Omarchy stock"
+  else
+    warn "  Omarchy template not found — Hyprland may not start cleanly"
+  fi
 fi
 
 # Restore omarchy shell.json
@@ -390,8 +406,11 @@ info "Searching for leftover Stellarchy references..."
 leftovers=""
 for base in "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/state" "$HOME/.local/share" /usr/local/bin /usr/share/libalpm/hooks /usr/share/plymouth/themes /usr/share/sddm/themes /etc/plymouth /etc/sddm.conf.d; do
   [[ -e "$base" ]] || continue
-  # Use find with -maxdepth to avoid crawling everything; still catch the known install sites
-  hits=$(find "$base" -maxdepth 4 \( -name "*stellarchy*" -o -name "*omartia*" \) -print 2>/dev/null || true)
+  # Use find with -maxdepth to avoid crawling everything; still catch the known install sites.
+  # Exclude BACKUP_DIR so we don't delete the backup the user may need to keep.
+  hits=$(find "$base" -maxdepth 4 \( -name "*stellarchy*" -o -name "*omartia*" \) -not -path "$BACKUP_DIR/*" -print 2>/dev/null || true)
+  # Filter out BACKUP_DIR itself if base is exactly the backup
+  hits=$(echo "$hits" | grep -v "^$BACKUP_DIR$" || true)
   if [[ -n "$hits" ]]; then
     leftovers+="$hits"$'\n'
   fi
