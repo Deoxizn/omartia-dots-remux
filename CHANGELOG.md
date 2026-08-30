@@ -6,18 +6,18 @@
 
 ## 2026-08-29
 
-- mpv: window now follows video's native resolution — floating without fixed 1000×720, mpv requests its own size per video (4K at 4K, etc.), matching noctarchy; ships `config/mpv/mpv.conf` with `autofit-larger=90%x90%` and commented tips, installed only if missing (sync updates when owned) ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
-- Hypr: add beginner-friendly inline comments to `monitors.lua`, `input.lua`, `bindings.lua`, `hyprland.lua` — banners, per-option docs, file-map and reload tips ported from noctarchy `4cf8f7a`/`5a43005` ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
+- mpv: window now follows video's native resolution — floating without fixed 1000×720, mpv requests its own size per video (4K at 4K, etc.); ships `config/mpv/mpv.conf` with `autofit-larger=90%x90%` and commented tips, installed only if missing (sync updates when owned) ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
+- Hypr: add beginner-friendly inline comments to `monitors.lua`, `input.lua`, `bindings.lua`, `hyprland.lua` — banners, per-option docs, file-map and reload tips ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
 - Uninstall: thorough scrub — actively searches and removes remaining Stellarchy/Caelestia/omartia files, restores stock Plymouth/SDDM/fastfetch/branding, removes Caelestia checkout, merge base, identity overlay, caches, omartia-owned `mpv.conf`, stray hooks and leftover theme dirs ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
 - Uninstall: fix guard removal — detect `omartia-dots-remux` marker (not just `stellarchy`) and correctly revert `omarchy-restart-shell` patch that was left intact after uninstall ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
 - Uninstall: auto-restore Omarchy shell after cleanup (daemon-reload + `omarchy-restart-shell` / `hyprctl` fallback) so no logout is required to get the stock shell back ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))
-- Uninstall: fix Hyprland restore — remove any `package.loaded["default.hypr.autostart"]` block even when the backup was polluted (e.g. Noctarchy stub), seed stock `hyprland.lua` if bootstrap missing, and exclude `omartia-dots-remux-backup` from the system-wide scrub so the backup isn't deleted mid-restore ([`f76fa05`](https://github.com/deoxizn/omartia-dots-remux/commit/f76fa05))
+- Uninstall: fix Hyprland restore — remove any `package.loaded["default.hypr.autostart"]` block even when the backup was polluted, seed stock `hyprland.lua` if bootstrap missing, and exclude `omartia-dots-remux-backup` from the system-wide scrub so the backup isn't deleted mid-restore ([`f76fa05`](https://github.com/deoxizn/omartia-dots-remux/commit/f76fa05))
 
 ## 2026-08-26
 
 - Remove redundant notifications from auto-sync hook (terminal already shows status)
 - Caelestia: disable keyboard layout, numlock, and capslock toast notifications — noisy OS-level toasts that fired on every layout switch and lock-key toggle are now suppressed via `utilities.toasts` overrides in shell.json; `sync.sh` patches existing installs ([`8601419`](https://github.com/deoxizn/omartia-dots-remux/commit/8601419))
-- Uninstall: add plymouth splash restore, SDDM theme removal, and repo removal option (port from Noctarchy)
+- Uninstall: add plymouth splash restore, SDDM theme removal, and repo removal option
 - Uninstall: revert `omarchy-restart-shell` guard patch, remove bar-off toggle to restore stock bar
 
 ## 2026-08-25

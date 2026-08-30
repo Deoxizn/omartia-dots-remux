@@ -73,10 +73,9 @@ if [[ -f "$HOME/.config/hypr/scripts/caelestia-system-lock" ]]; then
   ok "  Removed hypr/scripts/caelestia-system-lock (old layout)"
 fi
 
-# Ensure Hyprland can launch Omarchy shell — remove any remux/Noctarchy stub that
+# Ensure Hyprland can launch Omarchy shell — remove any remux stub that
 # blocks default autostart. This must happen AFTER restore, since the backup itself
-# may have been taken after the stub was installed (e.g. machine already had
-# Noctarchy's hyprland.lua when stellarchy was installed). Without this, Hyprland
+# may have been taken after the stub was installed. Without this, Hyprland
 # starts with no shell, no wallpaper, and only the few binds in the user's override.
 HYPRLAND_FILE="$HOME/.config/hypr/hyprland.lua"
 if [[ -f "$HYPRLAND_FILE" ]] && grep -q 'package\.loaded\["default\.hypr\.autostart"\]' "$HYPRLAND_FILE" 2>/dev/null; then
