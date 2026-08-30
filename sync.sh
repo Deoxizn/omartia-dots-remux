@@ -582,6 +582,34 @@ if systemctl --user is-enabled --quiet omarchy-sleep-lock.service 2>/dev/null; t
   fi
 fi
 
+# ──────────────────────────────────────────────
+# mpv — native resolution (no fixed 1000x720). Install if missing; update if
+# omartia-owned; leave genuinely custom configs untouched.
+# ──────────────────────────────────────────────
+
+info "mpv config:"
+MPV_SRC="$REPO_DIR/config/mpv/mpv.conf"
+MPV_DST="$HOME/.config/mpv/mpv.conf"
+if [[ -f $MPV_SRC ]]; then
+  if [[ ! -f $MPV_DST ]]; then
+    if ! $DRY_RUN; then mkdir -p "$(dirname "$MPV_DST")" && cp "$MPV_SRC" "$MPV_DST"; fi
+    ok "  mpv/mpv.conf installed (native resolution)"
+  elif grep -q "omartia-dots-remux" "$MPV_DST" 2>/dev/null; then
+    if ! cmp -s "$MPV_SRC" "$MPV_DST"; then
+      if $DRY_RUN; then
+        info "  [dry-run] would update mpv/mpv.conf (omartia-owned)"
+      else
+        cp "$MPV_SRC" "$MPV_DST"
+        ok "  mpv/mpv.conf updated (omartia-owned)"
+      fi
+    else
+      ok "  mpv/mpv.conf up to date"
+    fi
+  else
+    warn "  mpv/mpv.conf exists — skipped (custom config preserved)"
+  fi
+fi
+
 echo ""
 
 # ──────────────────────────────────────────────

@@ -44,13 +44,16 @@ hl.on("hyprland.start", function()
   hl.exec_cmd("gsettings set org.gnome.desktop.interface cursor-size 24")
 end)
 
--- Floating windows
+-- Floating windows (most TUI/dialog apps at fixed 1000×720)
 hl.window_rule({
   match = {
-    class = "org.omarchy.bluetui|org.omarchy.impala|org.omarchy.wiremix|org.omarchy.btop|org.omarchy.terminal|org.omarchy.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omarchy|About|TUI.float|imv|mpv"
+    class = "org.omarchy.bluetui|org.omarchy.impala|org.omarchy.wiremix|org.omarchy.btop|org.omarchy.terminal|org.omarchy.bash|org.gnome.NautilusPreviewer|org.gnome.Evince|com.gabm.satty|Omarchy|About|TUI.float|imv"
   },
   tag = "+floating-window"
 })
+
+-- Media player — floating, native resolution (no fixed size; mpv sizes window to video)
+hl.window_rule({ match = { class = "mpv" }, float = true })
 
 hl.window_rule({
   match = {

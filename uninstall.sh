@@ -108,14 +108,31 @@ if [[ -f "$HOME/.config/omarchy/hooks/post-update.d/stellarchy-repo-sync.sh" ]];
 fi
 
 # Remove update guard (guard self-neutralizes once Caelestia is gone)
-if [[ -f /usr/local/bin/stellarchy-guard-restart-shell.sh ]]; then
-  sudo rm -f /usr/local/bin/stellarchy-guard-restart-shell.sh /usr/share/libalpm/hooks/stellarchy-restart-shell-guard.hook
-  ok "  Removed update guard"
-fi
+# Handles both current (stellarchy) and legacy (omartia) names.
+for guard_bin in /usr/local/bin/stellarchy-guard-restart-shell.sh /usr/local/bin/omartia-guard-restart-shell.sh; do
+  [[ -f "$guard_bin" ]] || continue
+  sudo rm -f "$guard_bin"
+  ok "  Removed update guard bin: $(basename "$guard_bin")"
+done
+for guard_hook in /usr/share/libalpm/hooks/stellarchy-restart-shell-guard.hook /usr/share/libalpm/hooks/omartia-restart-shell-guard.hook; do
+  [[ -f "$guard_hook" ]] || continue
+  sudo rm -f "$guard_hook"
+  ok "  Removed update guard hook: $(basename "$guard_hook")"
+done
+# Catch any stray guard files matching *stellarchy* or *omartia* in those dirs
+shopt -s nullglob
+for f in /usr/local/bin/*stellarchy* /usr/local/bin/*omartia* /usr/share/libalpm/hooks/*stellarchy* /usr/share/libalpm/hooks/*omartia*; do
+  [[ -e "$f" ]] || continue
+  sudo rm -f "$f"
+  ok "  Removed stray guard: $f"
+done
+shopt -u nullglob
 
-# Revert guard patch from omarchy-restart-shell
+# Revert guard patch from omarchy-restart-shell — the guard inserts 5 lines after
+# the shebang (comment + if pgrep + echo + exit 0 + fi). The marker is
+# "omartia-dots-remux" (historical) or "stellarchy" or "Caelestia handles".
 F=/usr/share/omarchy/bin/omarchy-restart-shell
-if [[ -f "$F" ]] && grep -q 'stellarchy' "$F" 2>/dev/null; then
+if [[ -f "$F" ]] && grep -qE 'stellarchy|omartia-dots-remux|Caelestia handles' "$F" 2>/dev/null; then
   GUARD_REVERT=$(mktemp /tmp/stellarchy-guard-revert.XXXXXX.py)
   cat > "$GUARD_REVERT" << 'PYEOF'
 import sys
@@ -126,12 +143,18 @@ result = []
 for i, l in enumerate(lines):
     stripped = l.strip()
     if stripped == "exit 0" and i + 1 < len(lines) and lines[i+1].strip() == "fi":
-        continue
+        # Only drop the guard's exit/fi pair — check surrounding guard markers to avoid nuking unrelated exits
+        window = "".join(lines[max(0,i-3):i+3])
+        if "Caelestia" in window or "stellarchy" in window or "omartia-dots-remux" in window or "pgrep" in window:
+            continue
     if stripped == "fi" and i > 0 and lines[i-1].strip() == "exit 0":
-        continue
-    if "stellarchy" in l or "Caelestia handles the shell" in l or "pgrep -f" in l or "Caelestia active" in l:
+        window = "".join(lines[max(0,i-3):i+3])
+        if "Caelestia" in window or "stellarchy" in window or "omartia-dots-remux" in window or "pgrep" in window:
+            continue
+    if "stellarchy" in l or "omartia-dots-remux" in l or "Caelestia handles the shell" in l or "pgrep -f" in l or "qs -c caelestia" in l or "Caelestia active" in l:
         continue
     result.append(l)
+# Clean up double blank lines left by removal (keep single)
 with open(p, "w") as f:
     f.writelines(result)
 print("guard reverted")
@@ -246,6 +269,164 @@ if [[ -d "$HOME/sddm-stellarchy" ]]; then
   ok "  Removed ~/sddm-stellarchy"
 fi
 
+# ──────────────────────────────────────────────
+# Thorough scrub: actively search and remove any remaining Stellarchy /
+# Caelestia / omartia artifacts, then warn about any references still found.
+# ──────────────────────────────────────────────
+
+info "Scrubbing remaining Caelestia/Stellarchy artifacts..."
+
+# Caelestia Shell checkout (cloned repo). Wasted if left behind.
+if [[ -d "$HOME/.config/quickshell/caelestia" ]]; then
+  rm -rf "$HOME/.config/quickshell/caelestia"
+  ok "  Removed ~/.config/quickshell/caelestia checkout"
+  rmdir "$HOME/.config/quickshell" 2>/dev/null || true
+fi
+
+# Caelestia live config — remove if install created it. If the user had a
+# pre-existing ~/.config/caelestia before install, the earlier restore already
+# brought it back, so don't nuke it again.
+if [[ -d "$HOME/.config/caelestia" ]] && [[ ! -d "$LATEST_BACKUP/caelestia" ]]; then
+  rm -rf "$HOME/.config/caelestia"
+  ok "  Removed ~/.config/caelestia"
+elif [[ -d "$HOME/.config/caelestia" ]]; then
+  info "  Preserved ~/.config/caelestia (restored from backup)"
+fi
+
+# Hyprland merge history (sync.sh's 3-way base)
+if [[ -d "$HOME/.config/hypr/.stellarchy-base" ]]; then
+  rm -rf "$HOME/.config/hypr/.stellarchy-base"
+  ok "  Removed hypr/.stellarchy-base"
+fi
+
+# Stellarchy identity overlay (~/.config/stellarchy/os-release) — shell patch reads this
+if [[ -d "$HOME/.config/stellarchy" ]]; then
+  rm -rf "$HOME/.config/stellarchy"
+  ok "  Removed ~/.config/stellarchy overlay"
+fi
+
+# Cached Caelestia state (scheme, wallpapers, etc.) and disk cache
+if [[ -d "$HOME/.local/state/caelestia" ]]; then
+  rm -rf "$HOME/.local/state/caelestia"
+  ok "  Removed ~/.local/state/caelestia"
+fi
+if [[ -d "$HOME/.cache/caelestia" ]]; then
+  rm -rf "$HOME/.cache/caelestia"
+  ok "  Removed ~/.cache/caelestia"
+fi
+if [[ -d "$HOME/.local/state/stellarchy" ]]; then
+  # repo-dir already handled above; now sweep any stray siblings (logs etc.)
+  rm -rf "$HOME/.local/state/stellarchy"
+  ok "  Removed ~/.local/state/stellarchy"
+fi
+
+# mpv — remove only if we installed it (marker avoids nuking a custom config)
+if [[ -f "$HOME/.config/mpv/mpv.conf" ]] && grep -q "omartia-dots-remux" "$HOME/.config/mpv/mpv.conf" 2>/dev/null; then
+  rm -f "$HOME/.config/mpv/mpv.conf"
+  ok "  Removed mpv/mpv.conf (omartia-owned, native-res window)"
+  rmdir "$HOME/.config/mpv" 2>/dev/null || true
+fi
+
+# Branding — Stellarchy wordmark TUI art. Remove if still Stellarchy so Omarchy
+# falls back to its stock logo/icon at /usr/share/omarchy/*.txt. Never delete
+# a genuinely customized file.
+for f in screensaver.txt about.txt; do
+  p="$HOME/.config/omarchy/branding/$f"
+  if [[ -f "$p" ]] && { cmp -s "$p" "$REPO_DIR/branding/$f" 2>/dev/null || grep -q 'Stellarchy' "$p" 2>/dev/null; } then
+    rm -f "$p"
+    ok "  Removed branding/$f (stellarchy wordmark)"
+  fi
+done
+rmdir "$HOME/.config/omarchy/branding" 2>/dev/null || true
+
+# Fastfetch — Stellarchy logo + OS-line. Remove branded artifacts and restore
+# stock only when the live config is still Stellarchy-branded.
+if [[ -f "$HOME/.config/fastfetch/stellarchy.png" ]]; then
+  # Only remove the PNG if the config references it (i.e. it's ours) or it's unreferenced
+  if [[ ! -f "$HOME/.config/fastfetch/config.jsonc" ]] || grep -q 'stellarchy' "$HOME/.config/fastfetch/config.jsonc" 2>/dev/null || true; then
+    rm -f "$HOME/.config/fastfetch/stellarchy.png"
+    ok "  Removed fastfetch/stellarchy.png"
+  fi
+fi
+if [[ -f "$HOME/.config/fastfetch/config.jsonc" ]] && grep -q 'stellarchy-version' "$HOME/.config/fastfetch/config.jsonc" 2>/dev/null; then
+  if [[ -f /etc/fastfetch/config.jsonc ]]; then
+    cp /etc/fastfetch/config.jsonc "$HOME/.config/fastfetch/config.jsonc"
+    ok "  Restored fastfetch/config.jsonc to stock (removed Stellarchy OS line)"
+  else
+    rm -f "$HOME/.config/fastfetch/config.jsonc"
+    ok "  Removed branded fastfetch/config.jsonc (no stock template to restore)"
+  fi
+fi
+
+# Stellarchy hooks — sweep any stray copies that bypassed the standard paths
+# (e.g. manually copied, old post-update hook names).
+shopt -s nullglob
+for hook in "$HOME/.config/omarchy/hooks/theme-set.d/"*stellarchy* "$HOME/.config/omarchy/hooks/theme-set.d/"*caelestia* \
+           "$HOME/.config/omarchy/hooks/post-update.d/"*stellarchy* "$HOME/.config/omarchy/hooks/post-update.d/"*caelestia*; do
+  [[ -e "$hook" ]] || continue
+  rm -f "$hook"
+  ok "  Removed stray hook: ${hook/#$HOME/\~}"
+done
+shopt -u nullglob
+
+# Plymouth — ensure the stellarchy theme dir itself is gone after reverting
+# the default (the sync/guard above already flipped Theme= back to omarchy).
+if [[ -d /usr/share/plymouth/themes/stellarchy ]]; then
+  sudo rm -rf /usr/share/plymouth/themes/stellarchy
+  ok "  Removed plymouth stellarchy theme dir"
+fi
+# Plymouth config fallback — if Theme= still points at a missing dir, force omarchy
+if grep -q '^Theme=stellarchy' /etc/plymouth/plymouthd.conf 2>/dev/null; then
+  warn "  plymouthd.conf still Theme=stellarchy — forcing omarchy and rebuilding initrd"
+  sudo plymouth-set-default-theme omarchy
+  if mountpoint -q /boot && command -v limine-mkinitcpio &>/dev/null; then
+    sudo limine-mkinitcpio && ok "  initramfs rebuilt (omarchy splash)" || warn "  limine-mkinitcpio failed — run manually"
+  fi
+fi
+
+# System-wide search for leftover stellarchy/omartia/caelestia files
+# (covers /usr/local/bin, libalpm hooks, plymouth/sddm dirs, and any manual copies).
+info "Searching for leftover Stellarchy references..."
+leftovers=""
+for base in "$HOME/.config" "$HOME/.local/bin" "$HOME/.local/state" "$HOME/.local/share" /usr/local/bin /usr/share/libalpm/hooks /usr/share/plymouth/themes /usr/share/sddm/themes /etc/plymouth /etc/sddm.conf.d; do
+  [[ -e "$base" ]] || continue
+  # Use find with -maxdepth to avoid crawling everything; still catch the known install sites
+  hits=$(find "$base" -maxdepth 4 \( -name "*stellarchy*" -o -name "*omartia*" \) -print 2>/dev/null || true)
+  if [[ -n "$hits" ]]; then
+    leftovers+="$hits"$'\n'
+  fi
+done
+# Also grep for Caelestia shell service remnants that may not have stellarchy in name
+if [[ -f "$HOME/.config/systemd/user/caelestia-shell.service" ]]; then
+  leftovers+="$HOME/.config/systemd/user/caelestia-shell.service"$'\n'
+fi
+leftovers=$(echo -n "$leftovers" | sed '/^$/d' | sort -u)
+if [[ -n "$leftovers" ]]; then
+  warn "  Leftover Stellarchy artifacts still present (actively removing):"
+  echo "$leftovers" | while IFS= read -r p; do
+    [[ -e "$p" ]] || continue
+    warn "    $p"
+    # Actively remove — these are all inside the install sites enumerated above
+    if [[ -d "$p" ]]; then
+      rm -rf "$p" 2>/dev/null || sudo rm -rf "$p" 2>/dev/null || true
+    else
+      rm -f "$p" 2>/dev/null || sudo rm -f "$p" 2>/dev/null || true
+    fi
+  done
+  ok "  Leftover files removed"
+else
+  ok "  No leftover Stellarchy files found"
+fi
+
+# Final content search for the string "stellarchy" inside live hypr / hook / service files
+# (warns but does not auto-edit — lets user inspect before nuking references).
+hits=$(grep -RIl "stellarchy\|omartia-dots-remux" "$HOME/.config/hypr" "$HOME/.config/omarchy/hooks" "$HOME/.config/systemd/user" 2>/dev/null | head -20 || true)
+if [[ -n "$hits" ]]; then
+  warn "  Remaining references to 'stellarchy' found in:"
+  echo "$hits" | while IFS= read -r f; do warn "    $f"; done
+  warn "  Review and remove stellarchy mentions manually if needed"
+fi
+
 # Reinstall omarchy-dev if it was removed during install
 OMARCHY_DEV_FLAG="$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
 if [[ -f "$OMARCHY_DEV_FLAG" ]]; then
@@ -266,11 +447,46 @@ if [[ -f "$OMARCHY_DEV_FLAG" ]]; then
   rmdir "$HOME/.local/state/omartia-dots-remux" 2>/dev/null || true
 fi
 
+# ──────────────────────────────────────────────
+# Restore Omarchy shell — guard is now gone, so restart will actually launch it
+# ──────────────────────────────────────────────
+
+info "Restoring Omarchy shell..."
+# Ensure any lingering Caelestia quickshell is gone before restart (guard checks pgrep)
+if pgrep -f "qs.*caelestia\|quickshell.*caelestia" &>/dev/null; then
+  pkill -f "qs.*caelestia\|quickshell.*caelestia" 2>/dev/null || true
+  sleep 1
+fi
+# Reload user systemd daemon (we removed caelestia-shell.service)
+systemctl --user daemon-reload 2>/dev/null || true
+
+if command -v omarchy-restart-shell &>/dev/null; then
+  info "  Running omarchy-restart-shell..."
+  if omarchy-restart-shell 2>&1 | head -30; then
+    ok "  Omarchy shell restarted"
+  else
+    warn "  omarchy-restart-shell reported an error — try: omarchy-restart-shell or log out/in"
+  fi
+elif command -v hyprctl &>/dev/null && hyprctl dispatch --help &>/dev/null 2>&1; then
+  # Fallback: directly dispatch Omarchy's launcher (mirrors what omarchy-restart-shell does)
+  if hyprctl dispatch "exec omarchy-launch-shell" >/dev/null 2>&1; then
+    sleep 2
+    if pgrep -f "quickshell.*omarchy" &>/dev/null || pgrep -x omarchy-shell &>/dev/null; then
+      ok "  Omarchy shell launched via hyprctl"
+    else
+      warn "  Launch dispatched — verify with: pgrep -a quickshell"
+    fi
+  else
+    warn "  hyprctl dispatch failed — log out and back in to restore shell"
+  fi
+else
+  warn "  Could not auto-restart shell — log out and back in"
+fi
+
 echo ""
 ok "═══════════════════════════════════════════"
 ok "  omartia-dots-remux uninstalled!"
 ok "═══════════════════════════════════════════"
 echo ""
-info "Log out and back in to restore omarchy-shell."
 info "Backup preserved at: $LATEST_BACKUP"
 info "To remove backup: rm -rf $BACKUP_DIR"

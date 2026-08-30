@@ -558,6 +558,19 @@ for f in input.lua hypridle.conf; do
   fi
 done
 
+# mpv — native resolution window (no fixed 1000x720). Copy only if not present.
+if [[ ! -f "$HOME/.config/mpv/mpv.conf" ]]; then
+  if ! $DRY_RUN; then
+    mkdir -p "$HOME/.config/mpv"
+    cp "$REPO_DIR/config/mpv/mpv.conf" "$HOME/.config/mpv/mpv.conf"
+  fi
+  ok "  mpv/mpv.conf (new, native resolution)"
+elif grep -q "omartia-dots-remux" "$HOME/.config/mpv/mpv.conf" 2>/dev/null; then
+  warn "  mpv/mpv.conf already omartia-owned — left untouched"
+else
+  warn "  mpv/mpv.conf exists — skipped (custom config preserved)"
+fi
+
 # Main remux lua files — diff-checked against the live config. Stock Omarchy
 # ships every one of these, so on a fresh PC the old "copy if missing" rule
 # skipped them all and only a partial patch block landed. Unowned files are

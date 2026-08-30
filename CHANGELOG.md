@@ -4,6 +4,14 @@
      one bullet per change: - Description ([`short-hash`](commit-url)).
      Skip README rewordings, screenshots and demo videos. -->
 
+## 2026-08-29
+
+- mpv: window now follows video's native resolution — floating without fixed 1000×720, mpv requests its own size per video (4K at 4K, etc.), matching noctarchy; ships `config/mpv/mpv.conf` with `autofit-larger=90%x90%` and commented tips, installed only if missing (sync updates when owned)
+- Hypr: add beginner-friendly inline comments to `monitors.lua`, `input.lua`, `bindings.lua`, `hyprland.lua` — banners, per-option docs, file-map and reload tips ported from noctarchy `4cf8f7a`/`5a43005`
+- Uninstall: thorough scrub — actively searches and removes remaining Stellarchy/Caelestia/omartia files, restores stock Plymouth/SDDM/fastfetch/branding, removes Caelestia checkout, merge base, identity overlay, caches, omartia-owned `mpv.conf`, stray hooks and leftover theme dirs
+- Uninstall: fix guard removal — detect `omartia-dots-remux` marker (not just `stellarchy`) and correctly revert `omarchy-restart-shell` patch that was left intact after uninstall
+- Uninstall: auto-restore Omarchy shell after cleanup (daemon-reload + `omarchy-restart-shell` / `hyprctl` fallback) so no logout is required to get the stock shell back
+
 ## 2026-08-26
 
 - Remove redundant notifications from auto-sync hook (terminal already shows status)
