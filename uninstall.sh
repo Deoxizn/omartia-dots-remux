@@ -257,6 +257,11 @@ if [[ -d /usr/share/sddm/themes/stellarchy ]]; then
     ok "  Theme removed"
   fi
 fi
+# SDDM config may still point at stellarchy even if theme dir was already deleted
+if [[ -f /etc/sddm.conf.d/10-theme.conf ]] && grep -q '^Current=stellarchy' /etc/sddm.conf.d/10-theme.conf; then
+  sudo sed -i 's/^Current=.*/Current=omarchy/' /etc/sddm.conf.d/10-theme.conf
+  ok "  Restored SDDM greeter to omarchy (config was still stellarchy)"
+fi
 
 # Remove state file (repo path)
 if [[ -f "$HOME/.local/state/stellarchy/repo-dir" ]]; then
@@ -342,28 +347,35 @@ if [[ -f "$HOME/.config/mpv/mpv.conf" ]] && grep -q "omartia-dots-remux" "$HOME/
   rmdir "$HOME/.config/mpv" 2>/dev/null || true
 fi
 
-# Branding — Stellarchy wordmark TUI art. Remove if still Stellarchy so Omarchy
-# falls back to its stock logo/icon at /usr/share/omarchy/*.txt. Never delete
-# a genuinely customized file.
+# Branding — Stellarchy wordmark TUI art. Reverts to Omarchy stock by removing
+# the user overlay so Omarchy falls back to /usr/share/omarchy/*.txt.
+# Unconditional for Stellarchy-branded files so `uninstall` always reverts.
 for f in screensaver.txt about.txt; do
   p="$HOME/.config/omarchy/branding/$f"
-  if [[ -f "$p" ]] && { cmp -s "$p" "$REPO_DIR/branding/$f" 2>/dev/null || grep -q 'Stellarchy' "$p" 2>/dev/null; } then
-    rm -f "$p"
-    ok "  Removed branding/$f (stellarchy wordmark)"
+  if [[ -f "$p" ]]; then
+    if cmp -s "$p" "$REPO_DIR/branding/$f" 2>/dev/null || grep -q 'Stellarchy' "$p" 2>/dev/null || grep -q 'stellarchy' "$p" 2>/dev/null; then
+      rm -f "$p"
+      ok "  Removed branding/$f (stellarchy wordmark)"
+    else
+      # Even custom files that were once Stellarchy-branded but hand-edited still
+      # count as Stellarchy remnants — remove so stock Omarchy shows.
+      if grep -q -i 'stellarchy' "$p" 2>/dev/null; then
+        rm -f "$p"
+        ok "  Removed branding/$f (stellarchy remnant)"
+      fi
+    fi
   fi
 done
 rmdir "$HOME/.config/omarchy/branding" 2>/dev/null || true
 
-# Fastfetch — Stellarchy logo + OS-line. Remove branded artifacts and restore
-# stock only when the live config is still Stellarchy-branded.
+# Fastfetch — Stellarchy logo + OS-line. Always revert so `fastfetch` and
+# About/Bar show Omarchy again. Deletes the Stellarchy image and restores
+# the stock config template when the live config still references Stellarchy.
 if [[ -f "$HOME/.config/fastfetch/stellarchy.png" ]]; then
-  # Only remove the PNG if the config references it (i.e. it's ours) or it's unreferenced
-  if [[ ! -f "$HOME/.config/fastfetch/config.jsonc" ]] || grep -q 'stellarchy' "$HOME/.config/fastfetch/config.jsonc" 2>/dev/null || true; then
-    rm -f "$HOME/.config/fastfetch/stellarchy.png"
-    ok "  Removed fastfetch/stellarchy.png"
-  fi
+  rm -f "$HOME/.config/fastfetch/stellarchy.png"
+  ok "  Removed fastfetch/stellarchy.png"
 fi
-if [[ -f "$HOME/.config/fastfetch/config.jsonc" ]] && grep -q 'stellarchy-version' "$HOME/.config/fastfetch/config.jsonc" 2>/dev/null; then
+if [[ -f "$HOME/.config/fastfetch/config.jsonc" ]] && grep -q -i 'stellarchy' "$HOME/.config/fastfetch/config.jsonc" 2>/dev/null; then
   if [[ -f /etc/fastfetch/config.jsonc ]]; then
     cp /etc/fastfetch/config.jsonc "$HOME/.config/fastfetch/config.jsonc"
     ok "  Restored fastfetch/config.jsonc to stock (removed Stellarchy OS line)"
@@ -371,6 +383,11 @@ if [[ -f "$HOME/.config/fastfetch/config.jsonc" ]] && grep -q 'stellarchy-versio
     rm -f "$HOME/.config/fastfetch/config.jsonc"
     ok "  Removed branded fastfetch/config.jsonc (no stock template to restore)"
   fi
+fi
+# Also handle os-release identity overlay (fastfetch About + Caelestia lock About)
+if [[ -f "$HOME/.config/stellarchy/os-release" ]] || [[ -d "$HOME/.config/stellarchy" ]]; then
+  rm -rf "$HOME/.config/stellarchy"
+  ok "  Removed stellarchy os-release overlay (About/lock reverts to Omarchy)"
 fi
 
 # Stellarchy hooks — sweep any stray copies that bypassed the standard paths
