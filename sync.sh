@@ -6,7 +6,7 @@
 # ███████║   ██║   ███████╗███████╗███████╗██║  ██║██║  ██║╚██████╗██║  ██║   ██║
 # ╚══════╝   ╚═╝   ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝
 
-# omartia-dots-remux sync
+# stellarchy sync
 # Applies the current checkout's state to an existing remux install: menu
 # scripts, hooks, lua config merges (personal edits preserved), keybinds,
 # branding, shell.json migrations. Never pulls — the auto-sync hook pulls
@@ -262,9 +262,9 @@ SKIP_LUA=(monitors.lua input.lua bindings.lua)
 # it are stock Omarchy defaults or foreign rewrites — merging into those is
 # meaningless, so they are adopted wholesale (with backup) below.
 declare -A OWNED_RE=(
-  [hyprland.lua]='omartia-dots-remux|package\.loaded\["default\.hypr\.autostart"\]'
-  [autostart.lua]='omartia-dots-remux|caelestia-shell'
-  [looknfeel.lua]='omartia-dots-remux'
+  [hyprland.lua]='stellarchy|omartia-dots-remux|package\.loaded\["default\.hypr\.autostart"\]'
+  [autostart.lua]='stellarchy|omartia-dots-remux|caelestia-shell'
+  [looknfeel.lua]='stellarchy|omartia-dots-remux'
 )
 BASE_DIR="$HOME/.config/hypr/.stellarchy-base"
 info "Hypr Lua configs (merge from repo):"
@@ -376,8 +376,8 @@ LOOKNFEEL_FILE="$HOME/.config/hypr/looknfeel.lua"
 REPO_LOOKNFEEL="$REPO_DIR/config/hypr/looknfeel.lua"
 info "Corner rounding:"
 
-ROUND_BEGIN="-- BEGIN omartia-dots-remux managed rounding (auto-synced by upgrade.sh)"
-ROUND_END="-- END omartia-dots-remux managed rounding"
+ROUND_BEGIN="-- BEGIN stellarchy managed rounding (auto-synced by upgrade.sh)"
+ROUND_END="-- END stellarchy managed rounding"
 
 if [[ ! -f $REPO_LOOKNFEEL ]]; then
   warn "  repo looknfeel.lua not found — skipping"
@@ -449,21 +449,21 @@ if [[ ! -f $BINDINGS_FILE ]]; then
 elif [[ ! -f $REPO_BINDINGS ]]; then
   warn "  repo bindings.lua not found — skipping"
 else
-  MANAGED_BEGIN="-- BEGIN omartia-dots-remux managed keybinds (auto-synced by upgrade.sh — personal edits belong outside this block)"
-  MANAGED_END="-- END omartia-dots-remux managed keybinds"
+  MANAGED_BEGIN="-- BEGIN stellarchy managed keybinds (auto-synced by upgrade.sh — personal edits belong outside this block)"
+  MANAGED_END="-- END stellarchy managed keybinds"
 
   # Strip legacy auto-injected stellarchy blocks (predecessors of the managed
   # block). Duplicates make toggle binds (sidebar/dashboard) fire twice and
   # appear dead. A legacy block = its marker comment plus the command lines
   # after it, up to the next blank line.
-  if grep -q -- "-- omartia-dots-remux: .*auto-injected" "$BINDINGS_FILE"; then
+  if grep -q -- "-- stellarchy: .*auto-injected" "$BINDINGS_FILE"; then
     if $DRY_RUN; then
       info "  [dry-run] would remove legacy stellarchy auto-injected binding block(s)"
       changed=$((changed+1))
     else
       tmp="$(mktemp)"
       awk '
-        /^-- omartia-dots-remux: .*auto-injected/ { skip=1; next }
+        /^-- stellarchy: .*auto-injected/ { skip=1; next }
         skip && /^[[:space:]]*$/ { skip=0; next }
         skip { next }
         { print }
@@ -594,7 +594,7 @@ if [[ -f $MPV_SRC ]]; then
   if [[ ! -f $MPV_DST ]]; then
     if ! $DRY_RUN; then mkdir -p "$(dirname "$MPV_DST")" && cp "$MPV_SRC" "$MPV_DST"; fi
     ok "  mpv/mpv.conf installed (native resolution)"
-  elif grep -q "omartia-dots-remux" "$MPV_DST" 2>/dev/null; then
+  elif grep -qE "stellarchy|omartia-dots-remux" "$MPV_DST" 2>/dev/null; then
     if ! cmp -s "$MPV_SRC" "$MPV_DST"; then
       if $DRY_RUN; then
         info "  [dry-run] would update mpv/mpv.conf (omartia-owned)"

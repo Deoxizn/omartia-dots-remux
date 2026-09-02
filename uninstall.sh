@@ -1,10 +1,15 @@
 #!/usr/bin/env bash
-# omartia-dots-remux uninstaller
+# stellarchy uninstaller
 # Restores configs from backup, removes Caelestia Shell configs
 
 set -euo pipefail
 
-BACKUP_DIR="$HOME/.config/omartia-dots-remux-backup"
+BACKUP_DIR="$HOME/.config/stellarchy-backup"
+OLD_BACKUP_DIR="$HOME/.config/omartia-dots-remux-backup"
+# Migrate old omartia backup dir to stellarchy name (one-time)
+if [[ -d "$OLD_BACKUP_DIR" && ! -d "$BACKUP_DIR" ]]; then
+  mv "$OLD_BACKUP_DIR" "$BACKUP_DIR" 2>/dev/null || true
+fi
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -20,7 +25,7 @@ err()   { echo -e "${RED}[stellarchy]${NC} $*" >&2; }
 # Find latest backup
 if [[ ! -d "$BACKUP_DIR" ]]; then
   err "No backup found at $BACKUP_DIR"
-  err "Was omartia-dots-remux ever installed?"
+  err "Was stellarchy (omartia-dots-remux) ever installed?"
   exit 1
 fi
 
@@ -341,7 +346,7 @@ if [[ -d "$HOME/.local/state/stellarchy" ]]; then
 fi
 
 # mpv — remove only if we installed it (marker avoids nuking a custom config)
-if [[ -f "$HOME/.config/mpv/mpv.conf" ]] && grep -q "omartia-dots-remux" "$HOME/.config/mpv/mpv.conf" 2>/dev/null; then
+if [[ -f "$HOME/.config/mpv/mpv.conf" ]] && grep -qE "stellarchy|omartia-dots-remux" "$HOME/.config/mpv/mpv.conf" 2>/dev/null; then
   rm -f "$HOME/.config/mpv/mpv.conf"
   ok "  Removed mpv/mpv.conf (omartia-owned, native-res window)"
   rmdir "$HOME/.config/mpv" 2>/dev/null || true
@@ -463,7 +468,7 @@ if [[ -n "$hits" ]]; then
 fi
 
 # Reinstall omarchy-dev if it was removed during install
-OMARCHY_DEV_FLAG="$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
+OMARCHY_DEV_FLAG="$HOME/.local/state/stellarchy/omarchy-dev-removed"
 if [[ -f "$OMARCHY_DEV_FLAG" ]]; then
   if ! pacman -Qi omarchy-dev &>/dev/null; then
     echo ""
@@ -520,7 +525,7 @@ fi
 
 echo ""
 ok "═══════════════════════════════════════════"
-ok "  omartia-dots-remux uninstalled!"
+ok "  stellarchy uninstalled!"
 ok "═══════════════════════════════════════════"
 echo ""
 info "Backup preserved at: $LATEST_BACKUP"

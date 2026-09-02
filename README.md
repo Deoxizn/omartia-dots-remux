@@ -99,7 +99,7 @@ Honest list of the remaining gaps:
 ```
 
 ```bash
-git clone https://github.com/deoxizn/omartia-dots-remux.git ~/.local/opt/stellarchy
+git clone https://github.com/deoxizn/stellarchy.git ~/.local/opt/stellarchy
 cd ~/.local/opt/stellarchy
 ./install.sh
 ```
@@ -161,7 +161,7 @@ systemctl --user start caelestia-shell.service     # bring the shell back now
 ./sync.sh          # apply current checkout to the install (the auto-sync hook runs this after pulling)
 ```
 
-Your configs stay yours — lua updates merge in, conflicts never touch your files, and every replaced file is backed up in `~/.config/omartia-dots-remux-backup/`. Preview with `--dry-run`; `--adopt-lua` adopts repo lua versions that have no merge history (yours is backed up first).
+Your configs stay yours — lua updates merge in, conflicts never touch your files, and every replaced file is backed up in `~/.config/stellarchy-backup/`. Preview with `--dry-run`; `--adopt-lua` adopts repo lua versions that have no merge history (yours is backed up first).
 
 Kernel and splash live in the menus: **System → Kernel** (CachyOS opt-in, boot-entry status & repair) and **System → Splash** (adopt/refresh the boot splash) under `SUPER+Alt+Space` — plain scripts (`stellarchy-kernel`, `stellarchy-splash`) if you prefer a terminal.
 

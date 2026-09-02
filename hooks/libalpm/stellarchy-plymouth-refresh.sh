@@ -1,5 +1,5 @@
 #!/bin/bash
-# omartia-dots-remux: keep the Stellarchy splash on every kernel.
+# stellarchy: keep the Stellarchy splash on every kernel.
 # Fired by 95-stellarchy-plymouth-refresh.hook (PostTransaction, after
 # mkinitcpio's 90-* hooks) whenever a kernel package is installed or
 # upgraded. If the Stellarchy splash is adopted, rebuilds the UKIs so the

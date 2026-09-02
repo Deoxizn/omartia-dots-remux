@@ -24,7 +24,7 @@ else
 fi
 
 f=/usr/share/omarchy/bin/omarchy-restart-shell
-if [ -f "$f" ] && grep -q 'omartia-dots-remux' "$f"; then
+if [ -f "$f" ] && grep -qE 'stellarchy|omartia-dots-remux' "$f"; then
   ok "restart-shell guard present"
 else
   bad "restart-shell guard MISSING from $f"

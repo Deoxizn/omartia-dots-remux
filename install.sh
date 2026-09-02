@@ -6,21 +6,22 @@
 # ███████║   ██║   ███████╗███████╗███████╗██║  ██║██║  ██║╚██████╗██║  ██║   ██║
 # ╚══════╝   ╚═╝   ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝
 
-# omartia-dots-remux installer
+# stellarchy installer
 # Replaces omarchy-shell with Caelestia Shell + theme bridge
-# https://github.com/deoxizn/omartia-dots-remux
+# https://github.com/deoxizn/stellarchy
 
 set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
-BACKUP_DIR="$HOME/.config/omartia-dots-remux-backup"
+BACKUP_DIR="$HOME/.config/stellarchy-backup"
 BACKUP_TS="$(date +%Y%m%d%H%M%S)"
 BACKUP_PATH="$BACKUP_DIR/$BACKUP_TS"
 OMARCHY_PATH="${OMARCHY_PATH:-/usr/share/omarchy}"
 STATE_DIR="$HOME/.local/state/stellarchy"
 STATE_REPO_FILE="$STATE_DIR/repo-dir"
 XDG_REPO_DEFAULT="$HOME/.local/opt/stellarchy"
-LEGACY_REPO_PATHS=("$HOME/Work/omartia-dots-remux" "$HOME/omartia-dots-remux")
+LEGACY_REPO_PATHS=("$HOME/Work/omartia-dots-remux" "$HOME/omartia-dots-remux" "$HOME/Work/stellarchy")
+OLD_BACKUP_DIR="$HOME/.config/omartia-dots-remux-backup"
 YES=false
 SKIP_QS_CHECK=false
 DRY_RUN=false
@@ -82,7 +83,7 @@ run_sudo() {
 #   when set, the repo file is installed wrapped so sync.sh's managed-block
 #   sync recognizes it instead of appending a duplicate.
 sync_main_lua() {
-  local name="$1" own_re="${2:-omartia-dots-remux}"
+  local name="$1" own_re="${2:-stellarchy|omartia-dots-remux}"
   local wrap_begin="${3:-}" wrap_end="${4:-}"
   local src="$REPO_DIR/config/hypr/$name"
   local dst="$HOME/.config/hypr/$name"
@@ -237,20 +238,29 @@ if ! $SKIP_QS_CHECK && pacman -Qi quickshell-git &>/dev/null; then
     if pacman -Qi omarchy-dev &>/dev/null; then
       warn "omarchy-dev depends on quickshell-git — removing omarchy-dev first"
       run_sudo pacman -Rns omarchy-dev --noconfirm
-      mkdir -p "$HOME/.local/state/omartia-dots-remux"
-      touch "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
+      mkdir -p "$STATE_DIR"
+      touch "$STATE_DIR/omarchy-dev-removed"
+      # Migrate old omartia flag if present
+      if [[ -f "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed" ]]; then
+        mv "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed" "$STATE_DIR/omarchy-dev-removed" 2>/dev/null || true
+        rmdir "$HOME/.local/state/omartia-dots-remux" 2>/dev/null || true
+      fi
     fi
     # Atomic swap: installing stable resolves the conflict by removing the git
     # variant within one transaction, so omarchy's 'quickshell' dependency is
     # satisfied throughout (a separate -Rns step would break it)
     run_sudo pacman -S --ask 4 --noconfirm quickshell
     # Reinstall omarchy-dev now that stable quickshell provides the dependency
-    if [[ -f "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed" ]]; then
+    # Check both new and legacy flag locations
+    for flag in "$STATE_DIR/omarchy-dev-removed" "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"; do
+      [[ -f "$flag" ]] || continue
       info "Reinstalling omarchy-dev (provides omarchy-launch-* commands)..."
       run_sudo pacman -S --noconfirm omarchy-dev
-      rm -f "$HOME/.local/state/omartia-dots-remux/omarchy-dev-removed"
+      rm -f "$flag"
+      rmdir "$(dirname "$flag")" 2>/dev/null || true
       ok "omarchy-dev reinstalled"
-    fi
+      break
+    done
     ok "Switched to stable quickshell"
   else
     warn "Continuing with quickshell-git — you may hit build or runtime issues"
@@ -272,6 +282,19 @@ if ! $SKIP_QS_CHECK; then
         exit 1
       fi
     fi
+  fi
+fi
+
+# ──────────────────────────────────────────────
+# Migration: old omartia backup dir -> stellarchy name
+# ──────────────────────────────────────────────
+
+if [[ -d "$OLD_BACKUP_DIR" && ! -d "$BACKUP_DIR" ]]; then
+  if $DRY_RUN; then
+    info "[dry-run] would migrate backup dir $OLD_BACKUP_DIR -> $BACKUP_DIR"
+  else
+    mv "$OLD_BACKUP_DIR" "$BACKUP_DIR"
+    ok "Migrated backup dir $OLD_BACKUP_DIR -> $BACKUP_DIR"
   fi
 fi
 
@@ -565,7 +588,7 @@ if [[ ! -f "$HOME/.config/mpv/mpv.conf" ]]; then
     cp "$REPO_DIR/config/mpv/mpv.conf" "$HOME/.config/mpv/mpv.conf"
   fi
   ok "  mpv/mpv.conf (new, native resolution)"
-elif grep -q "omartia-dots-remux" "$HOME/.config/mpv/mpv.conf" 2>/dev/null; then
+elif grep -qE "stellarchy|omartia-dots-remux" "$HOME/.config/mpv/mpv.conf" 2>/dev/null; then
   warn "  mpv/mpv.conf already omartia-owned — left untouched"
 else
   warn "  mpv/mpv.conf exists — skipped (custom config preserved)"
@@ -576,15 +599,15 @@ fi
 # skipped them all and only a partial patch block landed. Unowned files are
 # now backed up (*.pre-install.bak) and replaced with the repo versions.
 # markers for sync.sh's managed keybind block must stay byte-identical to what older installs already have on disk (historical name: upgrade.sh).
-MANAGED_BEGIN="-- BEGIN omartia-dots-remux managed keybinds (auto-synced by upgrade.sh — personal edits belong outside this block)"
-MANAGED_END="-- END omartia-dots-remux managed keybinds"
-sync_main_lua hyprland.lua 'omartia-dots-remux|package\.loaded\["default\.hypr\.autostart"\]'
-sync_main_lua autostart.lua 'omartia-dots-remux|caelestia-shell'
+MANAGED_BEGIN="-- BEGIN stellarchy managed keybinds (auto-synced by upgrade.sh — personal edits belong outside this block)"
+MANAGED_END="-- END stellarchy managed keybinds"
+sync_main_lua hyprland.lua 'stellarchy|omartia-dots-remux|package\.loaded\["default\.hypr\.autostart"\]'
+sync_main_lua autostart.lua 'stellarchy|omartia-dots-remux|caelestia-shell'
 sync_main_lua looknfeel.lua
 # Ownership probe is the managed-block marker itself: older installers appended
-# a small auto-injected block that mentions omartia-dots-remux but lacks most of
+# a small auto-injected block that mentions stellarchy (legacy: omartia-dots-remux) but lacks most of
 # the documented binds — those must be replaced, not skipped.
-sync_main_lua bindings.lua 'BEGIN omartia-dots-remux managed keybinds' "$MANAGED_BEGIN" "$MANAGED_END"
+sync_main_lua bindings.lua 'BEGIN stellarchy managed keybinds' "$MANAGED_BEGIN" "$MANAGED_END"
 
 # Patch bindings.lua — inject Caelestia launcher/lock bindings into existing config
 BINDINGS_FILE="$HOME/.config/hypr/bindings.lua"
@@ -601,7 +624,7 @@ else
       info "  Patching hypr/bindings.lua with Caelestia bindings..."
       cat >> "$BINDINGS_FILE" << 'CAELESTIA_BINDINGS'
 
--- omartia-dots-remux: Caelestia bindings (auto-injected)
+-- stellarchy: Caelestia bindings (auto-injected)
 hl.unbind("SUPER + SPACE")
 o.bind("SUPER + SPACE", "Caelestia launcher", hl.dsp.global("caelestia:launcher"))
 o.bind("SUPER + ALT + SPACE", "Stellarchy menu", "stellarchy-menu")
@@ -636,10 +659,10 @@ else
       info "[dry-run] would replace outdated Caelestia autostart block"
     else
       info "  Replacing outdated Caelestia autostart block..."
-      sed -i '/^-- omartia-dots-remux: Caelestia Shell (auto-injected)/,/^end)$/d' "$AUTOSTART_FILE"
+      sed -i '/^-- stellarchy: Caelestia Shell (auto-injected)/,/^end)$/d' "$AUTOSTART_FILE"
       cat >> "$AUTOSTART_FILE" << 'CAELESTIA_AUTOSTART'
 
--- omartia-dots-remux: Caelestia Shell (auto-injected)
+-- stellarchy: Caelestia Shell (auto-injected)
 -- Replaces omarchy-shell. The default autostart is stubbed out in
 -- hyprland.lua, so the non-shell parts it used to launch are replicated here.
 hl.on("hyprland.start", function()
@@ -661,13 +684,13 @@ CAELESTIA_AUTOSTART
 
       # Comment out the omarchy quickshell bar launch (Caelestia provides its own bar)
       if grep -q 'quickshell.*config/quickshell/bar' "$AUTOSTART_FILE" 2>/dev/null; then
-        sed -i 's|^\([^#].*quickshell.*config/quickshell/bar.*\)$|-- omartia-dots-remux: disabled (Caelestia provides bar)\n-- \1|' "$AUTOSTART_FILE"
+        sed -i 's|^\([^#].*quickshell.*config/quickshell/bar.*\)$|-- stellarchy: disabled (Caelestia provides bar)\n-- \1|' "$AUTOSTART_FILE"
         ok "  hypr/autostart.lua (omarchy bar disabled)"
       fi
 
       cat >> "$AUTOSTART_FILE" << 'CAELESTIA_AUTOSTART'
 
--- omartia-dots-remux: Caelestia Shell (auto-injected)
+-- stellarchy: Caelestia Shell (auto-injected)
 -- Replaces omarchy-shell. The default autostart is stubbed out in
 -- hyprland.lua, so the non-shell parts it used to launch are replicated here.
 hl.on("hyprland.start", function()
@@ -1372,7 +1395,7 @@ lines = [l for l in lines if marker not in l and "Caelestia: prevent default oma
 with open(path, "w") as fh:
     fh.writelines(lines)
 PFUNSTUB
-        sed -i '/^-- omartia-dots-remux: Caelestia Shell (auto-injected)/,/^end)$/d' "$HOME/.config/hypr/autostart.lua" 2>/dev/null || true
+        sed -i '/^-- stellarchy: Caelestia Shell (auto-injected)/,/^end)$/d' "$HOME/.config/hypr/autostart.lua" 2>/dev/null || true
         warn "  no backup found — stripped injected blocks instead"
         echo "ROLLBACK: no backup; stripped injections surgically" >> "$PREFLIGHT_LOG"
       fi
@@ -1411,7 +1434,7 @@ if $DRY_RUN; then
   info "  $REPO_DIR/install.sh -y"
 else
   ok "═══════════════════════════════════════════"
-  ok "  omartia-dots-remux installed!"
+  ok "  stellarchy installed!"
   ok "═══════════════════════════════════════════"
   echo ""
   info "What changed:"

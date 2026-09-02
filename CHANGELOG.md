@@ -4,6 +4,10 @@
      one bullet per change: - Description ([`short-hash`](commit-url)).
      Skip README rewordings, screenshots and demo videos. -->
 
+## 2026-08-30
+
+- Repo rename `omartia-dots-remux` → `stellarchy` and site merge — `stellarchy.github.io` imported into `docs/` (single-repo like noctarchy), `BACKUP_DIR` → `~/.config/stellarchy-backup`, `install.sh`/`sync.sh`/`uninstall.sh` now use `stellarchy` markers with `stellarchy|omartia-dots-remux` fallback and auto-migrate old backup/state/repo paths
+
 ## 2026-08-29
 
 - mpv: window now follows video's native resolution — floating without fixed 1000×720, mpv requests its own size per video (4K at 4K, etc.); ships `config/mpv/mpv.conf` with `autofit-larger=90%x90%` and commented tips, installed only if missing (sync updates when owned) ([`7cd4216`](https://github.com/deoxizn/omartia-dots-remux/commit/7cd4216))

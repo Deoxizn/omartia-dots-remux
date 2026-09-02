@@ -1,4 +1,4 @@
--- omartia-dots-remux: Autostart
+-- stellarchy: Autostart
 -- Caelestia Shell replaces omarchy-shell. The default autostart is stubbed out
 -- in hyprland.lua, so the non-shell parts it used to launch are replicated here.
 
