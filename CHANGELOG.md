@@ -6,7 +6,7 @@
 
 ## 2026-08-30
 
-- Repo rename `omartia-dots-remux` → `stellarchy` and site merge — `stellarchy.github.io` imported into `docs/` (single-repo like noctarchy), `BACKUP_DIR` → `~/.config/stellarchy-backup`, `install.sh`/`sync.sh`/`uninstall.sh` now use `stellarchy` markers with `stellarchy|omartia-dots-remux` fallback and auto-migrate old backup/state/repo paths
+- Repo rename `omartia-dots-remux` → `stellarchy` and site merge — `stellarchy.github.io` imported into `docs/` (single-repo like noctarchy), `BACKUP_DIR` → `~/.config/stellarchy-backup`, `install.sh`/`sync.sh`/`uninstall.sh` now use `stellarchy` markers with `stellarchy|omartia-dots-remux` fallback and auto-migrate old backup/state/repo paths ([`c0aa6c6`](https://github.com/deoxizn/omartia-dots-remux/commit/c0aa6c6))
 
 ## 2026-08-29
 
