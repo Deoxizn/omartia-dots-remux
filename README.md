@@ -1,3 +1,5 @@
+> **PSA:** This project is now considered **stable** and is no longer in active development. Updates will only be made if issues arise.
+
 <div align="center">
 
 <img src="stellarchy.png" alt="Stellarchy" width="450">
